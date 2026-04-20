@@ -4,7 +4,7 @@
 
 #include "CClases.h"
 
-Movie::Movie(int _id,string _title, string _year, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
+Movie::Movie(int _id, string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
     id = _id;
     title = _title;
     release_year = _year;

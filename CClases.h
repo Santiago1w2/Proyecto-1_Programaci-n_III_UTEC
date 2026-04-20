@@ -23,7 +23,7 @@ class Movie {
     string wiki_page;
     string plot;
 public:
-    Movie(int _id,string _title,string _year,string _origin,string _director,string _cast,string _genre,string wiki,string _plot);
+    Movie(int _id,string _year,string _title,string _origin,string _director,string _cast,string _genre,string wiki,string _plot);
 };
 
 vector<Movie> leerCSV(const string& csv);
