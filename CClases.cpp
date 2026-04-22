@@ -16,15 +16,24 @@ Movie::Movie(int _id, string _year,string _title, string _origin,string _directo
     plot = _plot;
 }
 
-void procesarConComas(stringstream& ss,string& name) {
+int Movie::getId() {return id;}
+string Movie::getYear() {return release_year;}
+string Movie::getTtitle() {return title;}
+string Movie::getDirector() {return director;}
+string Movie::getGenre() {return genre;}
+string Movie::getOrigin() {return origin;}
+string Movie::getPlot() {return plot;}
+string Movie::getWiki() {return wiki_page;}
+
+void procesarComillas(stringstream& ss,string& name) {
     char c;
-    ss.get(c);
+    if (!ss.get(c)) return;
     if (c=='"') {
         string compuesto="";
         char nextChar;
         while (ss.get(nextChar)) {
             if (nextChar=='"') {
-                if (ss.peek()=='"') { //Se puede considerar innecesario pero nos aseguramos que el csv este bien definido
+                if (ss.peek()=='"') {
                     ss.get();
                     compuesto+='"';
                 }
@@ -45,27 +54,46 @@ void procesarConComas(stringstream& ss,string& name) {
 }
 
 
+
+
 //Procesamiento de datos previo al uso de arboles
 vector<Movie> leerCSV(const string& csv) {
     vector<Movie> movies;
-    int idMovie=0;
+    int idMovie = 1;
     ifstream archivo(csv);
     string linea;
     string _year,_title,_origin,_director,_cast,_genre,_wiki,_plot;
-    while (getline(archivo,linea)) {
-        stringstream ss(linea);
-        string title,director,cast,year,description;
+    //No queremos leer las cabeceras de las columnas
+    getline(archivo, linea);
+    while (true) {
+        string registro;
+        int comillas = 0;
+        if (!getline(archivo, linea)) break;
+        //Para la primera linea no queremos agregar un salto de linea
+        registro += linea;
+        for (char c: linea)
+            if (c=='"')
+                comillas++;
+        while (comillas % 2 != 0) {
+            if (!getline(archivo, linea)) break;
+            registro += "\n" + linea;
+            for (char c: linea)
+                if (c=='"')
+                    comillas++;
+        }
+        stringstream ss(registro);
         getline(ss,_year,',');
-        procesarConComas(ss,_title);
-        procesarConComas(ss,_origin);
-        procesarConComas(ss,_director);
-        procesarConComas(ss,_cast);
-        procesarConComas(ss,_genre);
-        procesarConComas(ss,_wiki);
-        procesarConComas(ss,_plot);
+        procesarComillas(ss,_title);
+        procesarComillas(ss,_origin);
+        procesarComillas(ss,_director);
+        procesarComillas(ss,_cast);
+        procesarComillas(ss,_genre);
+        procesarComillas(ss,_wiki);
+        getline(ss,_plot);
         movies.push_back(Movie(idMovie,_year,_title,_origin,_director,_cast,_genre,_wiki,_plot));
         idMovie++;
     }
+
     return movies;
 }
 
