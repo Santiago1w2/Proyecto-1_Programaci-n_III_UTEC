@@ -17,13 +17,13 @@ Movie::Movie(int _id, string _year,string _title, string _origin,string _directo
 }
 
 int Movie::getId() const {return id;}
-string Movie::getYear() {return release_year;}
-string Movie::getTtitle() {return title;}
-string Movie::getDirector() {return director;}
-string Movie::getGenre() {return genre;}
-string Movie::getOrigin() {return origin;}
-string Movie::getPlot() {return plot;}
-string Movie::getWiki() {return wiki_page;}
+string Movie::getYear()const {return release_year;}
+string Movie::getTtitle() const {return title;}
+string Movie::getDirector()const  {return director;}
+string Movie::getGenre() const {return genre;}
+string Movie::getOrigin() const {return origin;}
+string Movie::getPlot() const {return plot;}
+string Movie::getWiki() const {return wiki_page;}
 
 void Movie::more_info() {
     cout << "Title: " << title << endl;
@@ -140,12 +140,13 @@ bool validar_info(const string& _email, const string& _clave) {
 }
 void registrar_usuario(const string& name, const string& email, const string& clave) {
     ofstream archivo("registroUsuarios.txt", ios::app); //
-
     if (archivo.is_open()) {
         archivo << name << "," << email<<"," << clave << "\n";
         archivo.close();
     }
 }
+
+
 vector<string> mostrar_usuarios() {
     ifstream archivo("registroUsuarios.txt");
     string linea;
@@ -250,4 +251,37 @@ vector<Movie> Arbol::buscar1(string palabra) {
         nodo = nodo->nodos[c];
     }
     return nodo->peliculas;
+}
+
+
+// | titulo | cast | genre | plot
+void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
+    //caso en el que no tenga nada recomendado
+    vector<int> hist; //Guardamos los resultados
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dist(1,34886);
+    bool cond2=false;
+    int id;
+    for (int i=0;i<10;i++) {
+        id = dist(gen);
+        bool cond1 =find(hist.begin(),hist.end(),id)==hist.end();
+        if (i!=0)
+            cond2 = pelis[id-1].getGenre()==pelis[hist[i-1]].getGenre();
+        while (cond1==true and cond2==true) {
+            id = dist(gen);
+            cond1 =find(hist.begin(),hist.end(),id)==hist.end();
+            cond2 = pelis[id-1].getGenre()==pelis[hist[i-1]].getGenre();
+        }
+        hist.push_back(id);
+    }
+    cout<<left;
+    cout<<setw(10)<<"OPCION"<<setw(49)<<"TITULO "<<setw(20)<<"GENERO"<<setw(20)<<"LANZAMIENTO"<<endl;
+    cout<<string(100,'-')<<endl;
+    for (int i=0;i<hist.size();i++) {
+        cout<<setw(10)<<to_string(i+1)+"-> ";
+        cout<<setw(50)<<pelis[hist[i]].getTtitle();
+        cout<<setw(20)<<pelis[hist[i]].getGenre();
+        cout<<setw(20)<<pelis[hist[i]].getYear()<<endl;
+    }
 }

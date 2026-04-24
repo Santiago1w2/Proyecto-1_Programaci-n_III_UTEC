@@ -9,6 +9,10 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <ostream>
+#include <iomanip>
+#include <algorithm>
+#include <random>
 #include <unordered_map>
 using namespace std;
 
@@ -26,16 +30,15 @@ class Movie {
 public:
     Movie(int _id,string _year,string _title,string _origin,string _director,string _cast,string _genre,string wiki,string _plot);
     int getId() const;
-    string getYear();
-    string getTtitle();
-    string getOrigin();
-    string getDirector();
-    string getGenre();
-    string getWiki();
-    string getPlot();
+    string getYear()const;
+    string getTtitle()const;
+    string getOrigin() const;
+    string getDirector() const;
+    string getGenre() const;
+    string getWiki() const;
+    string getPlot()const;
 
     void more_info();
-
 };
 
 
@@ -60,8 +63,11 @@ public:
 
 bool validar_correo(const string& _email);
 bool validar_info(const string& _email, const string& _clave);
-void registrar_usuario(const string& name, const string& email, const string& clave);
-bool validar_usuario(const string& _username);
+void registrar_usuario(const string& name, const string& email, const string& clave); //Se deberia incluir en el constructor de Usuarios
+bool validar_usuario(const string& _username); //No es necesario
+
+void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis);
+
 int busquedaBinaria(const vector<Movie>& v, int objetivo_id);
 vector<string> mostrar_usuarios();
 

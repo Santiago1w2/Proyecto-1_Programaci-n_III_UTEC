@@ -5,24 +5,19 @@ int main() {
     cout<<"\n|     BIENVENIDO A UTECFLIX       |";
     cout<<"\n-----------------------------------";
     char opcion_entrada;
-    int p_entrada;
-    cout << endl;
-    vector<string> users = mostrar_usuarios();
-    cout << "Usuarios Registrados: " << endl;
-    for (int i = 0; i < users.size(); i++) {
-        cout << "(" << i+1 <<") "<< users[i]<< " ";
-    }
+
     cout<<"\n--- OPCIONES DE INGRESO ---";
     cout<<"\n'a' | Iniciar sesion";
     cout<<"\n'b' | Registrarse";
     cout<<"\n|-> ";cin>>opcion_entrada;
-
     while (tolower(opcion_entrada)!='a' and tolower(opcion_entrada)!='b') { // No habia opccion de b
-        cout<<"\n!ERRO EN DATO INGRESADO!";
+        cout<<"\n!ERROR EN DATO INGRESADO!";
         cout<<"\n'a' -> Iniciar sesion";
         cout<<"\n'b' -> Registrarse";
         cout<<"\n|-> ";cin>>opcion_entrada;
     }
+
+
     string us_email,us_password,us_name;
     if (tolower(opcion_entrada)=='a') {
         // Falta implementar la opcion de seleccionar usuarios y solo poner la contraseña
@@ -56,6 +51,8 @@ int main() {
             cin>>us_email;
         }
 
+
+
         string clave_temp;
         cout<<"\nIngrese su clave (contrasenia)";
         cin>>us_password;
@@ -71,19 +68,36 @@ int main() {
         Usuario user1(us_name,us_email,us_password);
         registrar_usuario(us_name,us_email,us_password);
     }
-    vector<Movie> pelis = leerCSV("peliculas.csv");
+
+
+    vector<Movie> pelis = leerCSV("peliculas.csv"); //Pre-procesamiento de las peliculas
+
+
+
     Arbol arbol;
     for (int i = 0; i < pelis.size(); i++) {
         arbol.insertar(pelis[i]);
     }
-    cout<<"----------- BIENVENIDO -----------------" << endl;
+    cout<<"\n----------- BIENVENIDO -----------------\n\n";
+    cout<<string(100,'=')<<endl;
+    cout<<string(30,' ')<<"PELICULAS RECOMENDADAS"<<endl;
+    cout<<string(100,'=')<<endl;
+    peliculasRecomendadas(us_email,pelis);
+
+    //Incluir recomendaciones personalizadas basado en busquedas previas
     // Top 5
+
+    /*
     cout << "-------------------------------------" << endl;
     cout << "Top 5"<< endl;
     cout << "-------------------------------------" << endl;
     for (int j = 0; j<6; j++) {
         cout <<"("<<j+1<<") "<<pelis[j].getTtitle() << " ";
     }
+    */
+
+
+
     cout<< endl;
     cin.ignore(); // si no se ua esto el getline va a fallar por usar cin antes
     vector<Movie> pelis2;
