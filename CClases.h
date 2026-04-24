@@ -32,10 +32,12 @@ public:
     string getGenre();
     string getWiki();
     string getPlot();
-
 };
 
+
+
 vector<Movie> leerCSV(const string& csv);
+
 void procesarComillas(stringstream& ss,string& name);
 class Usuario {
     string username;
@@ -52,7 +54,7 @@ public:
 };
 
 
-
-
+bool validar_correo(const string& _email);
+bool validar_info(const string& _email, const string& _clave);
 
 #endif //PROYECTAZO_CCLASES_H

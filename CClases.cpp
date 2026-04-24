@@ -55,7 +55,6 @@ void procesarComillas(stringstream& ss,string& name) {
 
 
 
-
 //Procesamiento de datos previo al uso de arboles
 vector<Movie> leerCSV(const string& csv) {
     vector<Movie> movies;
@@ -93,9 +92,34 @@ vector<Movie> leerCSV(const string& csv) {
         movies.push_back(Movie(idMovie,_year,_title,_origin,_director,_cast,_genre,_wiki,_plot));
         idMovie++;
     }
-
     return movies;
 }
 
+bool validar_correo(const string& _email) {
+    ifstream archivo("registroUsuarios.txt");
+    string linea;
+    string email;
+    while (getline(archivo,linea)) {
+        stringstream ss(linea);
+        getline(ss,email,',');
+        if (email==_email)
+            return true;
+    }
+    return false;
+}
 
+
+bool validar_info(const string& _email, const string& _clave) {
+    ifstream archivo("registroUsuarios.txt");
+    string linea;
+    string email,clave;
+    while (getline(archivo,linea)) {
+        stringstream ss(linea);
+        getline(ss,email,',');
+        getline(ss,clave,',');
+        if (email==_email and clave==_clave)
+            return true;
+    }
+    return false;
+}
 
