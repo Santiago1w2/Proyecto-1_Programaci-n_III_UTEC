@@ -139,7 +139,7 @@ bool validar_info(const string& _email, const string& _clave) {
     return false;
 }
 void registrar_usuario(const string& name, const string& email, const string& clave) {
-    ofstream archivo("registroUsuarios.txt", ios::app); // 👈 append
+    ofstream archivo("registroUsuarios.txt", ios::app); //
 
     if (archivo.is_open()) {
         archivo << name << "," << email<<"," << clave << "\n";
