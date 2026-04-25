@@ -25,3 +25,7 @@ punto adicional:
 - El proceso de verificacion de iniciar sesion o registrarse necesita mejoras. Las funciones me parece que estan bien, pero la implementacion en el main necesita mejoras.
 - Si es una cuenta privada no creo que sea necesario mostrar los usuarios registrados
 - Creo que no hay problema en que el nombre de usuario se repita, siempre y cuando el correo sea diferente.
+
+**Importante**
+el registro de usuarios sigue esta estructuta: email,clave,username,verMasTarde,MeGusta,Baneado,historial de busqueda
+
