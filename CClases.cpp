@@ -16,6 +16,16 @@ Movie::Movie(int _id, string _year,string _title, string _origin,string _directo
     plot = _plot;
 }
 
+Usuario::Usuario(const string &user, const string &_email, const string &_pass, const vector<Movie> &VT, const vector<Movie> &MG, const vector<Movie> &Ban, const vector<Movie> &hist) {
+    username=user;
+    email = _email;
+    password = _pass;
+    verMasTarde = VT;
+    meGusta = MG;
+    baneado = Ban;
+    historial = hist;
+}
+
 int Movie::getId() const {return id;}
 string Movie::getYear()const {return release_year;}
 string Movie::getTtitle() const {return title;}
@@ -34,7 +44,7 @@ void Movie::more_info() {
     cout << "Genre: " << genre << endl;
     cout << "Wiki Page: " << wiki_page << endl;
     cout << "Plot: " << plot << endl;
-};
+}
 
 void procesarComillas(stringstream& ss,string& name) {
     char c;
@@ -67,7 +77,7 @@ void procesarComillas(stringstream& ss,string& name) {
 
 
 //Procesamiento de datos previo al uso de arboles
-vector<Movie> leerCSV(const string& csv) {
+vector<Movie> leerPeliculas(const string& csv) {
     vector<Movie> movies;
     int idMovie = 1;
     ifstream archivo(csv);
@@ -103,48 +113,101 @@ vector<Movie> leerCSV(const string& csv) {
         movies.push_back(Movie(idMovie,_year,_title,_origin,_director,_cast,_genre,_wiki,_plot));
         idMovie++;
     }
+    archivo.close();
     return movies;
 }
 
+//Ingresa peliculas en un vector a partir de un string
+vector<Movie> generarPelis(string linea,const vector<Movie>& pelis) {
+    vector<Movie> res;
+    stringstream aa(linea);
+    string lin;
+    while (getline(aa,lin,',')) {
+        res.push_back(pelis[stoi(lin)]);
+    }
+    return res;
+}
+
+
+
+vector<Usuario> leerUsuarios(const string &csv,vector<Movie> pelis) {
+    vector<Usuario> resultado;
+    vector<Movie> VT;
+    vector<Movie> MG;
+    vector<Movie> Ban;
+    vector<Movie> Hist;
+
+    ifstream archivo(csv);
+    string linea;
+    string _user,_email,_pass,_vTarde,_likes,_ban,_hist;
+    getline(archivo,linea); //No debemos considerar las cabeceras
+    //Podemos usar procesarComillas
+    while (getline(archivo,linea)) {
+        stringstream ss(linea);
+        getline(ss,_email,',');
+        getline(ss,_pass,',');
+        getline(ss,_user,',');
+        procesarComillas(ss,_vTarde);
+        procesarComillas(ss,_likes);
+        procesarComillas(ss,_ban);
+        procesarComillas(ss,_hist);
+        VT = generarPelis(_vTarde,pelis);
+        MG = generarPelis(_likes,pelis);
+        Ban = generarPelis(_ban,pelis);
+        Hist = generarPelis(_hist,pelis);
+        Usuario us(_user,_email,_pass,VT,MG,Ban,Hist);
+    }
+    return resultado;
+}
+
+
+//True = correo ya registrado /
 bool validar_correo(const string& _email) {
     ifstream archivo("registroUsuarios.txt");
     string linea;
     string username,clave,email;
     while (getline(archivo,linea)) {
-
         stringstream ss(linea);
-
-        getline(ss, username, ',');
         getline(ss, email, ',');
         getline(ss, clave, ',');
+        getline(ss, username, ',');
         if (email==_email)
             return true;
     }
+    archivo.close();
     return false;
 }
 
-
+//True = Email y contraseña coinciden coinciden con las registradas
 bool validar_info(const string& _email, const string& _clave) {
     ifstream archivo("registroUsuarios.txt");
     string linea;
     string username,email,clave;
     while (getline(archivo,linea)) {
         stringstream ss(linea);
-        getline(ss, username, ',');
         getline(ss,email,',');
         getline(ss,clave,',');
+        getline(ss, username, ',');
         if (email==_email and clave==_clave)
             return true;
     }
+    archivo.close();
     return false;
 }
-void registrar_usuario(const string& name, const string& email, const string& clave) {
+
+
+//Funcion solo para registrar a nuevos usuarios
+void registrar_nuevoUsuario(const string& name, const string& email, const string& clave) {
     ofstream archivo("registroUsuarios.txt", ios::app); //
     if (archivo.is_open()) {
-        archivo << name << "," << email<<"," << clave << "\n";
+        archivo << email << "," << clave <<"," << name <<",,,,"<<"\n";
         archivo.close();
     }
 }
+
+
+void actualizarUsuario(vector<int> pelis,string tipo){}
+
 
 
 vector<string> mostrar_usuarios() {
@@ -161,23 +224,21 @@ vector<string> mostrar_usuarios() {
     while (getline(archivo, linea)) {
         if (linea.empty()) continue; // aca se vana  ignorar la slineas vacias
         stringstream ss(linea);
-
-        getline(ss, username, ',');
         getline(ss, email, ',');
         getline(ss, clave, ',');
-
+        getline(ss, username, ',');
         usuarios_name.push_back(username);
-
         hayDatos = true;
     }
-
     if (!hayDatos) {
         cout << "No hay usuarios registrados\n";
     }
-
     archivo.close();
     return usuarios_name;
 }
+
+
+
 bool validar_usuario(const string& _username) {
     ifstream archivo("registroUsuarios.txt");
     string linea;
@@ -186,15 +247,18 @@ bool validar_usuario(const string& _username) {
     while (getline(archivo, linea)) {
         stringstream ss(linea);
 
-        getline(ss, username, ',');
         getline(ss, email, ',');
         getline(ss, clave, ',');
+        getline(ss, username, ',');
 
         if (username == _username)
             return true;
     }
     return false;
 }
+
+
+
 int busquedaBinaria(const vector<Movie>& v, int objetivo_id) {
     int left = 0;
     int right = v.size() - 1;

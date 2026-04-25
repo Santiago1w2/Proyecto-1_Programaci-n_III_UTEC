@@ -41,30 +41,32 @@ public:
     void more_info();
 };
 
-
-
-vector<Movie> leerCSV(const string& csv);
-
 void procesarComillas(stringstream& ss,string& name);
 class Usuario {
     string username;
     string email;
     string password;
-    vector<int> verMasTarde;
-    vector<int> MeGusta;
-    vector<int> Baneado;
-
+    vector<Movie> verMasTarde;
+    vector<Movie> meGusta;
+    vector<Movie> baneado;
+    vector<Movie> historial;
 public:
-    Usuario(string user,string _email,string _password):username(user),email(_email),password(_password){}
+    Usuario(const string &user, const string &_email, const string &_pass, const vector<Movie> &VT, const vector<Movie> &MG, const vector<Movie> &Ban, const vector<Movie> &hist);
     void revisarUsuario();
-
 };
+
+vector<Movie> leerPeliculas(const string& csv);
+vector<Movie> generarPelis(string linea,const vector<Movie>& pelis);
+vector<Usuario> leerUsuarios(const string& csv,vector<Movie> pelis);
+
 
 
 bool validar_correo(const string& _email);
 bool validar_info(const string& _email, const string& _clave);
-void registrar_usuario(const string& name, const string& email, const string& clave); //Se deberia incluir en el constructor de Usuarios
 bool validar_usuario(const string& _username); //No es necesario
+
+void registrar_nuevoUsuario(const string& name, const string& email, const string& clave);
+void actualizarUsuario(vector<int> pelis,string tipo);
 
 void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis);
 
