@@ -117,46 +117,93 @@ vector<Movie> leerPeliculas(const string& csv) {
     return movies;
 }
 
-//Ingresa peliculas en un vector a partir de un string
-vector<Movie> generarPelis(string linea,const vector<Movie>& pelis) {
-    vector<Movie> res;
-    stringstream aa(linea);
-    string lin;
-    while (getline(aa,lin,',')) {
-        res.push_back(pelis[stoi(lin)]);
+vector<int> parseLista(const string& s) {
+    vector<int> res;
+    string num = "";
+
+    for (char c : s) {
+        if (isdigit(c)) {
+            num += c;
+        } else {
+            if (!num.empty()) {
+                try {
+                    res.push_back(stoi(num));
+                } catch (...) {}
+                num = "";
+            }
+        }
     }
+
+    if (!num.empty()) {
+        try {
+            res.push_back(stoi(num));
+        } catch (...) {}
+    }
+
     return res;
 }
 
+vector<Movie> convertirAPelis(const vector<int>& ids, const vector<Movie>& pelis) {
+    vector<Movie> res;
 
+    for (int id : ids) {
+        if (id >= 0 && id < pelis.size()) {
+            res.push_back(pelis[id]); // usa índice directo (0-based)
+        }
+    }
 
-vector<Usuario> leerUsuarios(const string &csv,vector<Movie> pelis) {
+    return res;
+}
+
+vector<Usuario> leerUsuarios(const string &csv, const vector<Movie>& pelis) {
     vector<Usuario> resultado;
-    vector<Movie> VT;
-    vector<Movie> MG;
-    vector<Movie> Ban;
-    vector<Movie> Hist;
 
     ifstream archivo(csv);
-    string linea;
-    string _user,_email,_pass,_vTarde,_likes,_ban,_hist;
-    getline(archivo,linea); //No debemos considerar las cabeceras
-    //Podemos usar procesarComillas
-    while (getline(archivo,linea)) {
-        stringstream ss(linea);
-        getline(ss,_email,',');
-        getline(ss,_pass,',');
-        getline(ss,_user,',');
-        procesarComillas(ss,_vTarde);
-        procesarComillas(ss,_likes);
-        procesarComillas(ss,_ban);
-        procesarComillas(ss,_hist);
-        VT = generarPelis(_vTarde,pelis);
-        MG = generarPelis(_likes,pelis);
-        Ban = generarPelis(_ban,pelis);
-        Hist = generarPelis(_hist,pelis);
-        Usuario us(_user,_email,_pass,VT,MG,Ban,Hist);
+    if (!archivo.is_open()) {
+        cout << "ERROR: no se pudo abrir el archivo de usuarios\n";
+        system("pause");
+        exit(1);
     }
+
+    string linea;
+    getline(archivo, linea); // saltar cabecera
+
+    while (getline(archivo, linea)) {
+        if (linea.empty()) continue;
+
+        stringstream ss(linea);
+
+        string _user, _email, _pass;
+        string _vTarde, _likes, _ban, _hist;
+
+        // datos básicos
+        getline(ss, _email, ',');
+        getline(ss, _pass, ',');
+        getline(ss, _user, ',');
+
+        // leer listas completas tipo [1,2,3]
+        getline(ss, _vTarde, ']'); _vTarde += "]";
+        ss.ignore(1);
+
+        getline(ss, _likes, ']'); _likes += "]";
+        ss.ignore(1);
+
+        getline(ss, _ban, ']'); _ban += "]";
+        ss.ignore(1);
+
+        getline(ss, _hist, ']'); _hist += "]";
+
+        // convertir a vectores de películas
+        vector<Movie> VT = convertirAPelis(parseLista(_vTarde), pelis);
+        vector<Movie> MG = convertirAPelis(parseLista(_likes), pelis);
+        vector<Movie> Ban = convertirAPelis(parseLista(_ban), pelis);
+        vector<Movie> Hist = convertirAPelis(parseLista(_hist), pelis);
+
+        Usuario us(_user, _email, _pass, VT, MG, Ban, Hist);
+        resultado.push_back(us);
+    }
+
+    archivo.close();
     return resultado;
 }
 
@@ -198,11 +245,22 @@ bool validar_info(const string& _email, const string& _clave) {
 
 //Funcion solo para registrar a nuevos usuarios
 void registrar_nuevoUsuario(const string& name, const string& email, const string& clave) {
-    ofstream archivo("registroUsuarios.txt", ios::app); //
-    if (archivo.is_open()) {
-        archivo << email << "," << clave <<"," << name <<",,,,"<<"\n";
-        archivo.close();
+    ofstream archivo("registroUsuarios.txt", ios::app);
+
+    if (!archivo.is_open()) {
+        cout << "Error al abrir archivo de usuarios\n";
+        return;
     }
+    archivo << email << ","
+            << clave << ","
+            << name << ","
+            << "[],"
+            << "[],"
+            << "[],"
+            << "[]"
+            << "\n";
+
+    archivo.close();
 }
 
 
@@ -324,18 +382,18 @@ void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
     vector<int> hist; //Guardamos los resultados
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> dist(1,34886);
+    uniform_int_distribution<> dist(1, pelis.size());
     bool cond2=false;
     int id;
     for (int i=0;i<10;i++) {
         id = dist(gen);
         bool cond1 =find(hist.begin(),hist.end(),id)==hist.end();
         if (i!=0)
-            cond2 = pelis[id-1].getGenre()==pelis[hist[i-1]].getGenre();
+            cond2 = pelis[id-1].getGenre()==pelis[hist[i-1]-1].getGenre();
         while (cond1==true and cond2==true) {
             id = dist(gen);
             cond1 =find(hist.begin(),hist.end(),id)==hist.end();
-            cond2 = pelis[id-1].getGenre()==pelis[hist[i-1]].getGenre();
+            cond2 = pelis[id-1].getGenre()==pelis[hist[i-1]-1].getGenre();
         }
         hist.push_back(id);
     }
@@ -344,8 +402,8 @@ void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
     cout<<string(100,'-')<<endl;
     for (int i=0;i<hist.size();i++) {
         cout<<setw(10)<<to_string(i+1)+"-> ";
-        cout<<setw(50)<<pelis[hist[i]].getTtitle();
-        cout<<setw(20)<<pelis[hist[i]].getGenre();
-        cout<<setw(20)<<pelis[hist[i]].getYear()<<endl;
+        cout<<setw(50)<<pelis[hist[i]-1].getTtitle();
+        cout<<setw(20)<<pelis[hist[i]-1].getGenre();
+        cout<<setw(20)<<pelis[hist[i]-1].getYear()<<endl;
     }
 }

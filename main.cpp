@@ -1,10 +1,14 @@
 #include "CClases.h"
 
 int main() {
+    cout << "INICIO PROGRAMA\n";
+    system("pause");
     //Inicializacion de peliculas y usuarios como registro histórico
-    vector<Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
-    vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
 
+    vector<Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
+    cout << "INICIO PROGRAMA\n";
+    vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
+    cout << "INICIO PROGRAMA\n";
     //Menu inicial de la plataforma
 
     cout<<string(101,'=')<<endl;
@@ -54,6 +58,7 @@ int main() {
     //Registro de un usuario nuevo
     else {
         cout<<"\n-- REGISTRO DE NUEVO USUARIO --\n";
+        cout << "User Name: "<<endl; cin>>us_name;
         cout<<"\nCorreo electronico :";cin>>us_email;
         while (validar_correo(us_email)) { //Verifica si el correo ya esta registrado
             cout<<"\nEL CORREO YA ESTA REGISTRADO\n";
@@ -137,5 +142,5 @@ int main() {
     }
 
 
-    return 0;
+    system("pause");
 }

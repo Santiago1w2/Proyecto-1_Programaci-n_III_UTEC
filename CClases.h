@@ -56,10 +56,10 @@ public:
 };
 
 vector<Movie> leerPeliculas(const string& csv);
-vector<Movie> generarPelis(string linea,const vector<Movie>& pelis);
-vector<Usuario> leerUsuarios(const string& csv,vector<Movie> pelis);
+vector<Movie> convertirAPelis(const vector<int>& ids, const vector<Movie>& pelis);
+vector<Usuario> leerUsuarios(const string&, const vector<Movie>&);
 
-
+vector<int> parseLista(const string& s);
 
 bool validar_correo(const string& _email);
 bool validar_info(const string& _email, const string& _clave);
