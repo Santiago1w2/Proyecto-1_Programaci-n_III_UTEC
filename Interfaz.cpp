@@ -1,0 +1,186 @@
+//
+// Created by smora on 29/04/2026.
+//
+
+#include "Interfaz.h"
+#include <conio.h>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <iostream>
+#include <string>
+#include <thread>
+#include <chrono>
+using namespace std;
+
+void moverCursor(int x, int y) {
+    COORD coord;
+    coord.X = x;
+    coord.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+void limpiarPantalla() {
+    system("cls");
+}
+
+void esperarEnter() {
+    cout << "\nPresiona Enter para continuar...";
+
+    cin.get(); // espera Enter real
+}
+void setColor(int color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+void inicio() {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
+    system("chcp 65001 > nul"); // activar UTF-8
+    setColor(11); // Cyan (celeste)
+    cout << R"(
+                                 ██╗   ██╗████████╗███████╗ ██████╗███████╗██╗     ██╗██╗  ██╗
+                                 ██║   ██║╚══██╔══╝██╔════╝██╔════╝██╔════╝██║     ██║╚██╗██╔╝
+                                 ██║   ██║   ██║   █████╗  ██║     █████╗  ██║     ██║ ╚███╔╝
+                                 ██║   ██║   ██║   ██╔══╝  ██║     ██╔══╝  ██║     ██║ ██╔██╗
+                                 ╚██████╔╝   ██║   ███████╗╚██████╗██║     ███████╗██║██╔╝ ██╗
+                                  ╚═════╝    ╚═╝   ╚══════╝ ╚═════╝╚═╝     ╚══════╝╚═╝╚═╝  ╚═╝
+)" << endl;
+
+    setColor(14); // Amarillo
+
+    cout << "\n                                               🎬 Películas y series\n";
+
+    setColor(10); // Verde
+
+    cout << "                                                  sin límites y mucho más 🍿\n";
+
+    setColor(7); // Blanco normal (reset)
+    esperarEnter();
+    limpiarPantalla();
+
+}
+
+
+void mostrarMenu(int opcion) {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
+    system("chcp 65001 > nul");
+    system("cls");
+
+    cout << R"(
+╭────────────────────────────────────╮
+│        * INGRESO AL SISTEMA *      │
+├────────────────────────────────────┤
+)";
+
+    // OPCIÓN A
+    if (opcion == 1) setColor(11), cout << "│   -> Iniciar sesión                │\n";
+    else setColor(7), cout << "│      Iniciar sesión                │\n";
+
+    // OPCIÓN B
+    if (opcion == 2) setColor(11), cout << "│   -> Registrarse                   │";
+    else setColor(7), cout << "│      Registrarse                   │";
+
+    setColor(7);
+
+    cout << R"(
+├────────────────────────────────────┤
+│   Usa ↑ ↓ y ENTER                  │
+╰────────────────────────────────────╯
+)";
+}
+
+void seleccionar_opcion(char& op) {
+    int opcion = 1;
+    char tecla;
+
+    while (true) {
+        mostrarMenu(opcion);
+
+        tecla = getch(); // lee tecla sin ENTER
+
+        if (tecla == 72) { // ↑
+            opcion--;
+            if (opcion < 1) opcion = 2;
+        }
+
+        if (tecla == 80) { // ↓
+            opcion++;
+            if (opcion > 2) opcion = 1;
+        }
+
+        if (tecla == 13) { // ENTER
+            system("cls");
+
+            if (opcion == 1) {
+                op = 'a';
+            } else if (opcion == 2) {
+                op = 'b';
+            }
+
+            break;
+        }
+    }
+
+}
+
+void mostrar_inicio_sesion() {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
+    system("chcp 65001 > nul");
+    cout << R"(
+╭────────────────────────────────────────────────────╮
+|                 *INICIO DE SESION*                 |
+├────────────────────────────────────────────────────┤
+|Email:                                              |
+├────────────────────────────────────────────────────┤
+|Password:                                           |
+╰────────────────────────────────────────────────────╯
+                    ╭────────────╮
+                    │  Ingresar  │
+                    ╰────────────╯
+)";
+}
+
+void inicio_sesion(string& correo, string& pass) {
+    mostrar_inicio_sesion();
+    moverCursor(7,4);
+    cin >> correo;
+    moverCursor(10, 6);
+    cin >> pass;
+}
+void esperar(int n) {
+    this_thread::sleep_for(chrono::seconds(n));
+}
+void mostrar_registro_usuario() {
+    cout << R"(
+╭────────────────────────────────────────────────────╮
+|            *REGISTRO DE NUEVO USUARIO*             |
+├────────────────────────────────────────────────────┤
+|User Name:                                          |
+├────────────────────────────────────────────────────┤
+|Email:                                              |
+├────────────────────────────────────────────────────┤
+|Contraseña:                                         |
+├────────────────────────────────────────────────────┤
+|Repetir contraseña:                                 |
+╰────────────────────────────────────────────────────╯
+                    ╭─────────────╮
+                    │  Registrar  │
+                    ╰─────────────╯
+)";
+}
+
+void registro(string& correo, string& pass, string& name, string& clave) {
+    mostrar_registro_usuario();
+    moverCursor(12,4);
+    cin >> name;
+    moverCursor(7, 6);
+    cin >> correo;
+    moverCursor(12, 8);
+    cin >> pass;
+    moverCursor(21, 10);
+    cin >> clave;
+}

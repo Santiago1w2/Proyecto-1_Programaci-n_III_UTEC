@@ -1,82 +1,75 @@
 #include "CClases.h"
+#include "Interfaz.h"
 
 int main() {
-    cout << "INICIO PROGRAMA\n";
-    system("pause");
     //Inicializacion de peliculas y usuarios como registro histórico
-
     vector<Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
-    cout << "INICIO PROGRAMA\n";
     vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
-    cout << "INICIO PROGRAMA\n";
     //Menu inicial de la plataforma
-
-    cout<<string(101,'=')<<endl;
-    cout<<"||"<<string(38,' ')<<"BIENVENIDO A UTECFLIX"<<string(38,' ')<<"||\n";
-    cout<<string(101,'=')<<endl;
     char opcion_entrada;
-    cout<<"\n"<<string(40,'-')<<endl;
-    cout<<"|->"<<string(7,' ')<<"OPCIONES DE INGRESO"<<string(8,' ')<<"<-|";
-    cout<<"\n"<<string(40,'-');
-    cout<<"\n'a' | Iniciar sesion"<<string(19,' ')<<"|";
-    cout<<"\n'b' | Registrarse"<<string(22,' ')<<"|";
-    cout<<"\n"<<string(40,'-');
-    cout<<"\nOpcion :";cin>>opcion_entrada;
-    while (tolower(opcion_entrada)!='a' and tolower(opcion_entrada)!='b') { // No habia opccion de b
-        cout<<"\n"<<string(40,'-')<<endl;
-        cout<<"!!!"<<string(4,' ')<<"ERROR EN OPCION INGRESADA"<<string(5,' ')<<"!!!";
-        cout<<"\n"<<string(40,'-');
-        cout<<"\n'a' | Iniciar sesion"<<string(19,' ')<<"|";
-        cout<<"\n'b' | Registrarse"<<string(22,' ')<<"|";
-        cout<<"\n"<<string(40,'-');
-        cout<<"\nOpcion :";cin>>opcion_entrada;
-    }
-
+    inicio();
+    seleccionar_opcion(opcion_entrada);
+    limpiarPantalla();
     string us_email,us_password,us_name;
     //Usuario ya existente quiere iniciar sesion
-    if (tolower(opcion_entrada)=='a') {
-        cout<<"\n"<<string(40,'-')<<endl;
-        cout<<"|->"<<string(9,' ')<<"INICIO DE SESION"<<string(9,' ')<<"<-|";
-        cout<<"\n"<<string(40,'-')<<endl;
-        cout<<"Email :";cin>>us_email;
-        cout<<"Clave :";cin>>us_password;
-        cout<<string(40,'-')<<endl;
+    if (opcion_entrada=='a') {
+        inicio_sesion(us_email,us_password);
         while (!validar_info(us_email,us_password)) { //Verifica si la combinacion correo-contraseña son iguales a las registradas
-            cout<<"\n"<<string(40,'-')<<endl;
-            cout<<"!!!"<<string(4,' ')<<"ERROR EN LAS CREDENCIALES"<<string(4,' ')<<"!!!";
-            cout<<"\n"<<string(40,'-')<<endl;
-            cout<<"Email :";cin>>us_email;
-            cout<<"Clave";cin>>us_password;
-            cout<<string(40,'-')<<endl;
+            limpiarPantalla();
+            cout << R"(
+╭───────────────────────────────╮
+│ ⚠ ERROR EN LAS CREDENCIALES   │
+╰───────────────────────────────╯
+)";
+            esperar(1);
+            limpiarPantalla();
+            inicio_sesion(us_email,us_password);
+
         }
-        cout<<"\n"<<string(20,'=')<<string(20,'-')<<endl;
-        cout<<string(8,' ')<<"INICIO DE SESION EXITOSO"<<endl;
-        cout<<string(20,'-')<<string(20,'=')<<endl;
+        limpiarPantalla();
+        cout << R"(
+╭───────────────────────────────╮
+│  ✔ INICIO DE SESION EXITOSO   │
+╰───────────────────────────────╯
+)"; esperar(1);
+        limpiarPantalla();
+
     }
 
-    //Falta mejorar esteticamente
-    //Registro de un usuario nuevo
     else {
-        cout<<"\n-- REGISTRO DE NUEVO USUARIO --\n";
-        cout << "User Name: "<<endl; cin>>us_name;
-        cout<<"\nCorreo electronico :";cin>>us_email;
-        while (validar_correo(us_email)) { //Verifica si el correo ya esta registrado
-            cout<<"\nEL CORREO YA ESTA REGISTRADO\n";
-            cout<<"Correo electronico :";cin>>us_email;
-        }
         string clave_temp;
-        cout<<"\nContrasenia :";cin>>us_password;
-        cout<<"Repita su contrasenia :";cin>>clave_temp;
-        while (us_password!=clave_temp) {
-            cout<<"\nLAS CLAVES NO COINCIDEN. VUELVA A INTENTAR\n";
-            cout<<"Contrasenia :";cin>>us_password;
-            cout<<"Contrasenia :";cin>>clave_temp;
+        registro(us_email,us_password,us_name,clave_temp);
+        while (validar_correo(us_email)) { //Verifica si el correo ya esta registrado
+            limpiarPantalla();
+            cout << R"(
+╭───────────────────────────────╮
+│    ⚠ CORREO YA REGISTRADO     │
+╰───────────────────────────────╯
+)"; esperar(2);
+            limpiarPantalla();
+            registro(us_email,us_password,us_name, clave_temp);
         }
+        while (us_password!=clave_temp) {
+            limpiarPantalla();
+            cout << R"(
+╭─────────────────────────────────────────────────────╮
+│    ⚠ LAS CLAVES NO COINCIDEN. VUELVA A INTENTAR     │
+╰─────────────────────────────────────────────────────╯
+)";
+            esperar(2);
+            limpiarPantalla();
+            registro(us_email,us_password,us_name, clave_temp);
+        }
+        limpiarPantalla();
+        esperar(2);
+        cout << R"(
+╭───────────────────────────────────╮
+│  ✔ USUARIO REGISTRADO CON EXITO   │
+╰───────────────────────────────────╯
+)";
+        limpiarPantalla();
         registrar_nuevoUsuario(us_name,us_email,us_password);
     }
-
-
-
 
     Arbol arbol;
     for (int i = 0; i < pelis.size(); i++) {
