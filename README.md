@@ -1,3 +1,19 @@
+Con las nuevas implementaciones viuales se tiene que configurar algunas cosas para correrlo en consola de Clion, pero sino:
+dentor de explorador de archivos dirigirse a la carpeta de su proyecto y ingresar a la carpeta de cmake-build-debug y ejecutar el .exe llamdo PROYECTAZO
+Proyecto-1_Programaci-n_III_UTEC/
+ ├── cmake-build-debug/
+ │     ├── PROYECTAZO.exe   ← AQUÍ ESTÁ
+
+ y si lo quieren correr en la temrinal de Clion tiene que ir a run->Edit Configurations-> y seleccionr la opcion de Emulate terminal in the output console
+ al correr el porgrama primero parece que hay un error pero es normal se esta ejecuntando el programa
+ ejemplo del error:
+ <img width="1841" height="422" alt="image" src="https://github.com/user-attachments/assets/a9cee4e2-6f83-47bf-9f04-f7e8b7c1479b" />
+
+
+
+
+
+
 COSAS QUE FALTA
 
 
