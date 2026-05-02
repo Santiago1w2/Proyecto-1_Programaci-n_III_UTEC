@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <cctype>
 
 using namespace std;
 
@@ -30,6 +31,7 @@ class Movie {
     string wiki_page;
     string plot;
 public:
+    Movie();
     Movie(string _year,string _title,string _origin,string _director,string _cast,string _genre,string wiki,string _plot);
     string getYear()const;
     string getTtitle()const;
@@ -89,10 +91,11 @@ class Trie {
 public:
     Trie();
     void insertar(const string& info, int id);
-    vector<int> buscar(const string& query,const map<int, string>& dataLimpia);
+    vector<int> buscar(const string& query);
 };
-
-
+string normalizar(const string& s);
+unordered_map<int, string> limpiardata(map<int, Movie>& data);
+void construirIndice(const unordered_map<int, string>& dataLimpia);
 
 
 #endif //PROYECTAZO_CCLASES_H

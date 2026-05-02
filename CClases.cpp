@@ -4,6 +4,7 @@
 
 #include "CClases.h"
 
+Movie::Movie() = default;
 Movie::Movie(string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
     title = _title;
     release_year = _year;
@@ -350,6 +351,7 @@ Trie::Trie() {
 
 void Trie::insertar(const string& info, int id) {
     Nodo* nodo = raiz;
+    nodo->esFinDePalabra = false;
     vector<string> palabras = separar(info);
     for (const string& palabra : palabras) {
         nodo = raiz; // reinicia todo cada palabra empieza desde la raíz
@@ -364,19 +366,26 @@ void Trie::insertar(const string& info, int id) {
         nodo->esFinDePalabra= true; // se verifica si ese nodo es el final de una plabra
     }
 }
+unordered_map<string, unordered_set<int>> keywordIndex;
+void construirIndice(const unordered_map<int, string>& dataLimpia) {
+    cout << "INDEX CONSTRUIDO\n";
+    for (const auto& [id, texto] : dataLimpia) {
+        vector<string> palabras = separar(texto);
 
-vector<int> Trie::buscar(const string& query,const map<int, string>& dataLimpia) {
-
+        for (const string& p : palabras) {
+            keywordIndex[p].insert(id);
+        }
+    }
+}
+vector<int> Trie::buscar(const string& query) {
     vector<string> palabras = separar(query);
-    vector<int> resultadoFinal;
-    bool primera = true;
+    unordered_map<int, int> score;
+
 
     for (const string& palabra : palabras) {
 
         Nodo* nodo = raiz;
         bool existeEnTrie = true;
-
-        // caso prefijo o palabra completa
 
         for (char c : palabra) {
             if (nodo->hijos.find(c) == nodo->hijos.end()) {
@@ -386,39 +395,36 @@ vector<int> Trie::buscar(const string& query,const map<int, string>& dataLimpia)
             nodo = nodo->hijos[c];
         }
 
-        vector<int> ids;
-
         if (existeEnTrie) {
-            ids.assign(nodo->movieIds.begin(), nodo->movieIds.end()); // concertir un onorered_set a in vector
+            int peso = min(5, (int)palabra.size());
 
-        } else {
-            // caso substring
-            for (const auto& [id, texto] : dataLimpia) {
-
-                if (texto.find(palabra) != string::npos) {
-                    ids.push_back(id);
-                }
+            for (int id : nodo->movieIds) {
+                score[id] += peso;
             }
         }
-        if (primera) {
-            resultadoFinal = ids;
-            primera = false;
-
-        } else {
-            unordered_set<int> setIds(ids.begin(), ids.end()); // guarta elemtnos unicos y no reptidos
-            vector<int> temp;
-            for (int id : resultadoFinal) {
-                if (setIds.count(id)) {
-                    temp.push_back(id);
-                }
+        //palabras en medio
+        if (keywordIndex.count(palabra)) {
+            for (int id : keywordIndex[palabra]) {
+                score[id] += 2;
             }
-            resultadoFinal = temp;
         }
     }
 
-    return resultadoFinal;
-}
+    vector<pair<int,int>> orden(score.begin(), score.end());
 
+    sort(orden.begin(), orden.end(),
+         [](auto &a, auto &b) {
+             return a.second > b.second;
+         });
+
+    vector<int> resultado;
+
+    for (int i = 0; i < min(5, (int)orden.size()); i++) {
+        resultado.push_back(orden[i].first);
+    }
+
+    return resultado;
+}
 
 // | titulo | cast | genre | plot
 void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
@@ -450,4 +456,79 @@ void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
         cout<<setw(20)<<pelis[hist[i]-1].getGenre();
         cout<<setw(20)<<pelis[hist[i]-1].getYear()<<endl;
     }
+}
+unordered_map<string, string> accents = {
+    {"á","a"}, {"à","a"}, {"ä","a"}, {"â","a"}, {"ã","a"}, {"å","a"},
+    {"Á","a"}, {"À","a"}, {"Ä","a"}, {"Â","a"}, {"Ã","a"}, {"Å","a"},
+
+    {"ó","o"}, {"ò","o"}, {"ö","o"}, {"ô","o"}, {"õ","o"}, {"ø","o"},
+    {"Ó","o"}, {"Ò","o"}, {"Ö","o"}, {"Ô","o"}, {"Õ","o"}, {"Ø","o"},
+
+    {"é","e"}, {"è","e"}, {"ë","e"}, {"ê","e"},
+    {"É","e"}, {"È","e"}, {"Ë","e"}, {"Ê","e"},
+
+    {"í","i"}, {"ì","i"}, {"ï","i"}, {"î","i"},
+    {"Í","i"}, {"Ì","i"}, {"Ï","i"}, {"Î","i"},
+
+    {"ú","u"}, {"ù","u"}, {"ü","u"}, {"û","u"},
+    {"Ú","u"}, {"Ù","u"}, {"Ü","u"}, {"Û","u"},
+
+    {"ç","c"}, {"Ç","c"},
+    {"ñ","n"}, {"Ñ","n"},
+    {"ý","y"}, {"ÿ","y"}, {"Ý","y"},
+    {"š","s"}, {"Š","s"},
+    {"ž","z"}, {"Ž","z"},
+    {"đ","d"}, {"Đ","d"}
+};
+
+string normalizar(const string& s) {
+    string res;
+    res.reserve(s.size());
+
+    for (size_t i = 0; i < s.size(); i++) {
+        string c(1, s[i]);
+
+        auto it = accents.find(c);
+        if (it != accents.end()) {
+            res += it->second;
+        } else {
+            res += c;
+        }
+    }
+
+    return res;
+}
+unordered_map<int, string> limpiardata(map<int, Movie>& data) {
+    unordered_map<int, string> data_resul;
+
+    for (auto& [id, movie] : data) {
+
+        string raw =
+            movie.getYear() + " " +
+            movie.getTtitle() + " " +
+            movie.getOrigin() + " " +
+            movie.getDirector() + " " +
+            movie.getGenre() + " " +
+            movie.getPlot();
+
+        // 1. normalizar acentos
+        string limpio = normalizar(raw);
+
+        // 2. pasar a minúsculas
+        limpio = aMinusculas(limpio);
+
+        // 3. filtrar caracteres
+        string final;
+        final.reserve(limpio.size());
+
+        for (char c : limpio) {
+            if (isalnum(c) || c == ' ') {
+                final += c;
+            }
+        }
+
+        data_resul[id] = move(final);
+    }
+
+    return data_resul;
 }

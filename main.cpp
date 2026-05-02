@@ -3,18 +3,22 @@
 
 int main() {
     //Inicializacion de peliculas y usuarios como registro histórico
+    cout << "Leyendo archivos..." << endl;
+
     map<int,Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
     vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
-    map<int, string> dataLimpia;
-    dataLimpia[1]="The history model articial";
-    dataLimpia[2]="The hismore moom mortal";
+    cout << "limpiando datos ..." << endl;
+
+    unordered_map<int, string> dataLimpia = limpiardata(pelis);
+    construirIndice(dataLimpia);
     //Menu inicial de la plataforma
     char opcion_entrada;
     inicio();
     seleccionar_opcion(opcion_entrada);
     limpiarPantalla();
     string us_email,us_password,us_name;
-    //Usuario ya existente quiere iniciar sesion
+    //Usuario ya existente quiere
+    //iniciar sesion
     if (opcion_entrada=='a') {
         inicio_sesion(us_email,us_password);
         while (!validar_info(us_email,us_password)) { //Verifica si la combinacion correo-contraseña son iguales a las registradas
@@ -75,6 +79,8 @@ int main() {
     }
 
     Trie trie;
+    limpiarPantalla();
+    cout << "cargando data ....." << endl;
     for (const auto& [clave, valor]: dataLimpia) {
         trie.insertar(valor,clave);
     }
@@ -102,13 +108,19 @@ int main() {
     cin.ignore(); // si no se ua esto el getline va a fallar por usar cin antes
     vector<Movie> pelis2;
     string buscar;
-    cout << "---------\n";
-    cout << "Buscar: ";
-    getline(cin, buscar);
-    cout << "----------\n";
-    vector<int> resultados = trie.buscar(buscar, dataLimpia);
-    for (int i = 0; i < resultados.size(); i++) {
-        cout << resultados[i];  }
+    int number = 0;
+    while (number < 10) {
+        cout << "---------\n";
+        cout << "Buscar: ";
+        getline(cin, buscar);
+        cout << "----------\n";
+        vector<int> resultados = trie.buscar(buscar);
+        for (int i = 0; i < resultados.size(); i++) {
+            cout << "[" << resultados[i] << "] " << pelis[resultados[i]].getTtitle() << endl;  }
+
+        number++;
+    }
+
 
 
     system("pause");
