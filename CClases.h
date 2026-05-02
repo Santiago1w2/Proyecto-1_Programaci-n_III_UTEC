@@ -93,8 +93,8 @@ public:
     void insertar(const string& info, int id);
     vector<int> buscar(const string& query);
 };
-string normalizar(const string& s);
-unordered_map<int, string> limpiardata(map<int, Movie>& data);
+
+
 void construirIndice(const unordered_map<int, string>& dataLimpia);
 
 

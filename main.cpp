@@ -7,10 +7,7 @@ int main() {
 
     map<int,Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
     vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
-    cout << "limpiando datos ..." << endl;
 
-    unordered_map<int, string> dataLimpia = limpiardata(pelis);
-    construirIndice(dataLimpia);
     //Menu inicial de la plataforma
     char opcion_entrada;
     inicio();
