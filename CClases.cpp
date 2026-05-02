@@ -339,40 +339,71 @@ int busquedaBinaria(const vector<Movie>& v, int objetivo_id) {
 }
 
 //Estructura del arbol prueba
-Arbol::Arbol() {
+vector<string> separar(const string& texto) {
+    stringstream ss(texto);
+    string palabra;
+    vector<string> palabras;
+
+    while (ss >> palabra) {
+        palabras.push_back(palabra);
+    }
+
+    return palabras;
+}
+Trie::Trie() {
     raiz = new Nodo;
 }
 
-void Arbol::insertar(Movie nuevo) {
+void Trie::insertar(const string& info, int id) {
     Nodo* nodo = raiz;
-    for (char c: nuevo.getTtitle()) {
-        if (nodo->nodos.find(c) == nodo->nodos.end()) {
-            nodo->nodos[c]=new Nodo(); // verifica si son iguales, sino parte a hacer otro nodo
-            //ejemplo:
-                 /*
+    vector<string> palabras = separar(info);
+    for (const string& palabra : palabras) {
+        nodo = raiz; // reinicia todo cada palabra empieza desde la raíz
+        for (char c : palabra) {
 
-                          r - r - o
-            Arbol -- c - a
-                          s - a
-
-                  */
+            if (nodo->hijos.find(c) == nodo->hijos.end()) { // verifica si es no hay camino en ese nodo, find de vuelce end() si no encuentra
+                nodo->hijos[c] = new Nodo(); // si no hay se crea
+            }
+            nodo = nodo->hijos[c]; // se mueve el nodo a la siguiente char
+            if (find(nodo->movieIds.begin(), nodo->movieIds.end(), id) == nodo->movieIds.end()) {
+                nodo->movieIds.push_back(id);
+            }
         }
-        nodo = nodo->nodos[c];
-
-        // se guarda a peliculas
-        nodo->peliculas.push_back(nuevo);
+        nodo->esFinDePalabra= true; // se verifica si ese nodo es el final de una plabra
     }
 }
 
-vector<Movie> Arbol::buscar1(string palabra) {
-    Nodo* nodo = raiz;
-    for (char c: palabra) {
-        if (nodo->nodos.find(c) == nodo->nodos.end()) {
-            return {}; // no se encontro
+vector<int> Trie::buscar(const string& query) {
+    vector<string> palabras = separar(query);
+    vector<int> resultadoFinal;
+    bool primera = true;
+    for (const string& palabra : palabras) {
+        Nodo* nodo = raiz;
+        for (char c : palabra) {
+            if (nodo->hijos.find(c) == nodo->hijos.end()) {
+                return {}; // no existe palabra
+            }
+            nodo = nodo->hijos[c];
         }
-        nodo = nodo->nodos[c];
+        vector<int> ids = nodo->movieIds;
+        if (primera) { // si es la primera palabra
+            resultadoFinal = ids; //se copia
+            primera = false;
+        } else { // sino se crea un interseccion para ver si tiene 
+            vector<int> temp;
+
+            for (int x : resultadoFinal) {
+                for (int y : ids) {
+                    if (x == y) {
+                        temp.push_back(x);
+                    }
+                }
+            }
+            resultadoFinal = temp;
+        }
     }
-    return nodo->peliculas;
+
+    return resultadoFinal;
 }
 
 

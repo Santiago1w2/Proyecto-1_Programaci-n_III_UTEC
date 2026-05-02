@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <random>
 #include <unordered_map>
+
 using namespace std;
 
 
@@ -75,19 +76,20 @@ vector<string> mostrar_usuarios();
 
 
 //Strcutra del arbol (pruebas)
-
+vector<string> separar(const string& texto);
 struct Nodo{
-    unordered_map<char, Nodo*> nodos; // unordered_map, es como un mpa, pero no lo ordena, como dijo el profe map ordena, este no
-    vector<Movie> peliculas;
+    unordered_map<char, Nodo*> hijos; // unordered_map, es como un map, pero no lo ordena, como dijo el profe map ordena, este no
+    vector<int> movieIds;
+    bool esFinDePalabra; //control duplicados
     //forma de los donos
 };
 
-class Arbol {
+class Trie {
     Nodo* raiz;
 public:
-    Arbol();
-    void insertar(Movie nuevo);
-    vector<Movie> buscar1(string query);
+    Trie();
+    void insertar(const string& info, int id);
+    vector<int> buscar(const string& query);
 };
 
 

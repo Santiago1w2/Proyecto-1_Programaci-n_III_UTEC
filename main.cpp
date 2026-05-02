@@ -73,7 +73,7 @@ int main() {
 
     Arbol arbol;
     for (int i = 0; i < pelis.size(); i++) {
-        arbol.insertar(pelis[i]);
+        //arbol.insertar(pelis[i]);
     }
     cout<<"\n\n\n----------- BIENVENIDO -----------------\n\n";
     cout<<string(100,'=')<<endl;
@@ -104,7 +104,7 @@ int main() {
         cout << "Buscar: ";
         getline(cin, buscar);
         cout << "----------\n";
-        pelis2 = arbol.buscar1(buscar);
+        //pelis2 = arbol.buscar1(buscar);
 
         if (!pelis2.empty()) {
             break;
