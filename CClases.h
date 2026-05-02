@@ -55,10 +55,10 @@ public:
     Usuario(const string &user, const string &_email, const string &_pass, const map<int,Movie> &VT, const map<int,Movie> &MG, const map<int,Movie> &Ban, const map<int,Movie> &hist);
     void revisarUsuario();
 };
-
+string aMinusculas(string texto);
 map<int,Movie> leerPeliculas(const string& csv);
 map<int, Movie> convertirAPelis(const vector<int>& ids, const map<int, Movie>& pelis);
-vector<Usuario> leerUsuarios(const string&, const vector<Movie>&);
+vector<Usuario> leerUsuarios(const string &csv, const map<int,Movie>& pelis);
 
 vector<int> parseLista(const string& s);
 
@@ -89,7 +89,7 @@ class Trie {
 public:
     Trie();
     void insertar(const string& info, int id);
-    vector<int> buscar(const string& query,const unordered_map<int, string>& dataLimpia);
+    vector<int> buscar(const string& query,const map<int, string>& dataLimpia);
 };
 
 

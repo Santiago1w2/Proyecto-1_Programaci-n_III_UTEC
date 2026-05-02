@@ -5,6 +5,9 @@ int main() {
     //Inicializacion de peliculas y usuarios como registro histórico
     map<int,Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
     vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
+    map<int, string> dataLimpia;
+    dataLimpia[1]="The history model articial";
+    dataLimpia[2]="The hismore moom mortal";
     //Menu inicial de la plataforma
     char opcion_entrada;
     inicio();
@@ -71,15 +74,15 @@ int main() {
         registrar_nuevoUsuario(us_name,us_email,us_password);
     }
 
-    //Arbol arbol;
-    for (int i = 0; i < pelis.size(); i++) {
-        //arbol.insertar(pelis[i]);
+    Trie trie;
+    for (const auto& [clave, valor]: dataLimpia) {
+        trie.insertar(valor,clave);
     }
     cout<<"\n\n\n----------- BIENVENIDO -----------------\n\n";
     cout<<string(100,'=')<<endl;
     cout<<string(30,' ')<<"PELICULAS RECOMENDADAS"<<endl;
     cout<<string(100,'=')<<endl;
-    peliculasRecomendadas(us_email,pelis);
+    //peliculasRecomendadas(us_email,pelis);
 
     //Incluir recomendaciones personalizadas basado en busquedas previas
     // Top 5
@@ -99,40 +102,13 @@ int main() {
     cin.ignore(); // si no se ua esto el getline va a fallar por usar cin antes
     vector<Movie> pelis2;
     string buscar;
-    while (true) {
-        cout << "---------\n";
-        cout << "Buscar: ";
-        getline(cin, buscar);
-        cout << "----------\n";
-        //pelis2 = arbol.buscar1(buscar);
-
-        if (!pelis2.empty()) {
-            break;
-        } else {
-            cout << "No se encontro ninguna pelicula: " << buscar << endl;
-            cout << "Intenta otra vez...\n\n";
-        }
-    }
-
-
-    if (!pelis2.empty()) {
-        for (int i=0;i<pelis2.size();i++) {
-            cout << "["<< pelis2[i].getId()<< "] "<< pelis2[i].getTtitle() << endl;
-        }
-        int id_peli;
-        cout << "Selecionar peli (id): " << endl;
-        cin >> id_peli;
-        int pos_id = busquedaBinaria(pelis2,id_peli);
-        if (pos_id != -1) {
-            pelis2[pos_id].more_info();
-        }
-        else {
-            cout << "No se encontro la peli que se quiso seleccionar";
-        }
-    }
-    else {
-        cout << "No se encontro la pelicula: "<<buscar << endl;
-    }
+    cout << "---------\n";
+    cout << "Buscar: ";
+    getline(cin, buscar);
+    cout << "----------\n";
+    vector<int> resultados = trie.buscar(buscar, dataLimpia);
+    for (int i = 0; i < resultados.size(); i++) {
+        cout << resultados[i];  }
 
 
     system("pause");

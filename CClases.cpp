@@ -72,6 +72,10 @@ void procesarComillas(stringstream& ss,string& name) {
     }
 }
 
+string aMinusculas(string texto) {
+    transform(texto.begin(), texto.end(), texto.begin(), ::tolower);
+    return texto;
+}
 
 
 //Procesamiento de datos previo al uso de arboles
@@ -327,9 +331,10 @@ int buscarPeli(const map<int, Movie>& v, int objetivo_id) {
     return -1; // no encontrado
 }
 
-//Estructura del arbol prueba
+//Estructura del TRIE
 vector<string> separar(const string& texto) {
-    stringstream ss(texto);
+    string procesado = aMinusculas(texto);
+    stringstream ss(procesado);
     string palabra;
     vector<string> palabras;
 
@@ -360,7 +365,7 @@ void Trie::insertar(const string& info, int id) {
     }
 }
 
-vector<int> Trie::buscar(const string& query,const unordered_map<int, string>& dataLimpia) {
+vector<int> Trie::buscar(const string& query,const map<int, string>& dataLimpia) {
 
     vector<string> palabras = separar(query);
     vector<int> resultadoFinal;
