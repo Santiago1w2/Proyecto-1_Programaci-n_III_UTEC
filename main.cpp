@@ -3,7 +3,7 @@
 
 int main() {
     //Inicializacion de peliculas y usuarios como registro histórico
-    vector<Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
+    map<int,Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
     vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
     //Menu inicial de la plataforma
     char opcion_entrada;
@@ -71,7 +71,7 @@ int main() {
         registrar_nuevoUsuario(us_name,us_email,us_password);
     }
 
-    Arbol arbol;
+    //Arbol arbol;
     for (int i = 0; i < pelis.size(); i++) {
         //arbol.insertar(pelis[i]);
     }

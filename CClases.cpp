@@ -4,8 +4,7 @@
 
 #include "CClases.h"
 
-Movie::Movie(int _id, string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
-    id = _id;
+Movie::Movie(string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
     title = _title;
     release_year = _year;
     origin = _origin;
@@ -16,7 +15,7 @@ Movie::Movie(int _id, string _year,string _title, string _origin,string _directo
     plot = _plot;
 }
 
-Usuario::Usuario(const string &user, const string &_email, const string &_pass, const vector<Movie> &VT, const vector<Movie> &MG, const vector<Movie> &Ban, const vector<Movie> &hist) {
+Usuario::Usuario(const string &user, const string &_email, const string &_pass, const map<int,Movie> &VT, const map<int,Movie> &MG, const map<int,Movie> &Ban, const map<int,Movie> &hist) {
     username=user;
     email = _email;
     password = _pass;
@@ -26,7 +25,6 @@ Usuario::Usuario(const string &user, const string &_email, const string &_pass, 
     historial = hist;
 }
 
-int Movie::getId() const {return id;}
 string Movie::getYear()const {return release_year;}
 string Movie::getTtitle() const {return title;}
 string Movie::getDirector()const  {return director;}
@@ -77,8 +75,8 @@ void procesarComillas(stringstream& ss,string& name) {
 
 
 //Procesamiento de datos previo al uso de arboles
-vector<Movie> leerPeliculas(const string& csv) {
-    vector<Movie> movies;
+map<int,Movie> leerPeliculas(const string& csv) {
+    map<int,Movie> movies;
     int idMovie = 1;
     ifstream archivo(csv);
     string linea;
@@ -110,7 +108,7 @@ vector<Movie> leerPeliculas(const string& csv) {
         procesarComillas(ss,_genre);
         procesarComillas(ss,_wiki);
         getline(ss,_plot);
-        movies.push_back(Movie(idMovie,_year,_title,_origin,_director,_cast,_genre,_wiki,_plot));
+        movies.insert({idMovie, Movie(_year,_title,_origin,_director,_cast,_genre,_wiki,_plot)});
         idMovie++;
     }
     archivo.close();
@@ -143,19 +141,21 @@ vector<int> parseLista(const string& s) {
     return res;
 }
 
-vector<Movie> convertirAPelis(const vector<int>& ids, const vector<Movie>& pelis) {
-    vector<Movie> res;
+map<int, Movie> convertirAPelis(const vector<int>& ids, const map<int, Movie>& pelis) {
+    map<int, Movie> res;
 
     for (int id : ids) {
-        if (id >= 0 && id < pelis.size()) {
-            res.push_back(pelis[id]); // usa índice directo (0-based)
+        auto it = pelis.find(id);
+
+        if (it != pelis.end()) {
+            res.insert({id, it->second});
         }
     }
 
     return res;
 }
 
-vector<Usuario> leerUsuarios(const string &csv, const vector<Movie>& pelis) {
+vector<Usuario> leerUsuarios(const string &csv, const map<int,Movie>& pelis) {
     vector<Usuario> resultado;
 
     ifstream archivo(csv);
@@ -194,10 +194,10 @@ vector<Usuario> leerUsuarios(const string &csv, const vector<Movie>& pelis) {
         getline(ss, _hist, ']'); _hist += "]";
 
         // convertir a vectores de películas
-        vector<Movie> VT = convertirAPelis(parseLista(_vTarde), pelis);
-        vector<Movie> MG = convertirAPelis(parseLista(_likes), pelis);
-        vector<Movie> Ban = convertirAPelis(parseLista(_ban), pelis);
-        vector<Movie> Hist = convertirAPelis(parseLista(_hist), pelis);
+        map<int,Movie> VT = convertirAPelis(parseLista(_vTarde), pelis);
+        map<int,Movie> MG = convertirAPelis(parseLista(_likes), pelis);
+        map<int,Movie> Ban = convertirAPelis(parseLista(_ban), pelis);
+        map<int,Movie> Hist = convertirAPelis(parseLista(_hist), pelis);
 
         Usuario us(_user, _email, _pass, VT, MG, Ban, Hist);
         resultado.push_back(us);
@@ -317,22 +317,11 @@ bool validar_usuario(const string& _username) {
 
 
 
-int busquedaBinaria(const vector<Movie>& v, int objetivo_id) {
-    int left = 0;
-    int right = v.size() - 1;
+int buscarPeli(const map<int, Movie>& v, int objetivo_id) {
+    auto it = v.find(objetivo_id);
 
-    while (left <= right) {
-        int mid = (left + right) / 2;
-
-        if (v[mid].getId() == objetivo_id) {
-            return mid; // encontrado
-        }
-        else if (v[mid].getId() < objetivo_id) {
-            left = mid + 1;
-        }
-        else {
-            right = mid - 1;
-        }
+    if (it != v.end()) {
+        return it->first; // devuelve el ID encontrado
     }
 
     return -1; // no encontrado
@@ -365,38 +354,57 @@ void Trie::insertar(const string& info, int id) {
                 nodo->hijos[c] = new Nodo(); // si no hay se crea
             }
             nodo = nodo->hijos[c]; // se mueve el nodo a la siguiente char
-            if (find(nodo->movieIds.begin(), nodo->movieIds.end(), id) == nodo->movieIds.end()) {
-                nodo->movieIds.push_back(id);
-            }
+            nodo->movieIds.insert(id);
         }
         nodo->esFinDePalabra= true; // se verifica si ese nodo es el final de una plabra
     }
 }
 
-vector<int> Trie::buscar(const string& query) {
+vector<int> Trie::buscar(const string& query,const unordered_map<int, string>& dataLimpia) {
+
     vector<string> palabras = separar(query);
     vector<int> resultadoFinal;
     bool primera = true;
+
     for (const string& palabra : palabras) {
+
         Nodo* nodo = raiz;
+        bool existeEnTrie = true;
+
+        // caso prefijo o palabra completa
+
         for (char c : palabra) {
             if (nodo->hijos.find(c) == nodo->hijos.end()) {
-                return {}; // no existe palabra
+                existeEnTrie = false;
+                break;
             }
             nodo = nodo->hijos[c];
         }
-        vector<int> ids = nodo->movieIds;
-        if (primera) { // si es la primera palabra
-            resultadoFinal = ids; //se copia
-            primera = false;
-        } else { // sino se crea un interseccion para ver si tiene 
-            vector<int> temp;
 
-            for (int x : resultadoFinal) {
-                for (int y : ids) {
-                    if (x == y) {
-                        temp.push_back(x);
-                    }
+        vector<int> ids;
+
+        if (existeEnTrie) {
+            ids.assign(nodo->movieIds.begin(), nodo->movieIds.end()); // concertir un onorered_set a in vector
+
+        } else {
+            // caso substring
+            for (const auto& [id, texto] : dataLimpia) {
+
+                if (texto.find(palabra) != string::npos) {
+                    ids.push_back(id);
+                }
+            }
+        }
+        if (primera) {
+            resultadoFinal = ids;
+            primera = false;
+
+        } else {
+            unordered_set<int> setIds(ids.begin(), ids.end()); // guarta elemtnos unicos y no reptidos
+            vector<int> temp;
+            for (int id : resultadoFinal) {
+                if (setIds.count(id)) {
+                    temp.push_back(id);
                 }
             }
             resultadoFinal = temp;
