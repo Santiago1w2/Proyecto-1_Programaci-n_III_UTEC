@@ -16,7 +16,7 @@ Movie::Movie(string _year,string _title, string _origin,string _director ,string
     plot = _plot;
 }
 
-Usuario::Usuario(const string &user, const string &_email, const string &_pass, const map<int,Movie> &VT, const map<int,Movie> &MG, const map<int,Movie> &Ban, const map<int,Movie> &hist) {
+Usuario::Usuario(const string &user, const string &_email, const string &_pass, const unordered_map<int,Movie> &VT, const unordered_map<int,Movie> &MG, const unordered_map<int,Movie> &Ban, const unordered_map<int,Movie> &hist) {
     username=user;
     email = _email;
     password = _pass;
@@ -80,8 +80,8 @@ string aMinusculas(string texto) {
 
 
 //Procesamiento de datos previo al uso de arboles
-map<int,Movie> leerPeliculas(const string& csv) {
-    map<int,Movie> movies;
+unordered_map<int,Movie> leerPeliculas(const string& csv) {
+    unordered_map<int,Movie> movies;
     int idMovie = 1;
     ifstream archivo(csv);
     string linea;
@@ -146,8 +146,8 @@ vector<int> parseLista(const string& s) {
     return res;
 }
 
-map<int, Movie> convertirAPelis(const vector<int>& ids, const map<int, Movie>& pelis) {
-    map<int, Movie> res;
+unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const map<int, Movie>& pelis) {
+    unordered_map<int, Movie> res;
 
     for (int id : ids) {
         auto it = pelis.find(id);
@@ -199,10 +199,10 @@ vector<Usuario> leerUsuarios(const string &csv, const map<int,Movie>& pelis) {
         getline(ss, _hist, ']'); _hist += "]";
 
         // convertir a vectores de películas
-        map<int,Movie> VT = convertirAPelis(parseLista(_vTarde), pelis);
-        map<int,Movie> MG = convertirAPelis(parseLista(_likes), pelis);
-        map<int,Movie> Ban = convertirAPelis(parseLista(_ban), pelis);
-        map<int,Movie> Hist = convertirAPelis(parseLista(_hist), pelis);
+        unordered_map<int,Movie> VT = convertirAPelis(parseLista(_vTarde), pelis);
+        unordered_map<int,Movie> MG = convertirAPelis(parseLista(_likes), pelis);
+        unordered_map<int,Movie> Ban = convertirAPelis(parseLista(_ban), pelis);
+        unordered_map<int,Movie> Hist = convertirAPelis(parseLista(_hist), pelis);
 
         Usuario us(_user, _email, _pass, VT, MG, Ban, Hist);
         resultado.push_back(us);
