@@ -49,18 +49,18 @@ class Usuario {
     string username;
     string email;
     string password;
-    map<int,Movie> verMasTarde;
-    map<int,Movie> meGusta;
-    map<int,Movie> baneado;
-    map<int,Movie> historial;
+    unordered_map<int,Movie> verMasTarde;
+    unordered_map<int,Movie> meGusta;
+    unordered_map<int,Movie> baneado;
+    unordered_map<int,Movie> historial;
 public:
-    Usuario(const string &user, const string &_email, const string &_pass, const map<int,Movie> &VT, const map<int,Movie> &MG, const map<int,Movie> &Ban, const map<int,Movie> &hist);
+    Usuario(const string &user, const string &_email, const string &_pass, const unordered_map<int,Movie> &VT, const unordered_map<int,Movie> &MG, const unordered_map<int,Movie> &Ban, const unordered_map<int,Movie> &hist);
     void revisarUsuario();
 };
 string aMinusculas(string texto);
-map<int,Movie> leerPeliculas(const string& csv);
-map<int, Movie> convertirAPelis(const vector<int>& ids, const map<int, Movie>& pelis);
-vector<Usuario> leerUsuarios(const string &csv, const map<int,Movie>& pelis);
+unordered_map<int,Movie> leerPeliculas(const string& csv);
+unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const unordered_map<int, Movie>& pelis);
+vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& pelis);
 
 vector<int> parseLista(const string& s);
 

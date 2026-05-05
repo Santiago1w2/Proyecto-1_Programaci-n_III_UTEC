@@ -1,13 +1,55 @@
 #include "CClases.h"
 #include "Interfaz.h"
+unordered_set<string> palabrasEnTodas(const unordered_map<int, Movie>& data) {
+    unordered_map<string, int> conteo;
+    int totalPeliculas = data.size();
 
+    for (const auto& [id, movie] : data) {
+
+        // 🔥 juntar texto (puedes ajustar esto)
+        string texto =
+            movie.getTtitle() + " " +
+            movie.getGenre() + " " +
+            movie.getPlot();
+
+        texto = normalizar(texto);
+        texto = aMinusculas(texto);
+
+        // 🔥 palabras únicas por película
+        unordered_set<string> palabrasUnicas;
+        stringstream ss(texto);
+        string palabra;
+
+        while (ss >> palabra) {
+            palabrasUnicas.insert(palabra);
+        }
+
+        // 🔥 contar presencia (no frecuencia)
+        for (const string& p : palabrasUnicas) {
+            conteo[p]++;
+        }
+    }
+
+    // 🔥 filtrar las que aparecen en TODAS
+    unordered_set<string> resultado;
+
+    for (const auto& [palabra, freq] : conteo) {
+        if (freq == totalPeliculas) {
+            resultado.insert(palabra);
+        }
+    }
+
+    return resultado;
+}
 int main() {
     //Inicializacion de peliculas y usuarios como registro histórico
     cout << "Leyendo archivos..." << endl;
 
-    map<int,Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
+    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
     vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
     cout << "limpiando datos ..." << endl;
+    unordered_set<string> fol = palabrasEnTodas(pelis);
+
 
     unordered_map<int, string> dataLimpia = limpiardata(pelis);
     construirIndice(dataLimpia);
