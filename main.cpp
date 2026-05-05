@@ -51,8 +51,6 @@ int main() {
     unordered_set<string> fol = palabrasEnTodas(pelis);
 
 
-    unordered_map<int, string> dataLimpia = limpiardata(pelis);
-    construirIndice(dataLimpia);
     //Menu inicial de la plataforma
     char opcion_entrada;
     inicio();
