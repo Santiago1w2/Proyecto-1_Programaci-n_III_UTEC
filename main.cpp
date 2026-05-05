@@ -1,67 +1,29 @@
 #include "CClases.h"
+#include "Pprocesamiento.h"
 #include "Interfaz.h"
-unordered_set<string> palabrasEnTodas(const unordered_map<int, Movie>& data) {
-    unordered_map<string, int> conteo;
-    int totalPeliculas = data.size();
 
-    for (const auto& [id, movie] : data) {
 
-        // 🔥 juntar texto (puedes ajustar esto)
-        string texto =
-            movie.getTtitle() + " " +
-            movie.getGenre() + " " +
-            movie.getPlot();
-
-        texto = normalizar(texto);
-        texto = aMinusculas(texto);
-
-        // 🔥 palabras únicas por película
-        unordered_set<string> palabrasUnicas;
-        stringstream ss(texto);
-        string palabra;
-
-        while (ss >> palabra) {
-            palabrasUnicas.insert(palabra);
-        }
-
-        // 🔥 contar presencia (no frecuencia)
-        for (const string& p : palabrasUnicas) {
-            conteo[p]++;
-        }
-    }
-
-    // 🔥 filtrar las que aparecen en TODAS
-    unordered_set<string> resultado;
-
-    for (const auto& [palabra, freq] : conteo) {
-        if (freq == totalPeliculas) {
-            resultado.insert(palabra);
-        }
-    }
-
-    return resultado;
-}
 int main() {
-    //Inicializacion de peliculas y usuarios como registro histórico
     cout << "Leyendo archivos..." << endl;
+    unordered_map<int,Movie> pelis = leerPeliculas("wiki_movie_plots_deduped.csv"); // Usa el archivo real de plots si lo necesitas
 
-    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv"); //Pre-procesamiento de las peliculas
-    vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt",pelis);
-    cout << "limpiando datos ..." << endl;
-    unordered_set<string> fol = palabrasEnTodas(pelis);
+    // Ojo: Si 'registroUsuarios.txt' requiere std::map en leerUsuarios, revisa que no haya conflicto (ahora usamos unordered_map en CClases)
+    // vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt", pelis);
 
+    cout << "Limpiando datos y preparando texto..." << endl;
 
-    //Menu inicial de la plataforma
+    // PREPARA TODOS LOS DATOS LIMPIOS SIN IMPRIMIRLOS Y CONSTRUYE LA ESTRUCTURA
+    unordered_map<int, string> dataLimpia = prepararDataLimpia(pelis);
+
     char opcion_entrada;
     inicio();
     seleccionar_opcion(opcion_entrada);
     limpiarPantalla();
     string us_email,us_password,us_name;
-    //Usuario ya existente quiere
-    //iniciar sesion
+
     if (opcion_entrada=='a') {
         inicio_sesion(us_email,us_password);
-        while (!validar_info(us_email,us_password)) { //Verifica si la combinacion correo-contraseña son iguales a las registradas
+        while (!validar_info(us_email,us_password)) {
             limpiarPantalla();
             cout << R"(
 ╭───────────────────────────────╮
@@ -71,7 +33,6 @@ int main() {
             esperar(1);
             limpiarPantalla();
             inicio_sesion(us_email,us_password);
-
         }
         limpiarPantalla();
         cout << R"(
@@ -80,13 +41,11 @@ int main() {
 ╰───────────────────────────────╯
 )"; esperar(1);
         limpiarPantalla();
-
     }
-
     else {
         string clave_temp;
         registro(us_email,us_password,us_name,clave_temp);
-        while (validar_correo(us_email)) { //Verifica si el correo ya esta registrado
+        while (validar_correo(us_email)) {
             limpiarPantalla();
             cout << R"(
 ╭───────────────────────────────╮
@@ -120,33 +79,21 @@ int main() {
 
     Trie trie;
     limpiarPantalla();
-    cout << "cargando data ....." << endl;
+    cout << "Cargando data al Arbol Trie ....." << endl;
     for (const auto& [clave, valor]: dataLimpia) {
-        trie.insertar(valor,clave);
+        // En el trie: insertar(texto_info, ID)
+        trie.insertar(valor, clave);
     }
+    construirIndice(dataLimpia); // Crear el índice de palabras intermedios
+
     cout<<"\n\n\n----------- BIENVENIDO -----------------\n\n";
     cout<<string(100,'=')<<endl;
     cout<<string(30,' ')<<"PELICULAS RECOMENDADAS"<<endl;
     cout<<string(100,'=')<<endl;
-    //peliculasRecomendadas(us_email,pelis);
-
-    //Incluir recomendaciones personalizadas basado en busquedas previas
-    // Top 5
-
-    /*
-    cout << "-------------------------------------" << endl;
-    cout << "Top 5"<< endl;
-    cout << "-------------------------------------" << endl;
-    for (int j = 0; j<6; j++) {
-        cout <<"("<<j+1<<") "<<pelis[j].getTtitle() << " ";
-    }
-    */
-
-
 
     cout<< endl;
-    cin.ignore(); // si no se ua esto el getline va a fallar por usar cin antes
-    vector<Movie> pelis2;
+    cin.ignore();
+
     string buscar;
     int number = 0;
     while (number < 10) {
@@ -155,13 +102,17 @@ int main() {
         getline(cin, buscar);
         cout << "----------\n";
         vector<int> resultados = trie.buscar(buscar);
-        for (int i = 0; i < resultados.size(); i++) {
-            cout << "[" << resultados[i] << "] " << pelis[resultados[i]].getTtitle() << endl;  }
 
+        if (resultados.empty()){
+            cout << "No se encontraron coincidencias.\n";
+        } else {
+            for (int i = 0; i < resultados.size(); i++) {
+                cout << "[" << resultados[i] << "] " << pelis[resultados[i]].getTtitle() << endl;
+            }
+        }
         number++;
     }
 
-
-
     system("pause");
+    return 0;
 }
