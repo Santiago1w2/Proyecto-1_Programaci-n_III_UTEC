@@ -4,6 +4,7 @@
 
 #include "CClases.h"
 #include "Pprocesamiento.h"
+#include <string_view>
 
 Movie::Movie() = default;
 Movie::Movie(string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
@@ -96,7 +97,7 @@ vector<int> parseLista(const string& s) {
     return res;
 }
 
-unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const map<int, Movie>& pelis) {
+unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const unordered_map<int, Movie>& pelis) {
     unordered_map<int, Movie> res;
     for (int id : ids) {
         auto it = pelis.find(id);
@@ -107,7 +108,7 @@ unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const map<int,
     return res;
 }
 
-vector<Usuario> leerUsuarios(const string &csv, const map<int,Movie>& pelis) {
+vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& pelis) {
     vector<Usuario> resultado;
     ifstream archivo(csv);
     if (!archivo.is_open()) {
@@ -240,75 +241,97 @@ vector<string> separar(const string& texto) {
 
 Trie::Trie() { raiz = new Nodo; }
 
-void Trie::insertar(const string& info, int id) {
-    stringstream ss(info);
-    string palabra;
-    unordered_set<string> vistas; // El filtro de velocidad
+// keywordIndex: mapa palabra -> set de IDs
+// Se usa para busqueda por SUBCADENA (ej: "ert" encuentra "puerta")
+// El Trie cubre palabras completas y prefijos; este indice cubre lo demas
+unordered_map<string, vector<int>> keywordIndex;
 
-    while (ss >> palabra) {
-        // Si la palabra ya se procesó para esta película, la salta al instante
-        if (!vistas.insert(palabra).second) {
-            continue;
-        }
+void Trie::insertar(const string& info, int id) {
+    stringstream ss(info); // genera un tipo imput para poder hacer eso de separar palbaras
+    string palabra;
+    unordered_set<string> vistas;
+
+    while (ss >> palabra) { // speraba palabras por espacios
+        if (!vistas.insert(palabra).second) continue;
 
         Nodo* nodo = raiz;
         for (char c : palabra) {
-            if (nodo->hijos.find(c) == nodo->hijos.end()) {
-                nodo->hijos[c] = new Nodo();
-            }
-            nodo = nodo->hijos[c];
-            nodo->movieIds.insert(id);
+            auto& hijo = nodo->hijos[c];
+            if (!hijo) hijo = new Nodo();
+            nodo = hijo;
         }
         nodo->esFinDePalabra = true;
+        // vector es mucho mas ligero que unordered_set en memoria y allocaciones
+        // vistas ya garantiza que no insertamos la misma palabra dos veces por pelicula
+        nodo->movieIds.push_back(id);
     }
 }
 
-unordered_map<string, unordered_set<int>> keywordIndex;
-
 void construirIndice(const unordered_map<int, string>& dataLimpia) {
-    cout << "INDEX CONSTRUIDO\n";
     for (const auto& [id, texto] : dataLimpia) {
-        vector<string> palabras = separar(texto);
-        for (const string& p : palabras) {
-            keywordIndex[p].insert(id);
+        stringstream ss(texto);
+        string palabra;
+        unordered_set<string> vistas;
+        while (ss >> palabra) {
+            if (palabra.size() < 2) continue; // si la plabaras es menor que 1 no se agrega ya que es basura
+            if (!vistas.insert(palabra).second) continue; // no duplicar por pelicula
+            keywordIndex[palabra].push_back(id);
         }
+    }
+    cout << "Indice construido: " << keywordIndex.size() << " palabras unicas.\n";
+}
+
+// DFS: recorre hijos del nodo y acumula IDs en score
+// Sirve para prefijos: buscar "car" encuentra "carro", "carbon", etc.
+static void recolectarPorPrefijo(Nodo* nodo, unordered_map<int,int>& score, int peso) {
+    if (nodo->esFinDePalabra) {
+        for (int id : nodo->movieIds) score[id] += peso;
+    }
+    for (auto& [c, hijo] : nodo->hijos) {
+        recolectarPorPrefijo(hijo, score, peso);
     }
 }
 
 vector<int> Trie::buscar(const string& query) {
-    vector<string> palabras = separar(query);
-    unordered_map<int, int> score;
+    unordered_map<int, int> score; // ID:Puntiacion
 
-    for (const string& palabra : palabras) {
+    stringstream ss(query);
+    string palabra;
+
+    while (ss >> palabra) {
+        if (palabra.size() < 2) continue;
+
+        // 1. Trie
         Nodo* nodo = raiz;
-        bool existeEnTrie = true;
+        bool encontrado = true;
 
         for (char c : palabra) {
-            if (nodo->hijos.find(c) == nodo->hijos.end()) {
-                existeEnTrie = false;
+            auto it = nodo->hijos.find(c);
+            if (it == nodo->hijos.end()) {
+                encontrado = false;
                 break;
             }
-            nodo = nodo->hijos[c];
+            nodo = it->second;
         }
 
-        if (existeEnTrie) {
+        if (encontrado) {
             int peso = min(5, (int)palabra.size());
-            for (int id : nodo->movieIds) {
-                score[id] += peso;
-            }
+            recolectarPorPrefijo(nodo, score, peso);
         }
-        if (keywordIndex.count(palabra)) {
-            for (int id : keywordIndex[palabra]) {
-                score[id] += 2;
+
+        // 2. keywordIndex
+        if (palabra.size() >= 3) {
+            for (const auto& [keyword, ids] : keywordIndex) {
+                if (keyword != palabra && keyword.find(palabra) != string::npos) {
+                    for (int id : ids) score[id] += 1;
+                }
             }
         }
     }
 
     vector<pair<int,int>> orden(score.begin(), score.end());
-    sort(orden.begin(), orden.end(), [](auto &a, auto &b) {
-        if (a.second == b.second) {
-            return a.first < b.first; // Si empatan, muestra el ID menor primero
-        }
+    sort(orden.begin(), orden.end(), [](const auto& a, const auto& b) {
+        if (a.second == b.second) return a.first < b.first;
         return a.second > b.second;
     });
 
@@ -318,7 +341,6 @@ vector<int> Trie::buscar(const string& query) {
     }
     return resultado;
 }
-
 void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
     vector<int> hist;
     random_device rd;

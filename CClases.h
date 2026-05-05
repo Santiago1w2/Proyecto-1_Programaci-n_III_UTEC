@@ -77,15 +77,27 @@ int busquedaBinaria(const vector<Movie>& v, int objetivo_id);
 vector<string> mostrar_usuarios();
 
 
-//Strcutra del arbol (pruebas)
 vector<string> separar(const string& texto);
-struct Nodo{
-    unordered_map<char, Nodo*> hijos; // unordered_map, es como un map, pero no lo ordena, como dijo el profe map ordena, este no
-    unordered_set<int> movieIds;
-    bool esFinDePalabra; //control duplicados
-    //forma de los donos
+
+// Nodo del Suffix Trie
+// - hijos:          mapa char -> nodo siguiente
+// - movieIds:       IDs de peliculas cuyo sufijo TERMINA en este nodo
+// - esFinDePalabra: true si algun sufijo termina aqui
+struct Nodo {
+    unordered_map<char, Nodo*> hijos;
+    vector<int> movieIds;
+    bool esFinDePalabra;
+
+    // Constructor: inicializa esFinDePalabra en false
+    // Sin esto el valor es basura de memoria -> comportamiento indefinido
+    Nodo() : esFinDePalabra(false) {}
 };
 
+// Suffix Trie:
+//   insertar(info, id) -> separa en palabras, por cada palabra
+//                         inserta TODOS sus sufijos con el id al final
+//   buscar(query)      -> navega hasta el nodo del query, hace DFS
+//                         recolectando todos los ids descendientes
 class Trie {
     Nodo* raiz;
 public:
@@ -94,7 +106,7 @@ public:
     vector<int> buscar(const string& query);
 };
 
-
+// Vacia intencionalmente: el Suffix Trie reemplaza el indice separado
 void construirIndice(const unordered_map<int, string>& dataLimpia);
 
 
