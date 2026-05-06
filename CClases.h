@@ -54,26 +54,21 @@ class Usuario {
     unordered_map<int,Movie> baneado;
     unordered_map<int,Movie> historial;
 public:
+    Usuario();
     Usuario(const string &user, const string &_email, const string &_pass, const unordered_map<int,Movie> &VT, const unordered_map<int,Movie> &MG, const unordered_map<int,Movie> &Ban, const unordered_map<int,Movie> &hist);
     void revisarUsuario();
+
 };
-string aMinusculas(string texto);
-unordered_map<int,Movie> leerPeliculas(const string& csv);
-unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const unordered_map<int, Movie>& pelis);
-vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& pelis);
 
-vector<int> parseLista(const string& s);
-
-bool validar_correo(const string& _email);
-bool validar_info(const string& _email, const string& _clave);
-bool validar_usuario(const string& _username); //No es necesario
-
-void registrar_nuevoUsuario(const string& name, const string& email, const string& clave);
-void actualizarUsuario(vector<int> pelis,string tipo);
-
-void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis);
-vector<string> mostrar_usuarios();
-
+struct DataLimpia {
+    string title;
+    string release_year;
+    string origin;
+    string director;
+    string cast;
+    string genre;
+    string plot;
+};
 
 
 #endif //PROYECTAZO_CCLASES_H

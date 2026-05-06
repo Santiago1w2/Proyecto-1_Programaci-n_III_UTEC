@@ -1,6 +1,6 @@
 //
 // Created by Pieri on 4/05/2026.
-#include "Pprocesamiento.h"
+#include "Climpieza.h"
 #include <sstream>
 
 unordered_map<string, char> acentos = {
@@ -162,4 +162,7 @@ unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& p
     }
     return dataLimpia;
 }
-//
+unordered_map<int, DataLimpia> construirDataLimpia(const unordered_map<int, Movie> &pelis) {
+    unordered_map<int, DataLimpia> dataLimpia;
+    return dataLimpia;
+}

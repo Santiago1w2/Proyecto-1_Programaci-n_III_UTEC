@@ -1,18 +1,18 @@
 #include "CClases.h"
-#include "Pprocesamiento.h"
+#include "Climpieza.h"
 #include "Interfaz.h"
+#include "Funciones.h"
 
 
 int main() {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
+    system("chcp 65001 > nul");
+    system("cls");
     cout << "Leyendo archivos..." << endl;
-    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv"); // Usa el archivo real de plots si lo necesitas
-
-    // Ojo: Si 'registroUsuarios.txt' requiere std::map en leerUsuarios, revisa que no haya conflicto (ahora usamos unordered_map en CClases)
-    // vector<Usuario> usuarios = leerUsuarios("registroUsuarios.txt", pelis);
-
+    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv");
     cout << "Limpiando datos y preparando texto..." << endl;
-
-    // PREPARA TODOS LOS DATOS LIMPIOS SIN IMPRIMIRLOS Y CONSTRUYE LA ESTRUCTURA
     unordered_map<int, string> dataLimpia = prepararDataLimpia(pelis);
 
     char opcion_entrada;
@@ -21,6 +21,9 @@ int main() {
     limpiarPantalla();
     string us_email,us_password,us_name;
     InicioSesionAndRegistro(us_email,us_password,us_name,opcion_entrada);
+    limpiarPantalla();
+    char g;
+    pantallaPrincipal(us_name,pelis,g);
 
     return 0;
 }

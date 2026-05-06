@@ -3,15 +3,6 @@
 //
 
 #include "Interfaz.h"
-#include <conio.h>
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <chrono>
-using namespace std;
 
 void moverCursor(int x, int y) {
     COORD coord;
@@ -186,6 +177,10 @@ void registro(string& correo, string& pass, string& name, string& clave) {
 }
 
 void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, char& opcion_entrada) {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
+    system("chcp 65001 > nul");
     if (opcion_entrada=='a') {
         inicio_sesion(us_email,us_password);
         while (!validar_info(us_email,us_password)) {
@@ -200,6 +195,7 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
             inicio_sesion(us_email,us_password);
         }
         limpiarPantalla();
+        us_name=UserName(us_email,us_password);
         cout << R"(
 ╭───────────────────────────────╮
 │  ✔ INICIO DE SESION EXITOSO   │
@@ -232,14 +228,52 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
             registro(us_email,us_password,us_name, clave_temp);
         }
         limpiarPantalla();
-        esperar(3);
         cout << R"(
 ╭───────────────────────────────────╮
 │  ✔ USUARIO REGISTRADO CON EXITO   │
 ╰───────────────────────────────────╯
 )";
+        esperar(3);
+
         limpiarPantalla();
         registrar_nuevoUsuario(us_name,us_email,us_password);
     }
+}
 
+void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n) {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    system("chcp 65001 > nul");
+    system("cls");
+    int espacios1 = max(0, 110 - (int)nombre.size());
+
+    // ===== INTERFAZ =====
+    cout << "╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮\n";
+    cout << "│ 🎬 UTECFLIX";
+
+    // usuario dinámico (alineado a la derecha)
+    cout << string(espacios1, ' ') << "Usuario: " << nombre << " │\n";
+
+    cout << "╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯\n\n";
+
+    cout << "╭─────────────── MENÚ ───────────────╮   ╭──────────────────── CONTENIDO ───────────────────────────────────────────────────────────────────────╮\n";
+    cout << "│                                    │   │   🎥 RECOMENDACIONES                                                                                 │\n";
+    cout << "│  A. 👤 Mi Perfil                   │   │   ───────────────────────────────                                                                    │\n";
+    cout << "│  B. 🕘 Historial                   │   │                                                                                                      │\n";
+    cout << "│  C. ⭐ Favoritos                   │   │                                                                                                      │\n";
+    cout << "│  D. 🔍 Buscar                      │   │                                                                                                      │\n";
+    cout << "│                                    │   │                                                                                                      │\n";
+    cout << "│  0. Salir                          │   │                                                                                                      │\n";
+    cout << "│                                    │   │                                                                                                      │\n";
+    cout << "│                                    │   │                                                                                                      │\n";
+    cout << "│                                    │   │                                                                                                      │\n";
+    cout << "╰────────────────────────────────────╯   ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯\n";
+
+    // ===== MOSTRAR PELÍCULAS EN PANEL DERECHO =====
+    peliculasRecomendadasPanel(pelis);
+
+    // ===== INPUT =====
+    moverCursor(0, 20);
+    cout << "👉 Selecciona una opción: ";
+    cin >> n;
 }
