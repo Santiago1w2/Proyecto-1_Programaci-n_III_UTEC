@@ -3,139 +3,157 @@
 //
 
 #include "Trie.h"
-void dfsRecolectar(Nodo* nodo, unordered_map<int,double>& score, double idf,  bool esRaizBusqueda, int& contador) {
 
-    if (contador > 100) return; //contador
-    if (nodo->esFinDePalabra) {
-        for (auto& par : nodo->freq) {
-            int id = par.first;
-            int tf = par.second;
+Trie::Trie() : raiz(new Nodo()), totalDocs(0) {}
 
-            double factor = esRaizBusqueda ? 1.0 : 0.6;
+Trie::~Trie() {
+    delete raiz;
+}
 
-            score[id] += tf * idf * factor;
-        }
-        contador++;
+// Inserta un palabra completo
+void Trie::insertarpalabraYTrigramas(const string& palabra, int id, int pesoCampo) {
+    if (!esValida(palabra)) return;
+
+    // caso uno insertar token completo (prefijos)
+    Nodo* nodo = raiz;
+    for (char c : palabra) {
+        if (!nodo->hijos.count(c)) nodo->hijos[c] = new Nodo();
+        nodo = nodo->hijos[c];
+        nodo->freq[id] += pesoCampo; // TF acumulado con peso de campo
     }
+    nodo->esFinDePalabra = true;
 
-    for (auto& hijo : nodo->hijos) {
-        dfsRecolectar(hijo.second, score, idf, false, contador);
+    //caso 2 3-gramas subs string de tamaños 3
+    int n = (int)palabra.size();
+    for (int i = 0; i <= n - 3; ++i) {
+        Nodo* nodoSub = raiz;
+        for (int j = 0; j < 3; ++j) {
+            char c = palabra[i + j];
+            if (!nodoSub->hijos.count(c)) nodoSub->hijos[c] = new Nodo();
+            nodoSub = nodoSub->hijos[c];
+            // menor peso para substrings
+            nodoSub->freq[id] += max(1, pesoCampo / 2);
+        }
     }
 }
-vector<Resultado> ordenarResultados(unordered_map<int,double>& score) {
 
-    vector<Resultado> lista;
+// Inserta texto completo (tokeniza por espacios)
+void Trie::insertarCompleto(const string& texto, int id, int pesoCampo) {
+    stringstream ss(texto);
+    string palabra;
+    while (ss >> palabra) {
+        insertarpalabraYTrigramas(palabra, id, pesoCampo);
+    }
+}
 
-    for (auto& par : score) {
-        Resultado r;
-        r.id = par.first;
-        r.score = par.second;
-        lista.push_back(r);
+// Construye DF para palabras y 3-gramas (sin duplicar dentro del mismo doc)
+void Trie::construirIndice(const unordered_map<int, string>& data) {
+    totalDocs = (int)data.size();
+
+    for (const auto& [id, texto] : data) {
+        unordered_set<string> vistas; // evitar contar repetidos en el mismo doc
+        stringstream ss(texto);
+        string token;
+
+        while (ss >> token) {
+            if (!esValida(token)) continue;
+
+            // DF de palabra completa
+            if (vistas.insert(token).second) {
+                docFreq[token]++;
+            }
+
+            // DF de 3-gramas
+            int n = (int)token.size();
+            for (int i = 0; i <= n - 3; ++i) {
+                string sub = token.substr(i, 3);
+                if (vistas.insert(sub).second) {
+                    docFreq[sub]++;
+                }
+            }
+        }
+    }
+}
+
+// Busca un nodo exacto en el Trie
+unordered_map<int,double> Trie::buscarNodo(const string& clave) const {
+    const Nodo* nodo = raiz;
+
+    for (char c : clave) {
+        if (!nodo->hijos.count(c)) return {};
+        nodo = nodo->hijos.at(c);
     }
 
-    sort(lista.begin(), lista.end(),
-         [](Resultado a, Resultado b) {
+    return nodo->freq; // copia
+}
+
+// Búsqueda con TF-IDF + log(tf) + bonus por coincidencia completa
+vector<int> Trie::buscar(const string& query) const {
+    unordered_map<int,double> score;
+    unordered_map<int,int> coincidencias;
+
+    stringstream ss(query);
+    string token;
+    int totalPartes = 0;
+
+    while (ss >> token) {
+        if (!esValida(token)) continue;
+
+        vector<string> partes;
+
+        // Si es >= 3, usar 3-gramas; si no, usar el token directo
+        if ((int)token.size() >= 3) {
+            for (int i = 0; i <= (int)token.size() - 3; ++i) {
+                partes.push_back(token.substr(i, 3));
+            }
+        } else {
+            partes.push_back(token);
+        }
+
+        for (const string& p : partes) {
+            totalPartes++;
+
+            auto resultados = buscarNodo(p);
+
+            // IDF
+            int df = docFreq.count(p) ? docFreq.at(p) : totalDocs;
+            double idf = log((double)totalDocs / (1.0 + df));
+
+            for (const auto& [id, tf] : resultados) {
+                // TF logarítmico
+                double wtf = 1.0 + log(tf);
+                score[id] += wtf * idf;
+                coincidencias[id]++;
+            }
+        }
+    }
+
+    if (totalPartes == 0) return {};
+
+    // Bonus por cubrir todas las partes de la query
+    for (auto& [id, c] : coincidencias) {
+        if (c == totalPartes) {
+            score[id] *= 1.5;
+        }
+        // Normalización por longitud de query
+        score[id] /= totalPartes;
+    }
+
+    // Ordenar
+    vector<Resultado> orden;
+    orden.reserve(score.size());
+    for (const auto& [id, sc] : score) {
+        orden.push_back({id, sc});
+    }
+
+    sort(orden.begin(), orden.end(),
+         [](const Resultado& a, const Resultado& b) {
              return a.score > b.score;
          });
 
-    return lista;
-}
-void Trie::insertarCompleto(const string& texto, int id, int pesoCampo) const {
-    stringstream ss(texto);
-    string palabra;
-
-    while (ss >> palabra) {
-        int n = palabra.size();
-        if (n < 2) continue;
-
-        // palabra compleja y prefijos
-        {
-            Nodo* nodo = raiz;
-            for (char c : palabra) {
-                if (!nodo->hijos[c]) nodo->hijos[c] = new Nodo();
-                nodo = nodo->hijos[c];
-            }
-            nodo->esFinDePalabra = true;
-            nodo->freq[id] += pesoCampo;
-        }
-
-        //sufijos y substrings
-        for (int i = 1; i < n; i++) {
-            int len = n - i;
-            if (len < 3) continue;
-
-            Nodo* nodo = raiz;
-            for (int j = i; j < n; j++) {
-                char c = palabra[j];
-                if (!nodo->hijos[c]) nodo->hijos[c] = new Nodo();
-                nodo = nodo->hijos[c];
-            }
-
-            nodo->esFinDePalabra = true;
-
-            //esvitar el peso 0
-            nodo->freq[id] += max(1, pesoCampo / 2);
-        }
-    }
-}
-
-void Trie::construirIndice(const unordered_map<int, string>& data) {
-    totalDocs = data.size();
-
-    for (auto& [id, texto] : data) {
-        stringstream ss(texto);
-        string palabra;
-
-        unordered_set<string> vistas;
-
-        while (ss >> palabra) {
-            if (palabra.size() < 3) continue;
-
-            if (vistas.insert(palabra).second) {
-                docFreq[palabra]++;
-            }
-        }
-    }
-}
-vector<int> Trie::buscar(const string& query) {
-
-    unordered_map<int,double> score;
-
-    stringstream ss(query);
-    string palabra;
-
-    while (ss >> palabra) {
-
-        Nodo* nodo = raiz;
-        for (char c : palabra) {
-            if (!nodo->hijos.count(c)) {
-                nodo = nullptr;
-                break;
-            }
-            nodo = nodo->hijos[c];
-        }
-
-        if (!nodo) continue;
-
-        // DF
-        int df;
-
-        if (docFreq.count(palabra)) {
-            df = docFreq[palabra];
-        } else {
-            df = totalDocs;
-        }
-
-        double idf = log((double)totalDocs / (1 + df));
-        int contador = 0;
-        dfsRecolectar(nodo, score, idf, true, contador);}
-
-    vector<Resultado> orden = ordenarResultados(score);
-
-    // top 5
+    // Top-K
     vector<int> res;
-
-    for (int i = 0; i < 5 && i < orden.size(); i++) {
+    for (int i = 0; i < 5 && i < (int)orden.size(); ++i) {
         res.push_back(orden[i].id);
     }
 
