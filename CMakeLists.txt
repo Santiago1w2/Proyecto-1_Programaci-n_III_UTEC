@@ -10,4 +10,6 @@ add_executable(PROYECTAZO main.cpp
         Interfaz.h
         Pprocesamiento.h
         Pprocesamiento.cpp
+        Trie.cpp
+        Trie.h
 )
