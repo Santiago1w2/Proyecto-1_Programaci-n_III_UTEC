@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -30,6 +31,8 @@ class Trie {
 private:
     Nodo* raiz;
     int totalDocs;
+    unordered_map<string, unordered_set<int>> seenInDoc;
+    unordered_map<string, int> docFreq;
 
     static inline bool esValida(const string& w) {
         return !w.empty();
@@ -38,6 +41,7 @@ private:
 public:
     Trie();
     ~Trie();
+    void limpiarNodo(Nodo* nodo);
 
     void insertarCompleto(const string& texto, int id, int pesoCampo);
     void insertarpalabraYTrigramas(const string& palabra, int id, int pesoCampo);

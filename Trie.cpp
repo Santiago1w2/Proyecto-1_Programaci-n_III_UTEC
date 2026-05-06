@@ -2,37 +2,33 @@
 
 Trie::Trie() : raiz(new Nodo()), totalDocs(0) {}
 
+
+void Trie::limpiarNodo(Nodo* nodo) {
+    if (!nodo) return;
+    for (auto& par : nodo->hijos) {
+        limpiarNodo(par.second);
+    }
+    delete nodo;
+}
 Trie::~Trie() {
-    delete raiz;
+    limpiarNodo(raiz);
 }
 void Trie::insertarpalabraYTrigramas(const string& palabra, int id, int pesoCampo) {
-    if (!esValida(palabra)) return;
-
-    // palabra completa
-    Nodo* nodo = raiz;
-    for (char c : palabra) {
-        if (!nodo->hijos.count(c))
-            nodo->hijos[c] = new Nodo();
-        nodo = nodo->hijos[c];
-    }
-    nodo->esFinDePalabra = true;
-    nodo->freq[id] += pesoCampo;
-
-    // 3-gramas (controlado, NO explosión)
     int n = palabra.size();
-    for (int i = 0; i <= n - 3; i++) {
-        Nodo* aux = raiz;
 
-        for (int j = 0; j < 3; j++) {
-            char c = palabra[i + j];
+    for (int i = 0; i < n; i++) {
+        Nodo* nodo = raiz;
 
-            if (!aux->hijos.count(c))
-                aux->hijos[c] = new Nodo();
+        for (int j = i; j < n; j++) {
+            char c = palabra[j];
 
-            aux = aux->hijos[c];
+            if (!nodo->hijos.count(c))
+                nodo->hijos[c] = new Nodo();
+
+            nodo = nodo->hijos[c];
+            nodo->freq[id] += pesoCampo;
         }
-
-        aux->freq[id] += 1;
+        nodo->esFinDePalabra = true;
     }
 }
 void Trie::insertarCompleto(const string& texto, int id, int pesoCampo) {
@@ -41,6 +37,10 @@ void Trie::insertarCompleto(const string& texto, int id, int pesoCampo) {
 
     while (ss >> palabra) {
         insertarpalabraYTrigramas(palabra, id, pesoCampo);
+        if (!seenInDoc[palabra].count(id)) {
+            seenInDoc[palabra].insert(id);
+            docFreq[palabra]++;   // solo 1 vez por documento
+        }
     }
 }
 
@@ -56,7 +56,7 @@ unordered_map<int,int> Trie::buscarNodo(const string& clave) const {
 
     if (nodo->esFinDePalabra) {
         for (auto &[id, freq] : nodo->freq) {
-            resultado[id] += freq * 3; // boost fuerte
+            resultado[id] += freq*0.5; // boost fuerte
         }
     }
     else {
@@ -68,7 +68,7 @@ unordered_map<int,int> Trie::buscarNodo(const string& clave) const {
     return resultado;
 }
 vector<int> Trie::buscar(const string& query) const {
-    unordered_map<int,int> score;
+    unordered_map<int,double> score;
     unordered_map<int,int> matchCount;
 
     stringstream ss(query);
@@ -77,42 +77,43 @@ vector<int> Trie::buscar(const string& query) const {
     int totalTokens = 0;
 
     while (ss >> token) {
-        if (token.size() == 1) continue;
 
+        if (token.size() <= 2) continue;
         totalTokens++;
 
         auto resultados = buscarNodo(token);
 
+        double idf;
+
+        auto it = docFreq.find(token);
+
+        int df = (it != docFreq.end()) ? it->second : 0;
+
+        idf = log((double)totalDocs / (1.0 + df));
+
         for (auto &[id, freq] : resultados) {
-            score[id] += freq;
+
+            double tf = (double)freq;
+
+            double add = tf * idf;
+
+            score[id] += add;
 
             matchCount[id]++;
         }
-
-        if (resultados.empty()) {
-            for (int i = 0; i <= (int)token.size() - 3; i++) {
-                string sub = token.substr(i, 3);
-
-                auto r = buscarNodo(sub);
-
-                for (auto &[id, freq] : r) {
-                    score[id] += 1;
-                    matchCount[id]++;
-                }
-            }
-        }
     }
 
+    // penalización fuerte por incompletitud
     for (auto &[id, sc] : score) {
         if (matchCount[id] < totalTokens) {
-            sc *= 0.4;  // baja fuerte si no coincide todo
+            sc *= 0.2;  // más agresivo = menos falsos positivos
         }
     }
 
     vector<Resultado> orden;
 
     for (auto &[id, sc] : score) {
-        orden.push_back({id, sc});
+        orden.push_back({id, (int)sc});
     }
 
     sort(orden.begin(), orden.end(),
@@ -120,7 +121,6 @@ vector<int> Trie::buscar(const string& query) const {
              return a.score > b.score;
          });
 
-    // top 5
     vector<int> res;
 
     for (int i = 0; i < 5 && i < (int)orden.size(); i++) {
