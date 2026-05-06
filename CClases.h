@@ -19,7 +19,19 @@
 #include <cctype>
 
 using namespace std;
+struct DataLimpia {
+    string title;
+    string release_year;
+    string origin;
+    string director;
+    string cast;
+    string genre;
+    string plot;
 
+    DataLimpia(const string &title, const string &release_year, const string &origin, const string &director,
+        const string &cast, const string &genre, const string &plot);
+    DataLimpia();
+};
 
 class Movie {
     string title;
@@ -40,6 +52,7 @@ public:
     string getGenre() const;
     string getWiki() const;
     string getPlot()const;
+    string getCast() const;
 
     void more_info();
 };
@@ -83,31 +96,5 @@ vector<string> separar(const string& texto);
 // - hijos:          mapa char -> nodo siguiente
 // - movieIds:       IDs de peliculas cuyo sufijo TERMINA en este nodo
 // - esFinDePalabra: true si algun sufijo termina aqui
-struct Nodo {
-    unordered_map<char, Nodo*> hijos;
-    vector<int> movieIds;
-    bool esFinDePalabra;
-
-    // Constructor: inicializa esFinDePalabra en false
-    // Sin esto el valor es basura de memoria -> comportamiento indefinido
-    Nodo() : esFinDePalabra(false) {}
-};
-
-// Suffix Trie:
-//   insertar(info, id) -> separa en palabras, por cada palabra
-//                         inserta TODOS sus sufijos con el id al final
-//   buscar(query)      -> navega hasta el nodo del query, hace DFS
-//                         recolectando todos los ids descendientes
-class Trie {
-    Nodo* raiz;
-public:
-    Trie();
-    void insertar(const string& info, int id);
-    vector<int> buscar(const string& query);
-};
-
-// Vacia intencionalmente: el Suffix Trie reemplaza el indice separado
-void construirIndice(const unordered_map<int, string>& dataLimpia);
-
 
 #endif //PROYECTAZO_CCLASES_H

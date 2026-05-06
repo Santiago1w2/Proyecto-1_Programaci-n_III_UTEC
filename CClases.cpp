@@ -3,8 +3,24 @@
 //
 
 #include "CClases.h"
-#include "Pprocesamiento.h"
+#include "PLimpieza.h"
 #include <string_view>
+
+DataLimpia::DataLimpia(const string &title, const string &release_year, const string &origin, const string &director,
+const string &cast, const string &genre, const string &plot)    : title(title),
+  release_year(release_year),
+  origin(origin),
+  director(director),
+  cast(cast),
+  genre(genre),
+  plot(plot) {
+
+}
+
+DataLimpia::DataLimpia() {
+
+}
+
 
 Movie::Movie() = default;
 Movie::Movie(string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
@@ -35,6 +51,7 @@ string Movie::getGenre() const {return genre;}
 string Movie::getOrigin() const {return origin;}
 string Movie::getPlot() const {return plot;}
 string Movie::getWiki() const {return wiki_page;}
+string Movie::getCast() const {return cast;}
 
 void Movie::more_info() {
     cout << "Title: " << title << endl;
@@ -239,108 +256,10 @@ vector<string> separar(const string& texto) {
     return palabras;
 }
 
-Trie::Trie() { raiz = new Nodo; }
-
-// keywordIndex: mapa palabra -> set de IDs
-// Se usa para busqueda por SUBCADENA (ej: "ert" encuentra "puerta")
-// El Trie cubre palabras completas y prefijos; este indice cubre lo demas
-unordered_map<string, vector<int>> keywordIndex;
-
-void Trie::insertar(const string& info, int id) {
-    stringstream ss(info); // genera un tipo imput para poder hacer eso de separar palbaras
-    string palabra;
-    unordered_set<string> vistas;
-
-    while (ss >> palabra) { // speraba palabras por espacios
-        if (!vistas.insert(palabra).second) continue;
-
-        Nodo* nodo = raiz;
-        for (char c : palabra) {
-            auto& hijo = nodo->hijos[c];
-            if (!hijo) hijo = new Nodo();
-            nodo = hijo;
-        }
-        nodo->esFinDePalabra = true;
-        // vector es mucho mas ligero que unordered_set en memoria y allocaciones
-        // vistas ya garantiza que no insertamos la misma palabra dos veces por pelicula
-        nodo->movieIds.push_back(id);
-    }
-}
-
-void construirIndice(const unordered_map<int, string>& dataLimpia) {
-    for (const auto& [id, texto] : dataLimpia) {
-        stringstream ss(texto);
-        string palabra;
-        unordered_set<string> vistas;
-        while (ss >> palabra) {
-            if (palabra.size() < 2) continue; // si la plabaras es menor que 1 no se agrega ya que es basura
-            if (!vistas.insert(palabra).second) continue; // no duplicar por pelicula
-            keywordIndex[palabra].push_back(id);
-        }
-    }
-    cout << "Indice construido: " << keywordIndex.size() << " palabras unicas.\n";
-}
 
 // DFS: recorre hijos del nodo y acumula IDs en score
 // Sirve para prefijos: buscar "car" encuentra "carro", "carbon", etc.
-static void recolectarPorPrefijo(Nodo* nodo, unordered_map<int,int>& score, int peso) {
-    if (nodo->esFinDePalabra) {
-        for (int id : nodo->movieIds) score[id] += peso;
-    }
-    for (auto& [c, hijo] : nodo->hijos) {
-        recolectarPorPrefijo(hijo, score, peso);
-    }
-}
 
-vector<int> Trie::buscar(const string& query) {
-    unordered_map<int, int> score; // ID:Puntiacion
-
-    stringstream ss(query);
-    string palabra;
-
-    while (ss >> palabra) {
-        if (palabra.size() < 2) continue;
-
-        // 1. Trie
-        Nodo* nodo = raiz;
-        bool encontrado = true;
-
-        for (char c : palabra) {
-            auto it = nodo->hijos.find(c);
-            if (it == nodo->hijos.end()) {
-                encontrado = false;
-                break;
-            }
-            nodo = it->second;
-        }
-
-        if (encontrado) {
-            int peso = min(5, (int)palabra.size());
-            recolectarPorPrefijo(nodo, score, peso);
-        }
-
-        // 2. keywordIndex
-        if (palabra.size() >= 3) {
-            for (const auto& [keyword, ids] : keywordIndex) {
-                if (keyword != palabra && keyword.find(palabra) != string::npos) {
-                    for (int id : ids) score[id] += 1;
-                }
-            }
-        }
-    }
-
-    vector<pair<int,int>> orden(score.begin(), score.end());
-    sort(orden.begin(), orden.end(), [](const auto& a, const auto& b) {
-        if (a.second == b.second) return a.first < b.first;
-        return a.second > b.second;
-    });
-
-    vector<int> resultado;
-    for (int i = 0; i < min(5, (int)orden.size()); i++) {
-        resultado.push_back(orden[i].first);
-    }
-    return resultado;
-}
 void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
     vector<int> hist;
     random_device rd;

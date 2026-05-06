@@ -1,0 +1,401 @@
+//
+// Created by Pieri on 4/05/2026.
+#include "PLimpieza.h"
+#include <sstream>
+#include <unordered_map>
+
+#include "CClases.h"
+
+// Nuestro nuevo mapa que devuelve strings
+unordered_map<string, string> accents = {
+    // A
+    {"á","a"},{"à","a"},{"ä","a"},{"â","a"},{"ã","a"},{"å","a"},
+    {"Á","a"},{"À","a"},{"Ä","a"},{"Â","a"},{"Ã","a"},{"Å","a"},
+    {"ā","a"},{"Ā","a"},{"ă","a"},{"ǎ","a"},
+    // E
+    {"é","e"},{"è","e"},{"ë","e"},{"ê","e"},
+    {"É","e"},{"È","e"},{"Ë","e"},{"Ê","e"},
+    {"ē","e"},{"Ē","e"},{"ė","e"},{"ę","e"},{"ě","e"},
+    // I
+    {"í","i"},{"ì","i"},{"ï","i"},{"î","i"},
+    {"Í","i"},{"Ì","i"},{"Ï","i"},{"Î","i"},
+    {"ī","i"},{"Ī","i"},{"İ","i"},{"ı","i"},
+    // O
+    {"ó","o"},{"ò","o"},{"ö","o"},{"ô","o"},{"õ","o"},{"ø","o"},
+    {"Ó","o"},{"Ò","o"},{"Ö","o"},{"Ô","o"},{"Õ","o"},{"Ø","o"},
+    {"ō","o"},{"Ō","o"},{"ŏ","o"},{"Ŏ","o"},{"ơ","o"},
+    // U
+    {"ú","u"},{"ù","u"},{"ü","u"},{"û","u"},
+    {"Ú","u"},{"Ù","u"},{"Ü","u"},{"Û","u"},
+    {"ū","u"},{"Ū","u"},{"ŭ","u"},{"Ŭ","u"},{"ư","u"},{"ǔ","u"},
+    // Y
+    {"ý","y"},{"Ý","y"},{"ŷ","y"},
+    // C
+    {"ç","c"},{"Ç","c"},{"ć","c"},{"č","c"},{"Č","c"},
+    // N
+    {"ñ","n"},{"Ñ","n"},{"ń","n"},{"ņ","n"},
+    // S
+    {"ś","s"},{"Ś","s"},{"ş","s"},{"Ş","s"},{"š","s"},{"Š","s"},{"ș","s"},
+    // Z
+    {"ź","z"},{"Ż","z"},{"ž","z"},{"Ž","z"},
+    // L
+    {"ł","l"},{"Ł","l"},
+    // G
+    {"ğ","g"},{"Ğ","g"},
+    // T
+    {"ţ","t"},{"Ț","t"},{"ț","t"},
+    // D
+    {"ð","d"},{"Đ","d"},{"đ","d"},
+    // Vocales compuestas
+    {"æ","ae"},{"Æ","ae"},
+    {"œ","oe"},{"Œ","oe"}
+};
+
+unordered_set<string> stopwords = {
+    "the", "and", "his", "her", "that", "with", "him", "for", "she", "but",
+    "who", "they", "from", "has", "their", "when", "are", "after", "out",
+    "into", "them", "was", "not", "one", "which", "then", "about", "while",
+    "will", "this", "have", "where", "all", "had", "also", "before", "been",
+    "other", "only", "over", "can", "himself", "there", "during", "now",
+    "down", "both", "next", "more", "does", "because", "own", "some",
+    "what", "again", "just", "each", "its", "against", "between", "would",
+    "same", "still", "how", "even", "were", "along", "under", "like",
+    "well", "once", "until", "around", "too", "very", "never", "much",
+    "than", "without", "though", "going", "found", "instead", "behind",
+    "upon", "since", "including", "many", "few", "inside", "outside",
+    "everyone", "could", "cannot", "others", "unable", "although", "most",
+    "given", "seeing", "high", "alone", "front", "put", "did", "told",
+    "saying", "such", "enough", "already", "every", "these", "something",
+    "continue", "point", "further", "form", "cause", "seems"
+};
+
+bool leerFilaCSV(ifstream& file, string& lineaCompleta) {
+    string linea;
+    if (!getline(file, linea)) return false;
+
+    lineaCompleta = linea;
+    int comillas = 0;
+    for (char c : linea) { if (c == '"') comillas++; }
+
+    while (comillas % 2 != 0) {
+        if (!getline(file, linea)) break;
+        lineaCompleta += "\n" + linea;
+        for (char c : linea) { if (c == '"') comillas++; }
+    }
+    return true;
+}
+
+vector<string> parseCSVLine(const string& linea) {
+    vector<string> fila;
+    string campo = "";
+    bool enComillas = false;
+
+    for (size_t i = 0; i < linea.size(); i++) {
+        char c = linea[i];
+        if (c == '"') {
+            if (enComillas && i + 1 < linea.size() && linea[i + 1] == '"') {
+                campo += '"'; i++;
+            } else {
+                enComillas = !enComillas;
+            }
+        }
+        else if (c == ',' && !enComillas) {
+            fila.push_back(campo);
+            campo = "";
+        }
+        else { campo += c; }
+    }
+    fila.push_back(campo);
+    return fila;
+}
+
+string aMinusculas(string texto) {
+    transform(texto.begin(), texto.end(), texto.begin(), ::tolower);
+    return texto;
+}
+
+// --------- NUEVAS FUNCIONES MAESTRAS Y OPTIMIZADAS ---------
+
+// FUNCIÓN MAESTRA REUTILIZABLE: Maneja corchetes, evalúa paréntesis, palabras extranjeras y filtra palabras exactas
+string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisProhibidos, const unordered_set<string>& palabrasProhibidas) {
+    string temp = "";
+
+    // Fase 1: Eliminar corchetes y evaluar paréntesis
+    for (size_t i = 0; i < s.length(); ) {
+        if (s[i] == '[') {
+            size_t start = i + 1;
+            size_t end = start;
+            while (end < s.length() && s[end] != ']') end++;
+
+            string inside = s.substr(start, end - start);
+
+            // Verificamos si el contenido son SOLO números (o espacios/comas)
+            bool soloNumeros = !inside.empty();
+            for (char c : inside) {
+                if (!isdigit((unsigned char)c) && c != ' ' && c != ',') {
+                    soloNumeros = false;
+                    break;
+                }
+            }
+
+            // REGLA: Si NO son solo números, conservamos el texto de adentro
+            if (!soloNumeros) {
+                temp += inside;
+            }
+            // Si eran solo números, no sumamos nada a 'temp' (se elimina el contenido y los [])
+
+            i = end;
+            if (i < s.length()) i++;
+        }
+        else if (s[i] == '(') {
+            // ... (aquí sigue tu lógica de paréntesis que ya tenías)
+            // que básicamente borra los () y evalúa el contenido
+            size_t start = i + 1;
+            size_t end = start;
+            while (end < s.length() && s[end] != ')') end++;
+            string inside = s.substr(start, end - start);
+
+            string lower_inside = aMinusculas(inside);
+            bool descartar = false;
+            for (const string& prohibida : parentesisProhibidos) {
+                if (lower_inside.find(prohibida) != string::npos) {
+                    descartar = true;
+                    break;
+                }
+            }
+            if (!descartar) {
+                temp += inside;
+            }
+            i = end;
+            if (i < s.length()) i++;
+        } else {
+            temp += s[i];
+            i++;
+        }
+    }
+
+    // Fase 2: Procesamiento letra a letra
+    string textoFinal = "";
+    string palabraActual = "";
+    bool palabraValida = true;
+
+    auto procesarPalabra = [&]() {
+        if (!palabraActual.empty()) {
+            // Si la palabra no tiene caracteres rusos/chinos Y no es una de las palabras prohibidas ("director")
+            if (palabraValida && palabrasProhibidas.find(palabraActual) == palabrasProhibidas.end()) {
+                if (!textoFinal.empty()) textoFinal += " ";
+                textoFinal += palabraActual;
+            }
+            palabraActual = "";
+            palabraValida = true;
+        }
+    };
+
+    for (size_t i = 0; i < temp.length(); ) {
+        unsigned char byte = temp[i];
+
+        if (byte < 0x80) {
+            char ch = temp[i];
+            if (isalnum(ch)) {
+                palabraActual += tolower(ch);
+                i++;
+            } else {
+                procesarPalabra();
+                i++;
+            }
+        } else {
+            int len = 0;
+            if ((byte & 0xE0) == 0xC0) len = 2;
+            else if ((byte & 0xF0) == 0xE0) len = 3;
+            else if ((byte & 0xF8) == 0xF0) len = 4;
+            else { i++; continue; }
+
+            string c = temp.substr(i, len);
+            i += len;
+
+            auto it = accents.find(c);
+            if (it != accents.end()) {
+                palabraActual += it->second;
+            } else {
+                palabraValida = false;
+            }
+        }
+    }
+    procesarPalabra();
+
+    return textoFinal;
+}
+
+// 1. Título usa la maestra bloqueando "film" y "part" en los paréntesis
+string limpiarTitulo(const string& s) {
+    return limpiarTextoAvanzado(s, {"film", "part"}, {});
+}
+
+// 2. Director usa la maestra, no bloquea nada en paréntesis, pero prohíbe la palabra "director"
+string limpiarDirector(const string& s) {
+    return limpiarTextoAvanzado(s, {}, {"director"});
+}
+
+// 3. Origen tiene su propia lógica rápida (es 100% letras y guiones)
+string limpiarOrigen(const string& s) {
+    string origenFinal = "";
+    string palabraActual = "";
+    auto procesarPalabra = [&]() {
+        if (!palabraActual.empty()) {
+            if (!origenFinal.empty()) origenFinal += " ";
+            origenFinal += palabraActual;
+            palabraActual = "";
+        }
+    };
+    for (char ch : s) {
+        if (isalpha((unsigned char)ch)) { palabraActual += tolower((unsigned char)ch); }
+        else { procesarPalabra(); }
+    }
+    procesarPalabra();
+    return origenFinal;
+}
+
+// 4. Cast usa la maestra: borra paréntesis (y su contenido),
+// y filtra palabras específicas como director y screenplay.
+string limpiarCast(const string& s) {
+    // Pasamos "director" y "screenplay" como palabras prohibidas.
+    // Como la función maestra ya maneja el mapa de 'accents',
+    // reemplazará caracteres especiales automáticamente.
+    return limpiarTextoAvanzado(s, {}, {"director", "screenplay"});
+}
+
+// 4. Limpieza Genérica (Se usará TEMPORALMENTE para el resto de columnas)
+string normalizarYLimpiar(const string& s) {
+    string res;
+    res.reserve(s.size());
+    bool enCorchetes = false;
+    string bufferCorchetes = "";
+
+    for (size_t i = 0; i < s.size(); ) {
+        unsigned char byte = s[i];
+        if ((byte & 0x80) == 0) {
+            char ch = s[i];
+            if (ch == '[') {
+                enCorchetes = true;
+                bufferCorchetes = "";
+                i++; continue;
+            }
+            else if (ch == ']') {
+                enCorchetes = false;
+                bool esSoloNumero = true;
+                for (char b : bufferCorchetes) {
+                    if (b != ' ' && !isdigit((unsigned char)b)) {
+                        esSoloNumero = false; break;
+                    }
+                }
+                if (!(esSoloNumero || bufferCorchetes == "clarification needed" ||
+                      bufferCorchetes == "citation needed" || bufferCorchetes == "dead link" ||
+                      bufferCorchetes == "better source needed")) {
+                    res += " " + bufferCorchetes + " ";
+                }
+                i++; continue;
+            }
+            char procesado;
+            if (isalnum((unsigned char)ch)) { procesado = tolower((unsigned char)ch); }
+            else { procesado = ' '; }
+
+            if (enCorchetes) bufferCorchetes += procesado;
+            else res += procesado;
+            i++;
+        }
+        else {
+            int len = 0;
+            if ((byte & 0xE0) == 0xC0) len = 2;
+            else if ((byte & 0xF0) == 0xE0) len = 3;
+            else if ((byte & 0xF8) == 0xF0) len = 4;
+            else { i++; continue; }
+
+            string c = s.substr(i, len);
+            i += len;
+            string procesado = "";
+            auto it = accents.find(c);
+            if (it != accents.end()) procesado = it->second;
+
+            if (enCorchetes) bufferCorchetes += procesado;
+            else res += procesado;
+        }
+    }
+    if (enCorchetes) res += " " + bufferCorchetes;
+    return res;
+}
+
+// Función auxiliar para el Plot
+string filtrarStopwords(const string& textoLimpio) {
+    stringstream ss(textoLimpio);
+    string palabra, resultado = "";
+    bool primero = true;
+    while (ss >> palabra) {
+        if (stopwords.find(palabra) == stopwords.end()) {
+            if (!primero) resultado += " ";
+            resultado += palabra;
+            primero = false;
+        }
+    }
+    return resultado;
+}
+
+// --- PREPARACIÓN PARA EL MOTOR DE BÚSQUEDA ---
+unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis) {
+    unordered_map<int, string> dataLimpia;
+
+    for (const auto& [id, movie] : pelis) {
+        string year     = movie.getYear();
+        string title    = limpiarTitulo(movie.getTtitle());
+        string origin   = limpiarOrigen(movie.getOrigin());
+        string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
+
+        string cast     = normalizarYLimpiar(movie.getCast());
+        string genre    = normalizarYLimpiar(movie.getGenre());
+
+        string plotRaw   = normalizarYLimpiar(movie.getPlot());
+        string plotFinal = filtrarStopwords(plotRaw);
+
+        string textoFinal = year + " " + title + " " + origin + " " + director + " " + cast + " " + genre + " " + plotFinal;
+        dataLimpia[id] = textoFinal;
+    }
+    return dataLimpia;
+}
+
+// --- EXPORTACIÓN A CSV SIN COMILLAS ---
+void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
+    ofstream archivo(nombreArchivo);
+    if (!archivo.is_open()) {
+        cout << "Error: No se pudo crear el archivo " << nombreArchivo << endl;
+        return;
+    }
+
+    archivo << "Release Year,Title,Origin/Ethnicity,Director,Cast,Genre,Plot\n";
+    unordered_map<int, DataLimpia> limpiaA;
+    for (const auto& [id, movie] : pelis) {
+        string year     = movie.getYear();
+        string title    = limpiarTitulo(movie.getTtitle());
+        string origin   = limpiarOrigen(movie.getOrigin());
+        string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
+
+        string cast     = normalizarYLimpiar(movie.getCast());
+        string genre    = normalizarYLimpiar(movie.getGenre());
+
+        string plotRaw  = normalizarYLimpiar(movie.getPlot());
+        string plotFin  = filtrarStopwords(plotRaw);
+
+        archivo << year << ","
+                << title << ","
+                << origin << ","
+                << director << ","
+                << cast << ","
+                << genre << ","
+                << plotFin << "\n";
+        DataLimpia limpia(title,year,origin,director,cast,genre,plotFin);
+        limpiaA[id] = limpia;
+
+    }
+    datalimpia = limpiaA;
+
+    archivo.close();
+    cout << "  -> Archivo CSV limpio exportado: " << nombreArchivo << endl;
+}
