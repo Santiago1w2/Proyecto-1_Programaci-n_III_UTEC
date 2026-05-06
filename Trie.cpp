@@ -56,7 +56,7 @@ unordered_map<int,int> Trie::buscarNodo(const string& clave) const {
 
     if (nodo->esFinDePalabra) {
         for (auto &[id, freq] : nodo->freq) {
-            resultado[id] += freq*0.5; // boost fuerte
+            resultado[id] += freq*1.5; // boost fuerte
         }
     }
     else {
@@ -84,12 +84,9 @@ vector<int> Trie::buscar(const string& query) const {
         auto resultados = buscarNodo(token);
 
         double idf;
+        int df = resultados.size();
 
-        auto it = docFreq.find(token);
-
-        int df = (it != docFreq.end()) ? it->second : 0;
-
-        idf = log((double)totalDocs / (1.0 + df));
+        idf = log(1.0 + ((double)totalDocs / (1.0 + df)));
 
         for (auto &[id, freq] : resultados) {
 
