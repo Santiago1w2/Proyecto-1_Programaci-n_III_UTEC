@@ -12,5 +12,4 @@ add_executable(PROYECTAZO main.cpp
         Funciones.h
         PLimpieza.cpp
         PLimpieza.h
-        PLimpieza.cpp
 )

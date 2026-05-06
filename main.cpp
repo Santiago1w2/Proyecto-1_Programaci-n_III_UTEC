@@ -1,5 +1,5 @@
 #include "CClases.h"
-#include "Climpieza.h"
+#include "Plimpieza.h"
 #include "Interfaz.h"
 #include "Funciones.h"
 
@@ -11,9 +11,12 @@ int main() {
     system("chcp 65001 > nul");
     system("cls");
     cout << "Leyendo archivos..." << endl;
-    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv");
+    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv"); // Usa el archivo real de plots si lo necesitas
+
     cout << "Limpiando datos y preparando texto..." << endl;
-    unordered_map<int, string> dataLimpia = prepararDataLimpia(pelis);
+    unordered_map<int , DataLimpia> dataLimpia;
+    exportarDataLimpiaCSV(pelis,"datosLimpios.csv", dataLimpia);
+
 
     char opcion_entrada;
     inicio();

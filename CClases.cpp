@@ -3,7 +3,7 @@
 //
 
 #include "CClases.h"
-#include "Climpieza.h"
+#include "Plimpieza.h"
 #include <string_view>
 
 Movie::Movie() = default;
@@ -38,7 +38,7 @@ string Movie::getGenre() const {return genre;}
 string Movie::getOrigin() const {return origin;}
 string Movie::getPlot() const {return plot;}
 string Movie::getWiki() const {return wiki_page;}
-
+string Movie::getCast() const {return cast;}
 void Movie::more_info() {
     cout << "Title: " << title << endl;
     cout << "Release Year: " << release_year << endl;

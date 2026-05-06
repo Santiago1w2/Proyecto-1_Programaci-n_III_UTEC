@@ -10,7 +10,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include "Climpieza.h"
+#include "Plimpieza.h"
 #include "Interfaz.h"
 using namespace std;
 string aMinusculas(string texto);

@@ -40,6 +40,7 @@ public:
     string getGenre() const;
     string getWiki() const;
     string getPlot()const;
+    string getCast()const;
 
     void more_info();
 };
