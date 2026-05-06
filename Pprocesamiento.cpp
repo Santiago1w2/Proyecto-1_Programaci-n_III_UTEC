@@ -132,7 +132,7 @@ unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& p
         string raw = movie.getYear() + " " + movie.getTtitle() + " " +
                      movie.getOrigin() + " " + movie.getDirector() + " " +
                      movie.getGenre() + " " + movie.getPlot();
-
+        raw = limpiarParentesisBasura(raw);
         string final_str;
         final_str.reserve(raw.size());
 
