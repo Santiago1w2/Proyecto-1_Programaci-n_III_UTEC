@@ -21,6 +21,7 @@ void inicio_sesion(string& correo, string& pass);
 void esperar(int n);
 void mostrar_registro_usuario();
 void registro(string& correo, string& pass, string& name, string& clave);
+void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, char& opcion_entrada);
 
 
 

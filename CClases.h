@@ -72,42 +72,8 @@ void registrar_nuevoUsuario(const string& name, const string& email, const strin
 void actualizarUsuario(vector<int> pelis,string tipo);
 
 void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis);
-
-int busquedaBinaria(const vector<Movie>& v, int objetivo_id);
 vector<string> mostrar_usuarios();
 
-
-vector<string> separar(const string& texto);
-
-// Nodo del Suffix Trie
-// - hijos:          mapa char -> nodo siguiente
-// - movieIds:       IDs de peliculas cuyo sufijo TERMINA en este nodo
-// - esFinDePalabra: true si algun sufijo termina aqui
-struct Nodo {
-    unordered_map<char, Nodo*> hijos;
-    vector<int> movieIds;
-    bool esFinDePalabra;
-
-    // Constructor: inicializa esFinDePalabra en false
-    // Sin esto el valor es basura de memoria -> comportamiento indefinido
-    Nodo() : esFinDePalabra(false) {}
-};
-
-// Suffix Trie:
-//   insertar(info, id) -> separa en palabras, por cada palabra
-//                         inserta TODOS sus sufijos con el id al final
-//   buscar(query)      -> navega hasta el nodo del query, hace DFS
-//                         recolectando todos los ids descendientes
-class Trie {
-    Nodo* raiz;
-public:
-    Trie();
-    void insertar(const string& info, int id);
-    vector<int> buscar(const string& query);
-};
-
-// Vacia intencionalmente: el Suffix Trie reemplaza el indice separado
-void construirIndice(const unordered_map<int, string>& dataLimpia);
 
 
 #endif //PROYECTAZO_CCLASES_H

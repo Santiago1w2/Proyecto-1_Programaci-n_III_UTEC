@@ -184,3 +184,62 @@ void registro(string& correo, string& pass, string& name, string& clave) {
     moverCursor(21, 10);
     cin >> clave;
 }
+
+void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, char& opcion_entrada) {
+    if (opcion_entrada=='a') {
+        inicio_sesion(us_email,us_password);
+        while (!validar_info(us_email,us_password)) {
+            limpiarPantalla();
+            cout << R"(
+╭───────────────────────────────╮
+│ ⚠ ERROR EN LAS CREDENCIALES   │
+╰───────────────────────────────╯
+)";
+            esperar(1);
+            limpiarPantalla();
+            inicio_sesion(us_email,us_password);
+        }
+        limpiarPantalla();
+        cout << R"(
+╭───────────────────────────────╮
+│  ✔ INICIO DE SESION EXITOSO   │
+╰───────────────────────────────╯
+)"; esperar(1);
+        limpiarPantalla();
+    }
+    else {
+        string clave_temp;
+        registro(us_email,us_password,us_name,clave_temp);
+        while (validar_correo(us_email)) {
+            limpiarPantalla();
+            cout << R"(
+╭───────────────────────────────╮
+│    ⚠ CORREO YA REGISTRADO     │
+╰───────────────────────────────╯
+)"; esperar(2);
+            limpiarPantalla();
+            registro(us_email,us_password,us_name, clave_temp);
+        }
+        while (us_password!=clave_temp) {
+            limpiarPantalla();
+            cout << R"(
+╭─────────────────────────────────────────────────────╮
+│    ⚠ LAS CLAVES NO COINCIDEN. VUELVA A INTENTAR     │
+╰─────────────────────────────────────────────────────╯
+)";
+            esperar(2);
+            limpiarPantalla();
+            registro(us_email,us_password,us_name, clave_temp);
+        }
+        limpiarPantalla();
+        esperar(3);
+        cout << R"(
+╭───────────────────────────────────╮
+│  ✔ USUARIO REGISTRADO CON EXITO   │
+╰───────────────────────────────────╯
+)";
+        limpiarPantalla();
+        registrar_nuevoUsuario(us_name,us_email,us_password);
+    }
+
+}
