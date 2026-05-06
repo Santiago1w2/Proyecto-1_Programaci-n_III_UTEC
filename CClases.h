@@ -85,29 +85,28 @@ vector<string> separar(const string& texto);
 // - esFinDePalabra: true si algun sufijo termina aqui
 struct Nodo {
     unordered_map<char, Nodo*> hijos;
-    vector<int> movieIds;
+    unordered_map<int, int> freq;
     bool esFinDePalabra;
 
     // Constructor: inicializa esFinDePalabra en false
     // Sin esto el valor es basura de memoria -> comportamiento indefinido
     Nodo() : esFinDePalabra(false) {}
 };
-
-// Suffix Trie:
-//   insertar(info, id) -> separa en palabras, por cada palabra
-//                         inserta TODOS sus sufijos con el id al final
-//   buscar(query)      -> navega hasta el nodo del query, hace DFS
-//                         recolectando todos los ids descendientes
+// Suffix Trie
 class Trie {
     Nodo* raiz;
+    unordered_map<string,int> docFreq;
+    int totalDocs = 0;
+    friend void construirIndice(const unordered_map<int, string>& data);
+
 public:
     Trie();
-    void insertar(const string& info, int id);
+    void insertarCompleto(const string& texto, int id, int pesoCampo);
     vector<int> buscar(const string& query);
-};
+    void construirIndice(const unordered_map<int, string>& data);
 
+};
 // Vacia intencionalmente: el Suffix Trie reemplaza el indice separado
-void construirIndice(const unordered_map<int, string>& dataLimpia);
 
 
 #endif //PROYECTAZO_CCLASES_H

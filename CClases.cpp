@@ -246,24 +246,49 @@ Trie::Trie() { raiz = new Nodo; }
 // El Trie cubre palabras completas y prefijos; este indice cubre lo demas
 unordered_map<string, vector<int>> keywordIndex;
 
-void Trie::insertar(const string& info, int id) {
-    stringstream ss(info); // genera un tipo imput para poder hacer eso de separar palbaras
+void Trie::insertarCompleto(const string& texto, int id, int pesoCampo) {
+    stringstream ss(texto);
     string palabra;
-    unordered_set<string> vistas;
 
-    while (ss >> palabra) { // speraba palabras por espacios
-        if (!vistas.insert(palabra).second) continue;
+    while (ss >> palabra) {
 
-        Nodo* nodo = raiz;
-        for (char c : palabra) {
-            auto& hijo = nodo->hijos[c];
-            if (!hijo) hijo = new Nodo();
-            nodo = hijo;
+        int n = palabra.size();
+
+        // filtro
+        if (n < 3) continue;
+
+        //palabra completa prefijos
+        {
+            Nodo* nodo = raiz;
+            for (char c : palabra) {
+                if (!nodo->hijos[c]) nodo->hijos[c] = new Nodo();
+                nodo = nodo->hijos[c];
+            }
+            nodo->esFinDePalabra = true;
+            nodo->freq[id] += pesoCampo;
         }
-        nodo->esFinDePalabra = true;
-        // vector es mucho mas ligero que unordered_set en memoria y allocaciones
-        // vistas ya garantiza que no insertamos la misma palabra dos veces por pelicula
-        nodo->movieIds.push_back(id);
+
+        // sufijos substrings
+        for (int i = 1; i < n; i++) {
+
+            int len = n - i;
+
+            //filtro
+            if (len < 3) continue;
+
+            Nodo* nodo = raiz;
+
+            for (int j = i; j < n; j++) {
+                char c = palabra[j];
+                if (!nodo->hijos[c]) nodo->hijos[c] = new Nodo();
+                nodo = nodo->hijos[c];
+            }
+
+            nodo->esFinDePalabra = true;
+
+            // el peor tien que ser menor a a plabra completa
+            nodo->freq[id] += pesoCampo / 2;
+        }
     }
 }
 
@@ -283,63 +308,68 @@ void construirIndice(const unordered_map<int, string>& dataLimpia) {
 
 // DFS: recorre hijos del nodo y acumula IDs en score
 // Sirve para prefijos: buscar "car" encuentra "carro", "carbon", etc.
-static void recolectarPorPrefijo(Nodo* nodo, unordered_map<int,int>& score, int peso) {
-    if (nodo->esFinDePalabra) {
-        for (int id : nodo->movieIds) score[id] += peso;
-    }
-    for (auto& [c, hijo] : nodo->hijos) {
-        recolectarPorPrefijo(hijo, score, peso);
+// total de pelis
+
+void Trie::construirIndice(const unordered_map<int, string>& data) {
+    totalDocs = data.size();
+
+    for (auto& [id, texto] : data) {
+        stringstream ss(texto);
+        string palabra;
+
+        unordered_set<string> vistas;
+
+        while (ss >> palabra) {
+            // evitar contar repetido en misma peli
+            if (vistas.insert(palabra).second) {
+                docFreq[palabra]++;
+            }
+        }
     }
 }
-
 vector<int> Trie::buscar(const string& query) {
-    unordered_map<int, int> score; // ID:Puntiacion
+    unordered_map<int, double> score;
 
     stringstream ss(query);
     string palabra;
 
     while (ss >> palabra) {
-        if (palabra.size() < 2) continue;
-
-        // 1. Trie
         Nodo* nodo = raiz;
-        bool encontrado = true;
 
+        // bajar en el Trie
         for (char c : palabra) {
-            auto it = nodo->hijos.find(c);
-            if (it == nodo->hijos.end()) {
-                encontrado = false;
+            if (!nodo->hijos.count(c)) {
+                nodo = nullptr;
                 break;
             }
-            nodo = it->second;
+            nodo = nodo->hijos[c];
         }
 
-        if (encontrado) {
-            int peso = min(5, (int)palabra.size());
-            recolectarPorPrefijo(nodo, score, peso);
-        }
+        if (!nodo || !nodo->esFinDePalabra) continue;
 
-        // 2. keywordIndex
-        if (palabra.size() >= 3) {
-            for (const auto& [keyword, ids] : keywordIndex) {
-                if (keyword != palabra && keyword.find(palabra) != string::npos) {
-                    for (int id : ids) score[id] += 1;
-                }
-            }
+        // 🔥 calcular IDF
+        int df = docFreq[palabra];
+        double idf = log((double)totalDocs / (1 + df));
+
+        // 🔥 aplicar TF-IDF
+        for (auto& [id, tf] : nodo->freq) {
+            score[id] += tf * idf;
         }
     }
 
-    vector<pair<int,int>> orden(score.begin(), score.end());
-    sort(orden.begin(), orden.end(), [](const auto& a, const auto& b) {
-        if (a.second == b.second) return a.first < b.first;
+    // ordenar
+    vector<pair<int,double>> orden(score.begin(), score.end());
+
+    sort(orden.begin(), orden.end(), [](auto& a, auto& b) {
         return a.second > b.second;
     });
 
-    vector<int> resultado;
+    vector<int> res;
     for (int i = 0; i < min(5, (int)orden.size()); i++) {
-        resultado.push_back(orden[i].first);
+        res.push_back(orden[i].first);
     }
-    return resultado;
+
+    return res;
 }
 void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis) {
     vector<int> hist;
