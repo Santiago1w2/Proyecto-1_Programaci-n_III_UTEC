@@ -128,11 +128,12 @@ string limpiarParentesisBasura(const string& s) {
 unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis) {
     unordered_map<int, string> dataLimpia;
 
-    for (const auto& [id, movie] : pelis) {
+    for (const auto &[id, movie]: pelis) {
+        string rawPlot = limpiarParentesisBasura(movie.getPlot());
         string raw = movie.getYear() + " " + movie.getTtitle() + " " +
                      movie.getOrigin() + " " + movie.getDirector() + " " +
-                     movie.getGenre() + " " + movie.getPlot();
-
+                     movie.getGenre() + " " + rawPlot;
+        raw = aMinusculas(raw);
         string final_str;
         final_str.reserve(raw.size());
 
@@ -140,9 +141,8 @@ unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& p
             unsigned char c = raw[i];
 
             if (c < 128) {
-                char minuscula = tolower(c);
-                if (isalnum(minuscula) || minuscula == ' ') {
-                    final_str += minuscula;
+                if (isalnum(c) || c == ' ') {
+                    final_str += c;
                 }
             }
             else {
