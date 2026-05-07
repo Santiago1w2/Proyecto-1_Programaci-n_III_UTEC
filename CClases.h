@@ -40,6 +40,7 @@ public:
     string getGenre() const;
     string getWiki() const;
     string getPlot()const;
+    string getCast()const;
 
     void more_info();
 };
@@ -54,59 +55,21 @@ class Usuario {
     unordered_map<int,Movie> baneado;
     unordered_map<int,Movie> historial;
 public:
+    Usuario();
     Usuario(const string &user, const string &_email, const string &_pass, const unordered_map<int,Movie> &VT, const unordered_map<int,Movie> &MG, const unordered_map<int,Movie> &Ban, const unordered_map<int,Movie> &hist);
     void revisarUsuario();
-};
-string aMinusculas(string texto);
-unordered_map<int,Movie> leerPeliculas(const string& csv);
-unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const unordered_map<int, Movie>& pelis);
-vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& pelis);
-
-vector<int> parseLista(const string& s);
-
-bool validar_correo(const string& _email);
-bool validar_info(const string& _email, const string& _clave);
-bool validar_usuario(const string& _username); //No es necesario
-
-void registrar_nuevoUsuario(const string& name, const string& email, const string& clave);
-void actualizarUsuario(vector<int> pelis,string tipo);
-
-void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis);
-
-int busquedaBinaria(const vector<Movie>& v, int objetivo_id);
-vector<string> mostrar_usuarios();
-
-
-vector<string> separar(const string& texto);
-
-// Nodo del Suffix Trie
-// - hijos:          mapa char -> nodo siguiente
-// - movieIds:       IDs de peliculas cuyo sufijo TERMINA en este nodo
-// - esFinDePalabra: true si algun sufijo termina aqui
-struct Nodo {
-    unordered_map<char, Nodo*> hijos;
-    unordered_map<int, int> freq;
-    bool esFinDePalabra;
-
-    // Constructor: inicializa esFinDePalabra en false
-    // Sin esto el valor es basura de memoria -> comportamiento indefinido
-    Nodo() : esFinDePalabra(false) {}
-};
-// Suffix Trie
-class Trie {
-    Nodo* raiz;
-    unordered_map<string,int> docFreq;
-    int totalDocs = 0;
-    friend void construirIndice(const unordered_map<int, string>& data);
-
-public:
-    Trie();
-    void insertarCompleto(const string& texto, int id, int pesoCampo);
-    vector<int> buscar(const string& query);
-    void construirIndice(const unordered_map<int, string>& data);
 
 };
-// Vacia intencionalmente: el Suffix Trie reemplaza el indice separado
+
+struct DataLimpia {
+    string title;
+    string release_year;
+    string origin;
+    string director;
+    string cast;
+    string genre;
+    string plot;
+};
 
 
 #endif //PROYECTAZO_CCLASES_H

@@ -8,6 +8,8 @@ add_executable(PROYECTAZO main.cpp
         CClases.cpp
         Interfaz.cpp
         Interfaz.h
-        Pprocesamiento.h
-        Pprocesamiento.cpp
+        Funciones.cpp
+        Funciones.h
+        PLimpieza.cpp
+        PLimpieza.h
 )
