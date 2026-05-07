@@ -1,5 +1,7 @@
 #include "Trie.h"
 
+#include "CClases.h"
+
 Trie::Trie() : raiz(new Nodo()), totalDocs(0) {}
 
 
@@ -13,33 +15,56 @@ void Trie::limpiarNodo(Nodo* nodo) {
 Trie::~Trie() {
     limpiarNodo(raiz);
 }
-void Trie::insertarpalabraYTrigramas(const string& palabra, int id, int pesoCampo) {
+void Trie::insertarpalabra(const string& palabra, const int id, const int pesoCampo) const {
     int n = palabra.size();
+    const int MAX_LEN = 6;
 
-    for (int i = 0; i < n-2; i++) {
+    // 1. Insertar palabra completa (match exacto)
+    {
         Nodo* nodo = raiz;
 
-        for (int j = i; j < n; j++) {
+        for (char c : palabra) {
+            if (!nodo->hijos.count(c))
+                nodo->hijos[c] = new Nodo();
+
+            nodo = nodo->hijos[c];
+            nodo->freq[id] += pesoCampo * 2; // boost para match exacto
+        }
+
+        nodo->esFinDePalabra = true;
+    }
+
+    // 2. Insertar subcadenas (suffix / n-grams controlados)
+    for (int i = 0; i < n; i++) {
+        Nodo* nodo = raiz;
+
+        for (int j = i; j < min(n, i + MAX_LEN); j++) {
             char c = palabra[j];
 
             if (!nodo->hijos.count(c))
                 nodo->hijos[c] = new Nodo();
 
             nodo = nodo->hijos[c];
+
             nodo->freq[id] += pesoCampo;
         }
+
         nodo->esFinDePalabra = true;
     }
 }
 void Trie::insertarCompleto(const string& texto, int id, int pesoCampo) {
+    totalDocs++;
+
     stringstream ss(texto);
     string palabra;
 
     while (ss >> palabra) {
-        insertarpalabraYTrigramas(palabra, id, pesoCampo);
+
+        insertarpalabra(palabra, id, pesoCampo);
+
         if (!seenInDoc[palabra].count(id)) {
             seenInDoc[palabra].insert(id);
-            docFreq[palabra]++;   // solo 1 vez por documento
+            docFreq[palabra]++;   // para IDF
         }
     }
 }
@@ -74,9 +99,11 @@ vector<int> Trie::buscar(const string& query) const {
     stringstream ss(query);
     string token;
 
+
     int totalTokens = 0;
 
     while (ss >> token) {
+        token = aMinusculas(token);
 
         if (token.size() <= 2) continue;
         totalTokens++;

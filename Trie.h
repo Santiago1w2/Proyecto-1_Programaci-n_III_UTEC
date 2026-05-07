@@ -41,10 +41,11 @@ private:
 public:
     Trie();
     ~Trie();
-    void limpiarNodo(Nodo* nodo);
+
+    static void limpiarNodo(Nodo* nodo);
 
     void insertarCompleto(const string& texto, int id, int pesoCampo);
-    void insertarpalabraYTrigramas(const string& palabra, int id, int pesoCampo);
+void insertarpalabra(const string& palabra, const int id, const int pesoCampo) const;
     vector<int> buscar(const string& query) const;
     unordered_map<int,int> buscarNodo(const string& clave) const;
 };
