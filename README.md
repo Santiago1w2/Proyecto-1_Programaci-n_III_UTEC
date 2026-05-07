@@ -393,3 +393,17 @@ Buscar: _
 
 > Al iniciar aparecerá brevemente un mensaje de sistema en la consola mientras se configura UTF-8; es esperado y no indica un error.
 
+## 📚 Fundamento teórico
+
+### CLRS (Cormen et al.)
+- Hash tables: O(1) average-case complexity
+- Balanced trees: O(log n) height operations
+
+### Sedgewick & Wayne
+- Trie operations (insert/search): O(L), where L is key length
+- Efficient for prefix-based string search
+
+### Manning et al. (Information Retrieval)
+- TF-IDF weights terms based on frequency and rarity
+- Rare terms carry higher discriminative power in ranking
+
