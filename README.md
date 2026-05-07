@@ -393,7 +393,7 @@ Buscar: _
 
 > Al iniciar aparecerá brevemente un mensaje de sistema en la consola mientras se configura UTF-8; es esperado y no indica un error.
 
-## 📚 Fundamento teórico
+## Fundamento teórico
 
 ### CLRS (Cormen et al.)
 - Hash tables: O(1) average-case complexity
