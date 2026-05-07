@@ -285,8 +285,6 @@ La implementación es sólida y tiene decisiones de diseño bien pensadas. Algun
 **Limitaciones conocidas:**
 - Insertar todos los sufijos de una palabra de longitud L genera O(L²) nodos, lo que hace que el consumo de memoria crezca rápido con un dataset grande de plots largos. Con el CSV de ~35k películas esto puede ser significativo.
 - Tokens de 1 o 2 caracteres se ignoran en la búsqueda (`if (token.size() <= 2) continue`), lo que es correcto para el inglés pero podría omitir siglas o años de 2 dígitos.
-- `totalDocs` se inicializa en 0 y no se incrementa automáticamente al insertar; debe actualizarse manualmente desde el código que llama a `insertarCompleto`, o el IDF calculará siempre con denominador incorrecto.
-
 ---
 
 ## Ejemplos de limpieza
