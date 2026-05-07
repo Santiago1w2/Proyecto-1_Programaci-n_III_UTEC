@@ -393,17 +393,30 @@ Buscar: _
 
 > Al iniciar aparecerá brevemente un mensaje de sistema en la consola mientras se configura UTF-8; es esperado y no indica un error.
 
-## Fundamento teórico
+## Complejidad
 
-### CLRS (Cormen et al.)
-- Hash tables: O(1) average-case complexity
-- Balanced trees: O(log n) height operations
+### Trie (estructura principal)
+- Búsqueda e inserción: O(L)
+- “A trie supports search and insertion in time proportional to the key length.” (Sedgewick & Wayne)
 
-### Sedgewick & Wayne
-- Trie operations (insert/search): O(L), where L is key length
-- Efficient for prefix-based string search
+### Hash maps
+- O(1) promedio para acceso
+- “Hash-table operations take O(1) time on average…” (CLRS)
 
-### Manning et al. (Information Retrieval)
-- TF-IDF weights terms based on frequency and rarity
-- Rare terms carry higher discriminative power in ranking
+### Árboles balanceados (referencia teórica)
+- O(log n) altura
+- “The height of a balanced binary search tree is O(log n).” (CLRS)
+
+### TF-IDF scoring
+- O(k) por consulta
+- “TF-IDF assigns higher weights to rare terms…” (Manning et al.)
+
+### Inserción con sufijos
+- O(L²) por palabra debido a expansión de subcadenas
+
+### Complejidad total de búsqueda
+- O(L + k)
+  donde:
+  L = longitud de query
+  k = documentos relevantes encontrados
 
