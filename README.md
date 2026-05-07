@@ -129,53 +129,107 @@ Se aplica exclusivamente al Plot después de `normalizarYLimpiar`. Elimina las ~
 
 ## Pseudo-código de inserción al Trie
 
-Cada película genera una cadena unificada de palabras limpias. Esa cadena se tokeniza y cada token se descompone en **trigramas** antes de insertarse.
+Cada película genera una cadena unificada de palabras limpias. Esa cadena se tokeniza y cada token se inserta tanto como palabra completa como mediante subcadenas (suffix / n-grams).
 
-```
+```txt
 FUNCIÓN insertarTodasLasPeliculas(peliculas: Map<id, Movie>, trie: Trie):
+
     PARA CADA (id, movie) EN peliculas:
 
-        textoLimpio ← limpiarTitulo(movie.title)     [peso: alto]
+        textoLimpio ← limpiarTitulo(movie.title)      [peso: alto]
                     + limpiarOrigen(movie.origin)     [peso: medio]
                     + limpiarDirector(movie.director) [peso: alto]
                     + limpiarCast(movie.cast)         [peso: medio]
                     + normalizarYLimpiar(movie.genre) [peso: medio]
-                    + filtrarStopwords(normalizarYLimpiar(movie.plot)) [peso: bajo]
+                    + filtrarStopwords(movie.plot)    [peso: bajo]
 
         trie.insertarCompleto(textoLimpio, id, pesoCampo)
 
 FIN FUNCIÓN
+```
 
+---
 
+## Inserción completa de texto
+
+```txt
 FUNCIÓN insertarCompleto(texto: string, id: int, pesoCampo: int):
-    tokens ← tokenizar(texto)   // split por espacios
+
+    totalDocs += 1
+
+    tokens ← tokenizar(texto)
 
     PARA CADA palabra EN tokens:
-        insertarpalabraYTrigramas(palabra, id, pesoCampo)
 
-        SI palabra NO ha sido vista en este documento antes:
-            docFreq[palabra] += 1     // para calcular IDF luego
+        insertarpalabra(palabra, id, pesoCampo)
+
+        SI palabra NO ha sido vista antes en este documento:
+
             seenInDoc[palabra].agregar(id)
 
+            docFreq[palabra] += 1     // usado para IDF
+
 FIN FUNCIÓN
+```
 
+---
 
-FUNCIÓN insertarpalabraYTrigramas(palabra: string, id: int, peso: int):
+## Inserción de palabras y subcadenas
+
+La implementación inserta:
+
+1. La palabra completa con boost extra.
+2. Subcadenas/sufijos controlados para soportar búsqueda parcial.
+
+```txt
+FUNCIÓN insertarpalabra(palabra: string, id: int, pesoCampo: int):
+
     n ← largo(palabra)
 
-    // Inserta todos los sufijos de longitud ≥ 3 como caminos en el Trie
-    // Ejemplo: "action" → inserta "action", "ction", "tion", "ion"
-    PARA i DESDE 0 HASTA n-3:
-        nodoActual ← raíz
+    MAX_LEN ← 6
 
-        PARA j DESDE i HASTA n-1:
+
+    ---------------------------------------------------
+    // 1. INSERTAR PALABRA COMPLETA
+    ---------------------------------------------------
+
+    nodo ← raíz
+
+    PARA CADA caracter c EN palabra:
+
+        SI c NO existe en nodo.hijos:
+
+            nodo.hijos[c] ← nuevo Nodo()
+
+        nodo ← nodo.hijos[c]
+
+        // boost fuerte para coincidencia exacta
+        nodo.freq[id] += pesoCampo * 2
+
+    nodo.esFinDePalabra ← true
+
+
+    ---------------------------------------------------
+    // 2. INSERTAR SUBCADENAS / SUFIJOS
+    ---------------------------------------------------
+
+    PARA i DESDE 0 HASTA n-1:
+
+        nodo ← raíz
+
+        PARA j DESDE i HASTA min(n-1, i + MAX_LEN - 1):
+
             c ← palabra[j]
-            SI c NO existe en nodoActual.hijos:
-                nodoActual.hijos[c] ← nuevo Nodo()
-            nodoActual ← nodoActual.hijos[c]
-            nodoActual.freq[id] += peso    // acumular peso en cada nodo del camino
 
-        nodoActual.esFinDePalabra ← true   // marcar fin de sufijo
+            SI c NO existe en nodo.hijos:
+
+                nodo.hijos[c] ← nuevo Nodo()
+
+            nodo ← nodo.hijos[c]
+
+            nodo.freq[id] += pesoCampo
+
+        nodo.esFinDePalabra ← true
 
 FIN FUNCIÓN
 ```
@@ -184,107 +238,232 @@ FIN FUNCIÓN
 
 ## Estructura de datos: Trie
 
-Se eligió un **Trie de caracteres con índice TF-IDF y trigramas** como motor de búsqueda.
+Se eligió un **Trie de caracteres con TF-IDF y soporte de subcadenas** como motor de búsqueda.
 
-### Por qué un Trie
+### ¿Por qué un Trie?
 
-- Búsquedas por prefijo en **O(L)** donde L = largo de la query, sin importar cuántas películas hay indexadas.
-- Soporte natural de búsqueda parcial: `"sci"` encuentra `"science"`, `"scientist"`, etc.
-- Los sufijos (trigramas) permiten encontrar palabras aunque el usuario escriba desde el medio: `"tion"` encuentra `"action"`, `"nation"`, etc.
+- Búsquedas por prefijo en **O(L)** donde `L` es el tamaño de la query.
+- Permite búsqueda parcial naturalmente.
+- Las subcadenas permiten encontrar palabras aunque el usuario escriba desde el medio.
 
-### Estructura de un nodo
+Ejemplo:
+
+```txt
+"tion" → encuentra:
+    "action"
+    "fiction"
+    "nation"
+```
+
+---
+
+## Estructura de un nodo
 
 ```cpp
 struct Nodo {
-    unordered_map<char, Nodo*> hijos;   // hijos por carácter
-    unordered_map<int, int>    freq;    // docID → frecuencia acumulada
+
+    unordered_map<char, Nodo*> hijos;
+
+    unordered_map<int, int> freq;
+
     bool esFinDePalabra = false;
 };
 ```
 
-Cada nodo del camino acumula `freq[id] += peso`, de modo que nodos intermedios ya cargan información útil de scoring sin necesidad de recorrer el subárbol completo.
+Cada nodo acumula:
 
-### Algoritmo de inserción — trigramas posicionales
-
-En lugar de insertar solo la palabra completa, se insertan **todos sus sufijos de longitud ≥ 3**. Para la palabra `"action"` de longitud 6 se crean 4 caminos desde la raíz:
-
+```cpp
+freq[id] += peso
 ```
-raíz → a→c→t→i→o→n   (sufijo completo, esFinDePalabra = true)
+
+De esta manera, los nodos intermedios ya contienen información útil para scoring sin recorrer todo el subárbol.
+
+---
+
+## Inserción de subcadenas
+
+Para la palabra:
+
+```txt
+"action"
+```
+
+El Trie inserta caminos como:
+
+```txt
+raíz → a→c→t→i→o→n
 raíz → c→t→i→o→n
 raíz → t→i→o→n
 raíz → i→o→n
+raíz → o→n
+raíz → n
 ```
 
-Todos los nodos de todos esos caminos reciben `freq[id] += peso`.
+Todos los nodos acumulan:
 
-**¿Por qué esto?** Permite buscar subcadenas de palabras. Si el usuario escribe `"tion"`, el Trie lo encuentra directamente sin necesidad de recorrer toda la palabra original.
-
-Complejidad de inserción: **O(L²)** por palabra (L sufijos × L nodos cada uno), que es el costo de los trigramas.
-
-### Algoritmo de búsqueda con TF-IDF
-
+```txt
+freq[id] += peso
 ```
-FUNCIÓN buscar(query: string) → Lista<id>:
-    score     ← Map<id, double>    // puntuación acumulada por película
-    matchCount← Map<id, int>       // cuántos tokens de la query aparecen en cada doc
+
+Esto permite búsquedas desde cualquier parte de la palabra.
+
+---
+
+## Algoritmo de búsqueda con TF-IDF
+
+```txt
+FUNCIÓN buscar(query: string) → Lista<id>
+
+    score ← Map<id, double>
+
+    matchCount ← Map<id, int>
+
     totalTokens ← 0
 
+
     PARA CADA token EN tokenizar(query):
-        SI largo(token) ≤ 2: continuar   // tokens muy cortos se ignoran
+
+        token ← convertirMinusculas(token)
+
+        SI largo(token) ≤ 2:
+
+            continuar
+
 
         totalTokens += 1
-        resultados ← buscarNodo(token)   // Map<id, freq> desde el Trie
 
-        df  ← tamaño(resultados)         // en cuántos docs aparece el token
-        idf ← log(1 + totalDocs / (1 + df))   // penaliza palabras muy comunes
+        resultados ← buscarNodo(token)
+
+
+        df ← tamaño(resultados)
+
+        idf ← log(
+                1 + (totalDocs / (1 + df))
+              )
+
 
         PARA CADA (id, freq) EN resultados:
-            tf  ← freq                   // frecuencia acumulada en ese doc
-            score[id]     += tf * idf
-            matchCount[id]+= 1
 
-    // Penalización por incompletitud: docs que no tienen todos los tokens
+            tf ← freq
+
+            add ← tf * idf
+
+            score[id] += add
+
+            matchCount[id] += 1
+
+
+    ---------------------------------------------------
+    // Penalización por coincidencias incompletas
+    ---------------------------------------------------
+
     PARA CADA (id, sc) EN score:
+
         SI matchCount[id] < totalTokens:
+
             score[id] *= 0.5
 
-    // Ordenar por score descendente y retornar los top 5
-    ordenar(score, descendente)
+
+    ---------------------------------------------------
+    // Ordenar resultados
+    ---------------------------------------------------
+
+    ordenar(score DESCENDENTE)
+
     RETORNAR primeros 5 ids
 
 FIN FUNCIÓN
+```
 
+---
 
-FUNCIÓN buscarNodo(clave: string) → Map<id, freq>:
+## Búsqueda dentro del Trie
+
+```txt
+FUNCIÓN buscarNodo(clave: string) → Map<id, freq>
+
     nodo ← raíz
-    PARA CADA c EN clave:
-        SI c NO existe en nodo.hijos: RETORNAR {}
+
+
+    PARA CADA caracter c EN clave:
+
+        SI c NO existe en nodo.hijos:
+
+            RETORNAR {}
+
         nodo ← nodo.hijos[c]
 
+
+    resultado ← nuevo Map<id, freq>
+
+
     SI nodo.esFinDePalabra:
-        // Coincidencia exacta → boost ×1.5
-        RETORNAR { id: freq*1.5  PARA CADA (id,freq) EN nodo.freq }
+
+        // coincidencia exacta → boost ×1.5
+
+        PARA CADA (id, freq) EN nodo.freq:
+
+            resultado[id] += freq * 1.5
+
+
     SINO:
-        // Coincidencia de prefijo/sufijo → sin boost
-        RETORNAR nodo.freq
+
+        // coincidencia parcial
+
+        PARA CADA (id, freq) EN nodo.freq:
+
+            resultado[id] += freq
+
+
+    RETORNAR resultado
 
 FIN FUNCIÓN
 ```
 
-### ¿Funciona bien el Trie implementado?
+---
 
-La implementación es sólida y tiene decisiones de diseño bien pensadas. Algunos puntos a considerar:
+## Liberación de memoria
 
-**Lo que funciona bien:**
-- Los trigramas posicionales resuelven búsquedas parciales sin necesidad de un algoritmo extra (como KMP o Aho-Corasick).
-- El scoring TF-IDF penaliza términos muy comunes (como `"love"` o `"man"` que aparecen en miles de plots) y favorece términos discriminativos.
-- El boost ×1.5 para coincidencia exacta premia queries precisas sobre prefijos genéricos.
-- La penalización del ×0.5 por incompletitud reduce los falsos positivos cuando solo uno de varios tokens buscados hace match.
-- `seenInDoc` garantiza que `docFreq` se incremente solo una vez por documento, manteniendo el IDF correcto.
+El Trie libera memoria recursivamente recorriendo todos los nodos hijos.
 
-**Limitaciones conocidas:**
-- Insertar todos los sufijos de una palabra de longitud L genera O(L²) nodos, lo que hace que el consumo de memoria crezca rápido con un dataset grande de plots largos. Con el CSV de ~35k películas esto puede ser significativo.
-- Tokens de 1 o 2 caracteres se ignoran en la búsqueda (`if (token.size() <= 2) continue`), lo que es correcto para el inglés pero podría omitir siglas o años de 2 dígitos.
+```txt
+FUNCIÓN limpiarNodo(nodo)
+
+    SI nodo ES null:
+
+        RETORNAR
+
+
+    PARA CADA hijo EN nodo.hijos:
+
+        limpiarNodo(hijo)
+
+
+    eliminar nodo
+
+FIN FUNCIÓN
+```
+
+---
+
+## ¿Qué funciona bien en esta implementación?
+
+- Soporta búsqueda exacta y parcial.
+- TF-IDF mejora la relevancia.
+- El boost ×1.5 favorece coincidencias exactas.
+- La penalización ×0.5 reduce falsos positivos.
+- `seenInDoc` mantiene el cálculo correcto de IDF.
+- `MAX_LEN` evita explosión excesiva de memoria.
+
+---
+
+## Limitaciones conocidas
+
+- Insertar subcadenas aumenta consumo de memoria.
+- Complejidad cercana a **O(L²)** por palabra.
+- El sistema relaciona palabras mediante prefijos y subcadenas, pero no mediante análisis lingüístico avanzado (stemming o lemmatization).
+- El Trie puede crecer bastante con datasets grandes.
+- Insertar todos los sufijos de una palabra de longitud L genera O(L²) nodos, lo que hace que el consumo de memoria crezca rápido con un dataset grande de plots largos.
 ---
 
 ## Ejemplos de limpieza
