@@ -24,7 +24,7 @@ struct Nodo {
 
 struct Resultado {
     int id;
-    int score;
+    double score;
 };
 
 class Trie {

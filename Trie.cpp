@@ -16,7 +16,7 @@ Trie::~Trie() {
 void Trie::insertarpalabraYTrigramas(const string& palabra, int id, int pesoCampo) {
     int n = palabra.size();
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n-2; i++) {
         Nodo* nodo = raiz;
 
         for (int j = i; j < n; j++) {
@@ -103,14 +103,14 @@ vector<int> Trie::buscar(const string& query) const {
     // penalización fuerte por incompletitud
     for (auto &[id, sc] : score) {
         if (matchCount[id] < totalTokens) {
-            sc *= 0.2;  // más agresivo = menos falsos positivos
+            sc *= 0.5;  // más agresivo = menos falsos positivos
         }
     }
 
     vector<Resultado> orden;
 
     for (auto &[id, sc] : score) {
-        orden.push_back({id, (int)sc});
+        orden.push_back({id, sc});
     }
 
     sort(orden.begin(), orden.end(),
