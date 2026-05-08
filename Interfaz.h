@@ -6,6 +6,9 @@
 #define PROYECTO_1_PROGRAMACION_III_UTEC_INTERFAZ_H
 
 #include "Interfaz.h"
+#include "IUsuarios.h"
+#include "LPeliculas.h"
+
 #include <conio.h>
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -14,8 +17,10 @@
 #include <string>
 #include <thread>
 #include <chrono>
-#include "Funciones.h"
 using namespace std;
+
+
+
 void limpiarPantalla();
 void moverCursor(int x, int y);
 void esperarEnter();

@@ -46,6 +46,7 @@ public:
 };
 
 void procesarComillas(stringstream& ss,string& name);
+
 class Usuario {
     string username;
     string email;
@@ -69,7 +70,37 @@ struct DataLimpia {
     string cast;
     string genre;
     string plot;
+    string getTitle()const{return title;}
+    string getRelease_year()const{return release_year;}
+    string getOrigin()const{return origin;}
+    string getDirector()const{return director;}
+    string getCast()const{return cast;}
+    string getGenre()const{return genre;}
+    string getPlot()const{return plot;}
+
 };
 
+
+struct TokenInfo {
+    string token;
+    int peso;
+};
+
+struct DocumentoIndexado {
+    int movieID;
+    vector<TokenInfo> tokens;
+};
+
+class Preprocesador {
+    unordered_map<int, DocumentoIndexado> documentosProcesados;
+    unordered_map<string, int> docFreq;
+    int totalDocs = 0;
+public:
+    vector<string> tokenizar(const string& texto);
+    void agregarTokens(DocumentoIndexado& doc,const string& texto,int peso);
+    DocumentoIndexado procesarMovie(int movieID,const DataLimpia& movie);
+    void preprocesar(const unordered_map<int, DataLimpia>& peliculas);
+
+};
 
 #endif //PROYECTAZO_CCLASES_H
