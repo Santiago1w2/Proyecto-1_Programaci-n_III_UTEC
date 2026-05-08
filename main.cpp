@@ -11,12 +11,15 @@ int main() {
     system("chcp 65001 > nul");
     system("cls");
     cout << "Leyendo archivos..." << endl;
-    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv"); // Usa el archivo real de plots si lo necesitas
+    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv");
 
     cout << "Limpiando datos y preparando texto..." << endl;
     unordered_map<int , DataLimpia> dataLimpia;
     exportarDataLimpiaCSV(pelis,"datosLimpios.csv", dataLimpia);
 
+    Preprocesador preprocesador;
+    cout << "Procesando datos para subir al Trie..."<< endl;
+    preprocesador.preprocesar(dataLimpia);
 
     char opcion_entrada;
     inicio();
