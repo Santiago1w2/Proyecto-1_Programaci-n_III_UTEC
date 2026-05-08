@@ -51,16 +51,32 @@ Tiene 8 columnas por fila:
 | 7 | Plot               | Sinopsis (puede tener saltos de línea) |
 
 ### El problema de los saltos de línea en los plots
+Como se especifico anteriormente el plot presenta una particularidad en cuanto a la manera en como está organizado el texto. En este sentido, el contenido puede estar distribuido en uno o más párrafos separados por saltos de linea. Asimismo, el contenido de un mismo párrafo puede estar dividido por diferentes saltos de linea.
+Al realizar una lectura simple, es decir usando un solo `getline()` no se estaría tomando en cuenta estas limitaciones, por lo cual la lectura no sería apropiada. Consecuentemente, este error genería una mala lectura de los siguientes atributos para las peliculas posteriores.
 
-Un `getline()` normal rompería la lectura cuando la sinopsis tiene saltos de línea internos envueltos en comillas. Se usaron dos funciones para resolverlo:
+Ante esta situación se propone un flujo de funciones que generalicen la lectura de los diferentes campos del csv, considerando las salvedades mencionadas anteriormente.
+La función principal de este flujo es `leerPeliculas(const string& csv)`. Esta función va a recibir, por referencia, el csv que se quiere leer y va a crear un unordered_map donde se almacenarán las peliculas leidas.
+La justificación en la elección de este tipo de contenedor se basa en que necesitamos almacenar las peliculas, pero mantenerlas mapeadas a traves de un id. Asimismo, es importante resaltar la baja complejidad algorítmica que tiene para la inserción y búsqueda, a comparación de un mapa simple.
 
-**`leerFilaCSV(ifstream& file, string& lineaCompleta)`**  
-Lee líneas y las concatena mientras haya un número impar de comillas abiertas. Garantiza que cada llamada devuelve exactamente una fila lógica del CSV, sin importar cuántas líneas físicas ocupe.
+Esta función, a su vez, se apoya de la función `leerFilaCSV(archivo,linea)`, la cual se encarga de almacenar en una sola línea, la información correspondiente a una misma película. Para ello, la función trabaja baja una simple lógica en el conteo de comillas en la linea.
+En este sentido, para que toda la información de la película sea leida debe existir una cantidad par de comillas en la linea. En el caso no se cumpla esto, se infiere que la información no se ha cerrado, por lo que la función lee e integra la línea siguiente, y vuelve a verificar si la cantidad de comillas es par.
 
-**`parseCSVLine(const string& linea)`**  
-Parsea la fila lógica campo a campo, respetando las comillas dobles RFC-4180 (incluyendo comillas escapadas como `""`). Devuelve un `vector<string>` con los 8 campos.
+Cuando esta función finaliza, obtenemos un string (una sola línea) con toda la información de la película, lo cual facilita la posterior interacción con la data.
+Continuando con el flujo se utiliza la funcion `parseCSVLine(linea)`, la cual se encarga de 'clasificar' la información de la pelicula en la cantidad de atributos requeridos. Como aspecto fundamental en esta función, se valida continuamente el uso de comillas en el texto.
+Para ello, es importante recordar que un archivo '.csv' utiliza comillas cuando se usan 'comas' como parte del texto y no como separador de columnas. Asimismo, el formato implica que se utilicen comillas dobles cuando una palabra o frase requiera comillas.
+Tomando esto en cuenta, la función verifica este tipo de singularidades y permite que el campo correspondiente se asimile a un texto 'normal', es decir que solo aparecen las comillas propias del texto.
 
-Ambas funciones se reutilizan también para la lectura de usuarios.
+Ahondando más en el apartado técnico de esta última función, podemos ver que crea y retorna un vector de strings donde se almacena el contenido para cada atributo de la pelicula.
+Asimismo, cuenta con una variable `encomillas` de tipo 'bool', la cual se utiliza como un 'recordatorio' para cuando el texto ingresa o sale de un apartado con comillas. Luego se recorre la linea de texto, caracter por caracter, y se valida si el valor corresponde a una comilla o una coma (fin del atributo).
+En caso no se cumpla ninguna condición el caracter se agrega a un nuevo string donde se almacenerá el texto 'limpio'. Para el caso de la validación de comillas, se verifica si el siguiente caracter tambien es una comilla, es decir es una palabra que utiliza comillas dobles. En el caso se cumpla esta condición, el texto 'limpio' solo registra una comilla y el flujo sigue.
+Para la caso contrario, se asume que se esta ingresando o saliendo de una parte de texto que usa comillas, por lo cual no se registra ese caracter y el valor de la variable `encomillas` cambia.
+Por otra parte, para el caso que el caracter sea una coma y el valor de `encomillas` sea false, se asume que el contenido de una columna finalizó. Por tanto, el texto limpio almacenado hasta el momento se agrega al vector de atributos y se restea para ser un string vacio.
+
+El proceso mencionado se realiza hasta leer la linea completa y se retorna el vector con los atributos obtenidos. Regresando a la función principal, se utilizan los índices de los atributos (como se muestra en la tabla anterior) para crear y registrar variables que correspondan a cada atributo.
+Finalmente, se inserta esta información en el unordered_map inicial, se aumenta el numero de Id y el proceso se repite para la siguiente linea (pelicula).
+Cuando todas las lineas han sido procesadas, como buena practica de programación se cierra el archivo y la funcion retorna el mapa.
+
+
 
 ---
 

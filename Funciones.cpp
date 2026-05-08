@@ -12,11 +12,10 @@ unordered_map<int,Movie> leerPeliculas(const string& csv) {
 
     string linea;
     leerFilaCSV(archivo, linea); // Saltar cabecera
-
+    
     while (leerFilaCSV(archivo, linea)) {
         vector<string> fila = parseCSVLine(linea);
         if (fila.size() < 8) continue;
-
         string _year = fila[0];
         string _title = fila[1];
         string _origin = fila[2];
@@ -36,7 +35,6 @@ unordered_map<int,Movie> leerPeliculas(const string& csv) {
 vector<int> parseLista(const string& s) {
     vector<int> res;
     string num = "";
-
     for (char c : s) {
         if (isdigit(c)) {
             num += c;
@@ -194,7 +192,7 @@ bool validar_usuario(const string& _username) {
 void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis) {
     vector<int> hist;
 
-    // 🔥 EXTRAER IDS REALES
+    // EXTRAER IDS REALES
     vector<int> ids;
     for (auto& p : pelis) {
         ids.push_back(p.first);
