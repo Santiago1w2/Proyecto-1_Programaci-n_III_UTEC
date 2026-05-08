@@ -77,7 +77,7 @@ Movie (raw)
     ├─ Title        → limpiarTitulo()
     ├─ Origin       → limpiarOrigen()
     ├─ Director     → limpiarDirector()
-    ├─ Cast         → limpiarCast()      + normalizarYLimpiar()
+    ├─ Cast         → limpiarCast()
     ├─ Genre        → normalizarYLimpiar()
     └─ Plot         → normalizarYLimpiar() → filtrarStopwords()
             │
@@ -87,6 +87,39 @@ Movie (raw)
             ▼
     Inserción al Trie  +  Exportación a datosLimpios.csv
 ```
+
+### Dos salidas del pipeline
+
+`exportarDataLimpiaCSV` hace dos cosas en un solo recorrido del mapa de películas, evitando procesar las ~35,000 entradas dos veces:
+
+1. **Escribe `datosLimpios.csv`** — archivo con los 7 campos limpios por fila, sin comillas, útil para depuración e inspección manual.
+2. **Llena `unordered_map<int, DataLimpia>`** — mapa en memoria (pasado por referencia) que asocia cada ID de película con su `DataLimpia` correspondiente. Este mapa es el que usa el resto del sistema para mostrar resultados al usuario.
+
+### `prepararDataLimpia` — Alimentando el Trie
+
+```cpp
+unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis);
+```
+
+Esta función aplica el mismo pipeline de limpieza que `exportarDataLimpiaCSV`, pero en lugar de escribir un archivo, devuelve un `unordered_map<int, string>` donde cada valor es una **cadena unificada** con todos los campos de la película concatenados:
+
+```
+"1942 casablanca american michael curtiz humphrey bogart ingrid bergman drama rick blaine..."
+```
+
+Esa cadena es la que se tokeniza e inserta palabra por palabra al Trie. El ID entero actúa como clave para relacionar cada palabra indexada con su película de origen.
+
+### Estructura `DataLimpia`
+
+`DataLimpia` es un struct definido en `CClases.h` que almacena los campos de una película ya procesados y normalizados:
+
+```cpp
+struct DataLimpia {
+    string title, release_year, origin, director, cast, genre, plot;
+};
+```
+
+A diferencia de `Movie` (que guarda los datos crudos del CSV incluyendo `wiki_page`), `DataLimpia` omite la URL de Wikipedia y solo conserva los campos indexables ya limpios. Es el resultado final del pipeline de limpieza.
 
 ### Funciones de limpieza detalladas
 
@@ -100,7 +133,7 @@ Es el núcleo del sistema de limpieza. Trabaja en dos fases:
 
 **Fase 2 — Procesamiento carácter a carácter:**
 - Caracteres ASCII alfanuméricos: se normalizan a minúsculas.
-- Caracteres UTF-8 multibyte: se buscan en el mapa `accents` (más de 80 caracteres acentuados mapeados a su equivalente ASCII). Si el carácter no existe en el mapa (cirílico, chino, árabe, etc.), la **palabra completa** se descarta.
+- Caracteres UTF-8 multibyte: se buscan en el mapa `accents`. Si el carácter no existe en el mapa (cirílico, chino, árabe, etc.), la **palabra completa** se descarta.
 - Separadores y puntuación: disparan el guardado de la palabra acumulada.
 - Palabras en `palabrasProhibidas`: se filtran exactamente (p. ej. `"director"` en campos de cast).
 
@@ -113,17 +146,50 @@ Llama a `limpiarTextoAvanzado` sin bloqueos en paréntesis, pero filtrando la pa
 Caso real: `"James Cameron (director)"` → `"james cameron"`.
 
 #### `limpiarOrigen(s)`
-Lógica propia más rápida: solo acepta letras (convierte a minúsculas) y descarta todo lo demás.  
+Lógica propia más rápida: solo acepta letras (convierte a minúsculas) y descarta todo lo demás. Se usa una lógica independiente porque el campo Origin solo contiene nombres de países e industrias, sin paréntesis ni caracteres especiales relevantes.  
 Caso real: `"American/British"` → `"american british"`.
 
 #### `limpiarCast(s)`
-Llama a `limpiarTextoAvanzado` filtrando las palabras `"director"` y `"screenplay"` que a veces aparecen en la columna de reparto de Wikipedia.
+Llama a `limpiarTextoAvanzado` filtrando las palabras `"director"` y `"screenplay"` que a veces aparecen mezcladas en la columna de reparto de Wikipedia.  
+Caso real: `"Tom Hanks, Robin Wright (screenplay by Eric Roth)"` → `"tom hanks robin wright"`.
 
 #### `normalizarYLimpiar(s)`
-Limpieza genérica para los campos Genre y Plot. Aplica el mismo mapa de acentos, maneja corchetes de Wikipedia (`[citation needed]`, `[dead link]`, etc.) y normaliza el resto a minúsculas con espacios como separadores.
+Limpieza genérica para los campos Genre y Plot. Aplica el mismo mapa de acentos, maneja corchetes de Wikipedia (`[citation needed]`, `[dead link]`, `[better source needed]`, etc.) y normaliza el resto a minúsculas con espacios como separadores. A diferencia de la función maestra, no descarta palabras por caracteres no mapeados: los reemplaza por espacio, lo que la hace más permisiva pero suficiente para estos campos.
 
 #### `filtrarStopwords(textoLimpio)`
-Se aplica exclusivamente al Plot después de `normalizarYLimpiar`. Elimina las ~80 palabras de ruido del inglés (`"the"`, `"and"`, `"was"`, etc.) para reducir el tamaño del índice y mejorar la precisión de las búsquedas.
+Se aplica exclusivamente al Plot después de `normalizarYLimpiar`. Elimina ~100 palabras de ruido del inglés para reducir el tamaño del índice y mejorar la precisión de las búsquedas.
+
+La lista es en inglés porque el dataset es predominantemente en inglés. Los criterios para incluir una palabra fueron:
+
+- **Alta frecuencia, bajo valor semántico**: artículos, preposiciones, conjunciones y pronombres (`"the"`, `"and"`, `"his"`, `"from"`...).
+- **Verbos auxiliares y copulativos**: `"was"`, `"were"`, `"have"`, `"had"`, `"does"`, `"been"`.
+- **Adverbios y cuantificadores genéricos**: `"very"`, `"much"`, `"most"`, `"many"`, `"few"`, `"already"`, `"never"`.
+- **Palabras narrativas sin valor de búsqueda**: `"going"`, `"found"`, `"saying"`, `"told"`, `"seems"` — aparecen en casi cualquier sinopsis y no distinguen una película de otra.
+
+> La lista **no** se aplica a título, director, cast ni origen, porque en esos campos palabras como `"the"` o `"will"` pueden ser parte de un nombre propio.
+
+### Decisión de diseño: UTF-8 manual sin librerías externas
+
+El sistema procesa texto UTF-8 sin usar ninguna librería de internacionalización (como ICU o `<codecvt>`). En su lugar, detecta la longitud de cada carácter multibyte inspeccionando los bits del primer byte:
+
+| Patrón del primer byte | Longitud del carácter |
+|---|---|
+| `0xxxxxxx` (< 0x80) | 1 byte — ASCII estándar |
+| `110xxxxx` (& 0xE0 == 0xC0) | 2 bytes |
+| `1110xxxx` (& 0xF0 == 0xE0) | 3 bytes |
+| `11110xxx` (& 0xF8 == 0xF0) | 4 bytes |
+
+Una vez extraído el carácter completo como `string`, se busca en el mapa `accents`. Si existe, se reemplaza por su equivalente ASCII. Si no existe (cirílico, chino, árabe, etc.), la palabra completa se descarta, ya que no puede ser indexada de forma útil en un índice basado en caracteres latinos.
+
+Esta decisión mantiene el proyecto sin dependencias externas y es suficiente dado que el dataset es predominantemente en inglés.
+
+### El mapa `accents` — Por qué `string → string` y no `char → char`
+
+```cpp
+unordered_map<string, string> accents = { {"á","a"}, {"ñ","n"}, {"æ","ae"}, ... };
+```
+
+Los caracteres acentuados en UTF-8 ocupan 2, 3 o 4 bytes, por lo que no caben en un `char`. La clave del mapa es el carácter multibyte extraído como `string` (por ejemplo, `"á"` son 2 bytes: `0xC3 0xA1`). El valor también es `string` para poder manejar los casos donde un carácter se expande a dos letras ASCII, como `æ → "ae"` y `œ → "oe"`. El mapa cubre más de 80 caracteres entre vocales acentuadas, consonantes especiales europeas y vocales compuestas.
 
 ---
 
@@ -464,6 +530,7 @@ FIN FUNCIÓN
 - El sistema relaciona palabras mediante prefijos y subcadenas, pero no mediante análisis lingüístico avanzado (stemming o lemmatization).
 - El Trie puede crecer bastante con datasets grandes.
 - Insertar todos los sufijos de una palabra de longitud L genera O(L²) nodos, lo que hace que el consumo de memoria crezca rápido con un dataset grande de plots largos.
+
 ---
 
 ## Ejemplos de limpieza
@@ -493,7 +560,7 @@ FIN FUNCIÓN
 
 | Antes de filtrar                                          | Después de filtrar stopwords    |
 |-----------------------------------------------------------|---------------------------------|
-| `the man was walking and he found a treasure in the cave` | `man walking found treasure cave` |
+| `the man was walking and he found a treasure in the cave` | `man walking treasure cave` |
 
 ### Ejemplo 5 — Resultado final unificado para el Trie
 
@@ -576,19 +643,19 @@ Buscar: _
 
 ### Trie (estructura principal)
 - Búsqueda e inserción: O(L)
-- “A trie supports search and insertion in time proportional to the key length.” (Sedgewick & Wayne)
+- "A trie supports search and insertion in time proportional to the key length." (Sedgewick & Wayne)
 
 ### Hash maps
 - O(1) promedio para acceso
-- “Hash-table operations take O(1) time on average…” (CLRS)
+- "Hash-table operations take O(1) time on average…" (CLRS)
 
 ### Árboles balanceados (referencia teórica)
 - O(log n) altura
-- “The height of a balanced binary search tree is O(log n).” (CLRS)
+- "The height of a balanced binary search tree is O(log n)." (CLRS)
 
 ### TF-IDF scoring
 - O(k) por consulta
-- “TF-IDF assigns higher weights to rare terms…” (Manning et al.)
+- "TF-IDF assigns higher weights to rare terms…" (Manning et al.)
 
 ### Inserción con sufijos
 - O(L²) por palabra debido a expansión de subcadenas
@@ -598,4 +665,3 @@ Buscar: _
   donde:
   L = longitud de query
   k = documentos relevantes encontrados
-
