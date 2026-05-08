@@ -349,7 +349,7 @@ unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& p
         string origin   = limpiarOrigen(movie.getOrigin());
         string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
 
-        string cast     = normalizarYLimpiar(movie.getCast());
+        string cast     = limpiarCast(movie.getCast());
         string genre    = normalizarYLimpiar(movie.getGenre());
 
         string plotRaw   = normalizarYLimpiar(movie.getPlot());
@@ -377,7 +377,7 @@ void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string&
         string origin   = limpiarOrigen(movie.getOrigin());
         string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
 
-        string cast     = normalizarYLimpiar(movie.getCast());
+        string cast     = limpiarCast(movie.getCast());
         string genre    = normalizarYLimpiar(movie.getGenre());
 
         string plotRaw  = normalizarYLimpiar(movie.getPlot());
