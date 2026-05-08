@@ -315,7 +315,141 @@ FUNCIÓN insertarpalabra(palabra: string, id: int, pesoCampo: int):
 
 FIN FUNCIÓN
 ```
+# Complejidad Algorítmica de `insertarPalabra`
 
+La función `insertarPalabra` implementa un índice textual basado en un **Trie (Prefix Tree)**.  
+El algoritmo realiza dos operaciones principales:
+
+1. Inserción de la palabra completa.
+2. Inserción de subcadenas/sufijos limitados por una longitud máxima (`MAX_LEN`).
+
+---
+
+## 1. Inserción de la palabra completa
+
+El algoritmo recorre cada carácter de la palabra exactamente una vez:
+
+```cpp
+PARA CADA caracter c EN palabra
+```
+
+Si `n` representa la longitud de la palabra, entonces el recorrido ejecuta `n` iteraciones.
+
+Las operaciones internas:
+
+```cpp
+nodo.hijos[c]
+nodo.freq[id] += pesoCampo
+```
+
+corresponden a accesos e inserciones sobre una tabla hash (`unordered_map`), cuyo costo promedio es `O(1)`.
+
+Según *Introduction to Algorithms* de Cormen et al.:
+
+> “Under the assumption of simple uniform hashing, hash-table operations take expected O(1) time.”
+
+Por tanto, la complejidad de esta sección es:
+
+```txt
+O(n)
+```
+
+---
+
+## 2. Inserción de subcadenas limitadas
+
+Posteriormente, el algoritmo genera subcadenas desde cada posición de la palabra:
+
+```cpp
+PARA i DESDE 0 HASTA n-1
+```
+
+Sin embargo, el ciclo interno se encuentra limitado por:
+
+```cpp
+MAX_LEN = 6
+```
+
+```cpp
+PARA j DESDE i HASTA min(n-1, i + MAX_LEN - 1)
+```
+
+Esto implica que el número máximo de iteraciones internas es constante:
+
+```txt
+6 → O(1)
+```
+
+Por ello, aunque el ciclo externo recorra `n` posiciones, el costo total permanece lineal:
+
+```txt
+O(n) * O(1) = O(n)
+```
+
+Según *The Algorithm Design Manual* de Steven Skiena:
+
+> “Bounding search depth or substring length is a common optimization technique to reduce quadratic behavior in text processing.”
+
+---
+
+# Complejidad Temporal Total
+
+La complejidad total del algoritmo es:
+
+```txt
+O(n) + O(n) = O(n)
+```
+
+Por tanto:
+
+```txt
+O(n)
+```
+
+---
+
+# Optimización Importante
+
+Si `MAX_LEN` no estuviera acotado, el ciclo interno recorrería aproximadamente `n-i` posiciones por iteración externa, generando la siguiente sumatoria:
+
+```txt
+Σ(i=0 → n-1) (n-i)
+```
+
+lo cual equivale a:
+
+```txt
+n(n+1)/2
+```
+
+y produce una complejidad:
+
+```txt
+O(n²)
+```
+
+Gracias al límite constante `MAX_LEN`, el algoritmo evita crecimiento cuadrático y mantiene complejidad lineal.
+
+---
+
+# Complejidad Espacial
+
+Cada carácter puede generar nuevos nodos dentro del Trie.
+
+Según *Open Data Structures* de Pat Morin:
+
+> “The space used by a trie is proportional to the total number of stored character nodes.”
+
+Dado que:
+
+- la palabra completa inserta `n` caracteres,
+- y las subcadenas poseen longitud máxima constante,
+
+el crecimiento espacial también es lineal:
+
+```txt
+O(n)
+```
 ---
 
 ## Estructura de datos: Trie
@@ -456,6 +590,218 @@ FUNCIÓN buscar(query: string) → Lista<id>
 
 FIN FUNCIÓN
 ```
+# Complejidad Algorítmica de `buscar`
+
+La función `buscar` implementa un sistema de recuperación de información basado en puntuación TF-IDF sobre un índice invertido almacenado en un Trie.  
+El algoritmo realiza cuatro procesos principales:
+
+1. Tokenización y normalización de la consulta.
+2. Búsqueda de coincidencias por token.
+3. Cálculo de puntuaciones TF-IDF.
+4. Ordenamiento de resultados por relevancia.
+
+---
+## 1. Tokenización de la consulta
+
+El algoritmo recorre cada token generado desde la consulta:
+
+```cpp
+PARA CADA token EN tokenizar(query)
+```
+
+Si:
+
+```txt
+t = número de tokens de la consulta
+```
+
+entonces el ciclo externo ejecuta `t` iteraciones.
+
+Las operaciones:
+
+```cpp
+convertirMinusculas(token)
+largo(token)
+```
+
+dependen únicamente del tamaño del token, el cual suele ser pequeño respecto al total de documentos indexados.
+
+Por ello, el costo promedio de esta etapa es:
+
+```txt
+O(t)
+```
+
+---
+
+## 2. Búsqueda en el Trie
+
+Cada token válido ejecuta:
+
+```cpp
+resultados ← buscarNodo(token)
+```
+
+La búsqueda en un Trie depende linealmente de la longitud de la cadena buscada.
+
+Según *Open Data Structures* de Pat Morin:
+
+> “Trie operations run in O(k) time, where k is the length of the string.”
+
+Si:
+
+```txt
+k = longitud del token
+```
+
+entonces:
+
+```txt
+buscarNodo(token) = O(k)
+```
+
+Como `k` suele ser pequeño y acotado para palabras normales, el costo promedio por token permanece cercano a constante.
+
+---
+
+## 3. Cálculo de TF-IDF
+
+Posteriormente, el algoritmo recorre todos los documentos asociados al token:
+
+```cpp
+PARA CADA (id, freq) EN resultados
+```
+
+Las operaciones:
+
+```cpp
+tf ← freq
+add ← tf * idf
+score[id] += add
+matchCount[id] += 1
+```
+
+corresponden a operaciones sobre tablas hash (`unordered_map`), cuyo costo promedio es `O(1)`.
+
+Según *Introduction to Algorithms* de Cormen et al.:
+
+> “Under the assumption of simple uniform hashing, hash-table operations take expected O(1) time.”
+
+Si:
+
+```txt
+r = cantidad de documentos que contienen el token
+```
+
+entonces esta etapa posee complejidad:
+
+```txt
+O(r)
+```
+
+Por tanto, considerando todos los tokens:
+
+```txt
+O(t * r)
+```
+
+---
+
+## 4. Penalización de coincidencias incompletas
+
+El algoritmo recorre todos los documentos puntuados:
+
+```cpp
+PARA CADA (id, sc) EN score
+```
+
+Si:
+
+```txt
+m = cantidad de documentos con score
+```
+
+entonces esta sección cuesta:
+
+```txt
+O(m)
+```
+
+---
+
+## 5. Ordenamiento de resultados
+
+Finalmente, los resultados se ordenan por relevancia:
+
+```cpp
+ordenar(score DESCENDENTE)
+```
+
+Ordenar `m` elementos requiere:
+
+```txt
+O(m log m)
+```
+
+Según *Introduction to Algorithms*:
+
+> “Comparison sorting algorithms have a lower bound of Ω(n log n) in the worst case.”
+
+---
+
+# Complejidad Temporal Total
+
+La complejidad total del algoritmo es:
+
+```txt
+O(t * r + m log m)
+```
+
+donde:
+
+- `t` = número de tokens en la consulta.
+- `r` = cantidad promedio de documentos asociados por token.
+- `m` = cantidad total de documentos puntuados.
+
+En escenarios reales, como únicamente se retornan los 5 mejores resultados y las consultas suelen contener pocos tokens, el rendimiento práctico es cercano a lineal respecto al número de coincidencias relevantes.
+
+---
+
+# Complejidad Espacial
+
+El algoritmo utiliza estructuras auxiliares:
+
+```cpp
+score ← Map<id, double>
+matchCount ← Map<id, int>
+```
+
+Ambas almacenan información únicamente para documentos coincidentes.
+
+Si:
+
+```txt
+m = cantidad de documentos relevantes
+```
+
+entonces el espacio utilizado es:
+
+```txt
+O(m)
+```
+
+---
+
+# Optimización Implementada
+
+El algoritmo incorpora una penalización para documentos que no contienen todos los tokens de la consulta:
+
+```cpp
+SI matchCount[id] < totalTokens:
+    score[id] *= 0.5
+```
+
+Esto mejora la relevancia semántica de los resultados sin incrementar significativamente la complejidad temporal, ya que la operación se realiza durante un recorrido lineal sobre los documentos puntuados.
 
 ---
 
@@ -501,6 +847,167 @@ FUNCIÓN buscarNodo(clave: string) → Map<id, freq>
 
 FIN FUNCIÓN
 ```
+# Complejidad Algorítmica de `buscarNodo`
+
+La función `buscarNodo` realiza búsquedas dentro de un **Trie (Prefix Tree)** para recuperar documentos asociados a una palabra o prefijo determinado.
+
+El algoritmo realiza tres procesos principales:
+
+1. Recorrido del Trie carácter por carácter.
+2. Verificación de coincidencia exacta o parcial.
+3. Construcción del mapa de resultados.
+
+---
+
+## 1. Recorrido del Trie
+
+El algoritmo recorre cada carácter de la clave buscada:
+
+```cpp
+PARA CADA caracter c EN clave
+```
+
+Si:
+
+```txt
+k = longitud de la clave
+```
+
+entonces el ciclo ejecuta `k` iteraciones.
+
+En cada iteración se realiza:
+
+```cpp
+SI c NO existe en nodo.hijos
+nodo ← nodo.hijos[c]
+```
+
+Estas operaciones corresponden a accesos sobre una tabla hash (`unordered_map`), cuyo costo promedio es `O(1)`.
+
+Según *Introduction to Algorithms* de Cormen et al.:
+
+> “Under the assumption of simple uniform hashing, hash-table operations take expected O(1) time.”
+
+Por ello, el recorrido completo del Trie tiene complejidad:
+
+```txt
+O(k)
+```
+
+---
+
+## 2. Caso de coincidencia exacta o parcial
+
+Una vez alcanzado el nodo correspondiente, el algoritmo recorre las frecuencias almacenadas:
+
+```cpp
+PARA CADA (id, freq) EN nodo.freq
+```
+
+Si:
+
+```txt
+r = cantidad de documentos asociados al nodo
+```
+
+entonces el recorrido cuesta:
+
+```txt
+O(r)
+```
+
+Las operaciones internas:
+
+```cpp
+resultado[id] += freq
+resultado[id] += freq * 1.5
+```
+
+son operaciones de inserción y actualización sobre tablas hash, cuyo costo promedio es `O(1)`.
+
+---
+
+## 3. Construcción del resultado
+
+El mapa:
+
+```cpp
+resultado ← nuevo Map<id, freq>
+```
+
+almacena únicamente los documentos encontrados para la clave buscada.
+
+Por tanto, el tamaño del resultado depende directamente de `r`.
+
+---
+
+# Complejidad Temporal Total
+
+La complejidad total del algoritmo es:
+
+```txt
+O(k + r)
+```
+
+donde:
+
+- `k` = longitud de la palabra buscada.
+- `r` = cantidad de documentos asociados al nodo encontrado.
+
+---
+
+# Complejidad Espacial
+
+El algoritmo crea una estructura auxiliar:
+
+```cpp
+resultado ← nuevo Map<id, freq>
+```
+
+que almacena todos los documentos coincidentes.
+
+Si:
+
+```txt
+r = cantidad de resultados encontrados
+```
+
+entonces el espacio utilizado es:
+
+```txt
+O(r)
+```
+
+---
+
+# Optimización Implementada
+
+El algoritmo diferencia entre:
+
+- coincidencias exactas,
+- coincidencias parciales.
+
+Cuando existe coincidencia exacta:
+
+```cpp
+resultado[id] += freq * 1.5
+```
+
+se aplica un incremento de relevancia (*boost*) para priorizar resultados exactos sobre coincidencias parciales.
+
+Esta optimización mejora la calidad del ranking sin alterar la complejidad asintótica del algoritmo, ya que únicamente agrega una operación aritmética constante durante el recorrido lineal de resultados.
+
+Los Tries permiten búsquedas proporcionales a la longitud de la cadena consultada.
+
+Según *Open Data Structures* de Pat Morin:
+
+> “Trie operations run in O(k) time, where k is the length of the string.”
+
+Asimismo, las operaciones promedio sobre tablas hash poseen costo constante esperado.
+
+Según *Introduction to Algorithms*:
+
+> “Hash-table operations take expected O(1) time.”
 
 ---
 
