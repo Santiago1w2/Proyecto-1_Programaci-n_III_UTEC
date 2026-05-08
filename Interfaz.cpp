@@ -258,7 +258,7 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "│                                    │   │   🎥 RECOMENDACIONES                                                                                 │\n";
     cout << "│  A. 👤 Mi Perfil                   │   │   ───────────────────────────────                                                                    │\n";
     cout << "│  B. 🕘 Historial                   │   │                                                                                                      │\n";
-    cout << "│  C. ⭐ Favoritos                   │   │                                                                                                      │\n";
+    cout << "│  C. ⭐ Favoritos                    │   │                                                                                                      │\n";
     cout << "│  D. 🔍 Buscar                      │   │                                                                                                      │\n";
     cout << "│                                    │   │                                                                                                      │\n";
     cout << "│  0. Salir                          │   │                                                                                                      │\n";

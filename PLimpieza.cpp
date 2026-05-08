@@ -1,10 +1,6 @@
 //
 // Created by Pieri on 4/05/2026.
 #include "PLimpieza.h"
-#include <sstream>
-#include <unordered_map>
-
-#include "CClases.h"
 
 // Nuestro nuevo mapa que devuelve strings
 unordered_map<string, string> accents = {
@@ -69,45 +65,6 @@ unordered_set<string> stopwords = {
     "continue", "point", "further", "form", "cause", "seems"
 };
 
-bool leerFilaCSV(ifstream& file, string& lineaCompleta) {
-    string linea;
-    if (!getline(file, linea)) return false;
-
-    lineaCompleta = linea;
-    int comillas = 0;
-    for (char c : linea) { if (c == '"') comillas++; }
-
-    while (comillas % 2 != 0) {
-        if (!getline(file, linea)) break;
-        lineaCompleta += "\n" + linea;
-        for (char c : linea) { if (c == '"') comillas++; }
-    }
-    return true;
-}
-
-vector<string> parseCSVLine(const string& linea) {
-    vector<string> fila;
-    string campo = "";
-    bool enComillas = false;
-
-    for (size_t i = 0; i < linea.size(); i++) {
-        char c = linea[i];
-        if (c == '"') {
-            if (enComillas && i + 1 < linea.size() && linea[i + 1] == '"') {
-                campo += '"'; i++;
-            } else {
-                enComillas = !enComillas;
-            }
-        }
-        else if (c == ',' && !enComillas) {
-            fila.push_back(campo);
-            campo = "";
-        }
-        else { campo += c; }
-    }
-    fila.push_back(campo);
-    return fila;
-}
 
 string aMinusculas(string texto) {
     transform(texto.begin(), texto.end(), texto.begin(), ::tolower);
@@ -148,8 +105,6 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
             if (i < s.length()) i++;
         }
         else if (s[i] == '(') {
-            // ... (aquí sigue tu lógica de paréntesis que ya tenías)
-            // que básicamente borra los () y evalúa el contenido
             size_t start = i + 1;
             size_t end = start;
             while (end < s.length() && s[end] != ')') end++;
@@ -222,7 +177,6 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
         }
     }
     procesarPalabra();
-
     return textoFinal;
 }
 
@@ -263,6 +217,7 @@ string limpiarCast(const string& s) {
     // reemplazará caracteres especiales automáticamente.
     return limpiarTextoAvanzado(s, {}, {"director", "screenplay"});
 }
+
 
 // 4. Limpieza Genérica (Se usará TEMPORALMENTE para el resto de columnas)
 string normalizarYLimpiar(const string& s) {
@@ -324,6 +279,7 @@ string normalizarYLimpiar(const string& s) {
     return res;
 }
 
+
 // Función auxiliar para el Plot
 string filtrarStopwords(const string& textoLimpio) {
     stringstream ss(textoLimpio);
@@ -339,6 +295,9 @@ string filtrarStopwords(const string& textoLimpio) {
     return resultado;
 }
 
+
+
+
 // --- PREPARACIÓN PARA EL MOTOR DE BÚSQUEDA ---
 unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis) {
     unordered_map<int, string> dataLimpia;
@@ -347,19 +306,25 @@ unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& p
         string year     = movie.getYear();
         string title    = limpiarTitulo(movie.getTtitle());
         string origin   = limpiarOrigen(movie.getOrigin());
-        string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
+        string director = limpiarDirector(movie.getDirector());
 
         string cast     = limpiarCast(movie.getCast());
         string genre    = normalizarYLimpiar(movie.getGenre());
 
-        string plotRaw   = normalizarYLimpiar(movie.getPlot());
-        string plotFinal = filtrarStopwords(plotRaw);
+        string plotTemp   = normalizarYLimpiar(movie.getPlot());
+        string plotFinal = filtrarStopwords(plotTemp);
 
         string textoFinal = year + " " + title + " " + origin + " " + director + " " + cast + " " + genre + " " + plotFinal;
         dataLimpia[id] = textoFinal;
     }
     return dataLimpia;
 }
+
+
+
+
+
+
 
 // --- EXPORTACIÓN A CSV SIN COMILLAS ---
 void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
@@ -368,7 +333,6 @@ void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string&
         cout << "Error: No se pudo crear el archivo " << nombreArchivo << endl;
         return;
     }
-
     archivo << "Release Year,Title,Origin/Ethnicity,Director,Cast,Genre,Plot\n";
     unordered_map<int, DataLimpia> limpiaA;
     for (const auto& [id, movie] : pelis) {

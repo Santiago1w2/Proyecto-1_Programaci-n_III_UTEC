@@ -1,20 +1,19 @@
 #ifndef PROCESAMIENTO_H
 #define PROCESAMIENTO_H
 
+
+#include "CClases.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <cctype>
-#include "CClases.h"
-
 using namespace std;
-// Declaraciones de funciones de procesamiento y lectura CSV
-bool leerFilaCSV(ifstream& file, string& lineaCompleta);
-vector<string> parseCSVLine(const string& linea);
+
 
 string aMinusculas(string texto);
 
@@ -24,8 +23,10 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
 // Funciones exclusivas (Ahora usan la función maestra o su lógica rápida)
 string limpiarTitulo(const string& s);
 string limpiarOrigen(const string& s);
-string limpiarDirector(const string& s); // NUEVA FUNCIÓN PARA DIRECTOR
+string limpiarDirector(const string& s);
 string limpiarCast(const string& s);
+
+
 
 // Función de limpieza genérica (se usará temporalmente para las demás columnas)
 string normalizarYLimpiar(const string& s);

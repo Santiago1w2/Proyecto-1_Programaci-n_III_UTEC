@@ -24,7 +24,7 @@ Proyecto-1_Programaci-n_III_UTEC/
 ├── main.cpp                  ← Punto de entrada
 ├── CClases.h / CClases.cpp   ← Clases Movie, Usuario, DataLimpia
 ├── PLimpieza.h / PLimpieza.cpp ← Toda la lógica de limpieza
-├── Funciones.h / Funciones.cpp ← Lectura CSV, manejo de usuarios
+├── LPeliculas.h / LPeliculas.cpp ← Lectura CSV, manejo de usuarios
 ├── Trie.h / Trie.cpp          ← Estructura de datos principal
 ├── Interfaz.h / Interfaz.cpp  ← UI de consola (Windows)
 └── cmake-build-debug/
@@ -75,8 +75,6 @@ Por otra parte, para el caso que el caracter sea una coma y el valor de `encomil
 El proceso mencionado se realiza hasta leer la linea completa y se retorna el vector con los atributos obtenidos. Regresando a la función principal, se utilizan los índices de los atributos (como se muestra en la tabla anterior) para crear y registrar variables que correspondan a cada atributo.
 Finalmente, se inserta esta información en el unordered_map inicial, se aumenta el numero de Id y el proceso se repite para la siguiente linea (pelicula).
 Cuando todas las lineas han sido procesadas, como buena practica de programación se cierra el archivo y la funcion retorna el mapa.
-
-
 
 ---
 
@@ -208,6 +206,121 @@ unordered_map<string, string> accents = { {"á","a"}, {"ñ","n"}, {"æ","ae"}, .
 Los caracteres acentuados en UTF-8 ocupan 2, 3 o 4 bytes, por lo que no caben en un `char`. La clave del mapa es el carácter multibyte extraído como `string` (por ejemplo, `"á"` son 2 bytes: `0xC3 0xA1`). El valor también es `string` para poder manejar los casos donde un carácter se expande a dos letras ASCII, como `æ → "ae"` y `œ → "oe"`. El mapa cubre más de 80 caracteres entre vocales acentuadas, consonantes especiales europeas y vocales compuestas.
 
 ---
+## Ejemplos de limpieza
+
+### Ejemplo 1 — Título con paréntesis y caracteres especiales
+
+| Campo    | Valor original                        | Valor limpio         |
+|----------|---------------------------------------|----------------------|
+| Title    | `Spider-Man (film)`                   | `spider man`         |
+| Title    | `Amélie`                              | `amelie`             |
+| Title    | `功夫 (Kung Fu Hustle)`               | `kung fu hustle`     |
+
+### Ejemplo 2 — Director con anotaciones de Wikipedia
+
+| Campo    | Valor original                        | Valor limpio         |
+|----------|---------------------------------------|----------------------|
+| Director | `James Cameron (director)`            | `james cameron`      |
+| Director | `Sergio León [1]`                     | `sergio leon`        |
+
+### Ejemplo 3 — Cast con roles mezclados
+
+| Campo | Valor original                                      | Valor limpio                   |
+|-------|-----------------------------------------------------|--------------------------------|
+| Cast  | `Tom Hanks, Robin Wright (screenplay by Eric Roth)` | `tom hanks robin wright`       |
+
+### Ejemplo 4 — Plot con stopwords
+
+| Antes de filtrar                                          | Después de filtrar stopwords    |
+|-----------------------------------------------------------|---------------------------------|
+| `the man was walking and he found a treasure in the cave` | `man walking treasure cave` |
+
+### Ejemplo 5 — Resultado final unificado para el Trie
+
+Para la película *Casablanca* (hipotético):
+
+```
+Texto final indexado:
+"1942 casablanca american michael curtiz humphrey bogart ingrid bergman drama
+world war ii rick blaine cynical american expatriate operates nightclub wartime
+casablanca morocco unexpected arrival former lover ilsa lund..."
+```
+
+---
+
+## Estructura de datos: Trie
+
+Se eligió un **Trie de caracteres con TF-IDF y soporte de subcadenas** como motor de búsqueda.
+
+### ¿Por qué un Trie?
+
+- Búsquedas por prefijo en **O(L)** donde `L` es el tamaño de la query.
+- Permite búsqueda parcial naturalmente.
+- Las subcadenas permiten encontrar palabras aunque el usuario escriba desde el medio.
+
+Ejemplo:
+
+```txt
+"tion" → encuentra:
+    "action"
+    "fiction"
+    "nation"
+```
+
+---
+
+## Estructura de un nodo
+
+```cpp
+struct Nodo {
+
+    unordered_map<char, Nodo*> hijos;
+
+    unordered_map<int, int> freq;
+
+    bool esFinDePalabra = false;
+};
+```
+
+Cada nodo acumula:
+
+```cpp
+freq[id] += peso
+```
+
+De esta manera, los nodos intermedios ya contienen información útil para scoring sin recorrer todo el subárbol.
+
+---
+
+## Inserción de subcadenas
+
+Para la palabra:
+
+```txt
+"action"
+```
+
+El Trie inserta caminos como:
+
+```txt
+raíz → a→c→t→i→o→n
+raíz → c→t→i→o→n
+raíz → t→i→o→n
+raíz → i→o→n
+raíz → o→n
+raíz → n
+```
+
+Todos los nodos acumulan:
+
+```txt
+freq[id] += peso
+```
+
+Esto permite búsquedas desde cualquier parte de la palabra.
+
+---
+
 
 ## Pseudo-código de inserción al Trie
 
@@ -315,79 +428,6 @@ FUNCIÓN insertarpalabra(palabra: string, id: int, pesoCampo: int):
 
 FIN FUNCIÓN
 ```
-
----
-
-## Estructura de datos: Trie
-
-Se eligió un **Trie de caracteres con TF-IDF y soporte de subcadenas** como motor de búsqueda.
-
-### ¿Por qué un Trie?
-
-- Búsquedas por prefijo en **O(L)** donde `L` es el tamaño de la query.
-- Permite búsqueda parcial naturalmente.
-- Las subcadenas permiten encontrar palabras aunque el usuario escriba desde el medio.
-
-Ejemplo:
-
-```txt
-"tion" → encuentra:
-    "action"
-    "fiction"
-    "nation"
-```
-
----
-
-## Estructura de un nodo
-
-```cpp
-struct Nodo {
-
-    unordered_map<char, Nodo*> hijos;
-
-    unordered_map<int, int> freq;
-
-    bool esFinDePalabra = false;
-};
-```
-
-Cada nodo acumula:
-
-```cpp
-freq[id] += peso
-```
-
-De esta manera, los nodos intermedios ya contienen información útil para scoring sin recorrer todo el subárbol.
-
----
-
-## Inserción de subcadenas
-
-Para la palabra:
-
-```txt
-"action"
-```
-
-El Trie inserta caminos como:
-
-```txt
-raíz → a→c→t→i→o→n
-raíz → c→t→i→o→n
-raíz → t→i→o→n
-raíz → i→o→n
-raíz → o→n
-raíz → n
-```
-
-Todos los nodos acumulan:
-
-```txt
-freq[id] += peso
-```
-
-Esto permite búsquedas desde cualquier parte de la palabra.
 
 ---
 
@@ -528,7 +568,7 @@ FIN FUNCIÓN
 
 ---
 
-## ¿Qué funciona bien en esta implementación?
+## Ventajas de este tipo de implementación
 
 - Soporta búsqueda exacta y parcial.
 - TF-IDF mejora la relevancia.
@@ -549,47 +589,6 @@ FIN FUNCIÓN
 
 ---
 
-## Ejemplos de limpieza
-
-### Ejemplo 1 — Título con paréntesis y caracteres especiales
-
-| Campo    | Valor original                        | Valor limpio         |
-|----------|---------------------------------------|----------------------|
-| Title    | `Spider-Man (film)`                   | `spider man`         |
-| Title    | `Amélie`                              | `amelie`             |
-| Title    | `功夫 (Kung Fu Hustle)`               | `kung fu hustle`     |
-
-### Ejemplo 2 — Director con anotaciones de Wikipedia
-
-| Campo    | Valor original                        | Valor limpio         |
-|----------|---------------------------------------|----------------------|
-| Director | `James Cameron (director)`            | `james cameron`      |
-| Director | `Sergio León [1]`                     | `sergio leon`        |
-
-### Ejemplo 3 — Cast con roles mezclados
-
-| Campo | Valor original                                      | Valor limpio                   |
-|-------|-----------------------------------------------------|--------------------------------|
-| Cast  | `Tom Hanks, Robin Wright (screenplay by Eric Roth)` | `tom hanks robin wright`       |
-
-### Ejemplo 4 — Plot con stopwords
-
-| Antes de filtrar                                          | Después de filtrar stopwords    |
-|-----------------------------------------------------------|---------------------------------|
-| `the man was walking and he found a treasure in the cave` | `man walking treasure cave` |
-
-### Ejemplo 5 — Resultado final unificado para el Trie
-
-Para la película *Casablanca* (hipotético):
-
-```
-Texto final indexado:
-"1942 casablanca american michael curtiz humphrey bogart ingrid bergman drama
-world war ii rick blaine cynical american expatriate operates nightclub wartime
-casablanca morocco unexpected arrival former lover ilsa lund..."
-```
-
----
 
 ## Avance de la interfaz
 

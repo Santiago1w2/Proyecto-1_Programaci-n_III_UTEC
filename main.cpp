@@ -1,7 +1,7 @@
 #include "CClases.h"
 #include "Plimpieza.h"
 #include "Interfaz.h"
-#include "Funciones.h"
+#include "LPeliculas.h"
 
 
 int main() {
