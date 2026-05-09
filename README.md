@@ -1021,7 +1021,9 @@ Buscar: _
 - "TF-IDF assigns higher weights to rare terms…" (Manning et al.)
 
 ### Inserción con sufijos
-- O(L²) por palabra debido a expansión de subcadenas
+- O(L) por palabra debido a expansión de subcadenas
+- La generación de subcadenas está acotada por una constante, por lo que no crece cuadráticamente.
+- En un Suffix Trie completo sería O(L²), pero aquí se optimiza a lineal.
 
 ### Complejidad total de búsqueda
 - O(L + k)
