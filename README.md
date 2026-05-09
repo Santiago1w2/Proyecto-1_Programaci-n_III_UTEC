@@ -1030,7 +1030,6 @@ Buscar: _
 ---
 ## Interaccion con el usuario
 
----
 
 Mas allá de la interacción con el usuario a traves de la interfaz, es importante mencionar y enteder algunas validaciones que se realizan.
 
