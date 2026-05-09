@@ -306,34 +306,6 @@ string filtrarStopwords(const string& textoLimpio) {
 
 
 
-//Acá ya preparo el texto final que utilizará el motor de búsqueda, la idea es limpiar cada columna individualmente y luego concatenar todo en un solo string grande por película. El resultado final funciona como una especie de representación "indexable" de cada película ya normalizada.
-unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis) {
-    unordered_map<int, string> dataLimpia;
-
-    for (const auto& [id, movie] : pelis) {
-        string year     = movie.getYear();
-        string title    = limpiarTitulo(movie.getTtitle());
-        string origin   = limpiarOrigen(movie.getOrigin());
-        string director = limpiarDirector(movie.getDirector());
-
-        string cast     = limpiarCast(movie.getCast());
-        string genre    = normalizarYLimpiar(movie.getGenre());
-
-        string plotTemp   = normalizarYLimpiar(movie.getPlot());
-        string plotFinal = filtrarStopwords(plotTemp);
-
-        string textoFinal = year + " " + title + " " + origin + " " + director + " " + cast + " " + genre + " " + plotFinal;
-        dataLimpia[id] = textoFinal;
-    }
-    return dataLimpia;
-}
-
-
-
-
-
-
-
 // --- EXPORTACIÓN A CSV SIN COMILLAS ---
 //Esta función exporta toda la data ya limpia a un CSV y me sirvió bastante para debugging porque podía revisar manualmente cómo estaba quedando cada columna después de la limpieza.
 void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
