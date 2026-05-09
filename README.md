@@ -923,38 +923,7 @@ FIN FUNCIÓN
 
 ---
 
-# Flujo Completo del Sistema
 
-```txt
-CSV
-    ↓
-
-normalización
-    ↓
-
-tokenización
-    ↓
-
-Trie
-    ↓
-
-TF acumulado
-    ↓
-
-docFreq
-    ↓
-
-búsqueda
-    ↓
-
-TF-IDF
-    ↓
-
-ranking
-    ↓
-
-top resultados
-```
 ## Ventajas de este tipo de implementación
 
 - Soporta búsqueda exacta, por prefijo y parcial (subcadenas).
