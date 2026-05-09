@@ -325,27 +325,13 @@ nation
 ```cpp
 struct Nodo {
 
-    unordered_map<char, Nodo*> hijos;
+    unordered_map<char, Nodo*> hijos; // conexiones hacia otros caracteres
 
-    unordered_map<int, int> freq;
+    unordered_map<int, int> freq; //TF (Frecuencia de aparicion) acumulado por película
 
-    bool esFinDePalabra = false;
+    bool esFinDePalabra = false; // indica si es el fin de la palabra su sirve para indicar si hubo cincidencia exacta con la busqueda
 };
 ```
-
----
-
-# Explicación de la Estructura
-
-Cada nodo almacena:
-
-| atributo | función |
-|---|---|
-| `hijos` | conexiones hacia otros caracteres |
-| `freq` | TF acumulado por película |
-| `esFinDePalabra` | indica coincidencia exacta |
-
----
 
 # Frecuencias Acumuladas
 
@@ -368,11 +354,11 @@ El sistema asigna distintos pesos según el origen del token:
 
 | campo | peso |
 |---|---|
-| título | alto |
-| director | alto |
-| cast | medio |
-| género | medio |
-| plot | bajo |
+| título | alto = 5 |
+| director | bajo = 1 |
+| cast | bajo = 1 |
+| género | bajo = 1 |
+| plot | medio = 2 |
 
 Esto mejora la relevancia semántica de los resultados.
 
@@ -683,7 +669,7 @@ donde:
 | símbolo | significado |
 |---|---|
 | `k` | longitud de la palabra |
-| `r` | cantidad de documentos encontrados |
+| `r` | cantidad de películas encontrados |
 
 ---
 
@@ -742,7 +728,7 @@ donde:
 | símbolo | significado |
 |---|---|
 | `totalDocs` | películas totales |
-| `df` | documentos que contienen el token |
+| `df` | películas que contienen el token |
 
 ---
 
@@ -839,7 +825,7 @@ FUNCIÓN buscar(query)
     FIN PARA
 
 
-    // PENALIZACIÓN POR NO SER UNA PALBRA COMPLETA
+    // PENALIZACIÓN POR NO SER UNA PALABRA COMPLETA
     
 
     PARA CADA (id, sc) EN score
@@ -855,7 +841,7 @@ FUNCIÓN buscar(query)
 
 
     
-    // ORDENAR DE MAYOR A MENOR SEGUN SCORE CALCULA CON TF-IDF
+    // ORDENAR DE MAYOR A MENOR SEGUN SCORE CALCULADO CON TF-IDF
     
 
     ordenar score DESCENDENTE
@@ -894,8 +880,8 @@ donde:
 | símbolo | significado |
 |---|---|
 | `t` | tokens de la consulta |
-| `r` | documentos encontrados por token |
-| `m` | documentos puntuados |
+| `r` | películas encontradas por token |
+| `m` | cantidad de películas que recibieron score|
 
 ---
 
@@ -971,22 +957,24 @@ top resultados
 ```
 ## Ventajas de este tipo de implementación
 
-- Soporta búsqueda exacta y parcial.
-- TF-IDF mejora la relevancia.
-- El boost ×1.5 favorece coincidencias exactas.
-- La penalización ×0.5 reduce falsos positivos.
-- `seenInDoc` mantiene el cálculo correcto de IDF.
-- `MAX_LEN` evita explosión excesiva de memoria.
+- Soporta búsqueda exacta, por prefijo y parcial (subcadenas).
+- El uso de n-grams/suffix limitados (MAX_LEN) permite encontrar palabras incluso desde el medio.
+- TF-IDF mejora la relevancia global de los resultados.
+- El boost ×1.5 favorece coincidencias exactas frente a parciales.
+- La penalización ×0.5 reduce resultados incompletos o poco relevantes.
+- seenInDoc permite calcular correctamente el IDF (document frequency) sin duplicados por película.
+- El límite MAX_LEN evita una expansión excesiva del Trie y mantiene el crecimiento controlado.
+- El sistema combina recuperación léxica (Trie) con ranking estadístico (TF-IDF).
 
 ---
 
 ## Limitaciones conocidas
 
-- Insertar subcadenas aumenta consumo de memoria.
-- Complejidad cercana a **O(L²)** por palabra.
-- El sistema relaciona palabras mediante prefijos y subcadenas, pero no mediante análisis lingüístico avanzado (stemming o lemmatization).
-- El Trie puede crecer bastante con datasets grandes.
-- Insertar todos los sufijos de una palabra de longitud L genera O(L²) nodos, lo que hace que el consumo de memoria crezca rápido con un dataset grande de plots largos.
+- El almacenamiento de subcadenas aumenta el consumo de memoria respecto a un Trie clásico.
+- El sistema no realiza procesamiento lingüístico avanzado.
+- El Trie puede crecer bastante en datasets grandes debido a la duplicación de caminos por subcadenas.
+- Aunque MAX_LEN reduce el problema, sigue existiendo redundancia en nodos intermedios.
+- El ranking depende fuertemente de tokens exactos, por lo que puede fallar en sinónimos o variaciones semánticas.
 
 ---
 
