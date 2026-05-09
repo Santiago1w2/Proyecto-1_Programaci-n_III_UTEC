@@ -24,10 +24,8 @@ vector<int> parseLista(const string& s);
 
 bool validar_correo(const string& _email);
 bool validar_info(const string& _email, const string& _clave);
-bool validar_usuario(const string& _username); //No es necesario
 
 void registrar_nuevoUsuario(const string& name, const string& email, const string& clave);
-void actualizarUsuario(vector<int> pelis,string tipo);
 
 void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis);
 string UserName(const string& _email, const string& _clave);

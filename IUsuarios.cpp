@@ -137,7 +137,6 @@ void registrar_nuevoUsuario(const string& name, const string& email, const strin
     archivo.close();
 }
 
-//void actualizarUsuario(vector<int> pelis,string tipo){}
 
 //Fncion utilizada par visualizar a los usuarios registrados (seria adecuado para un rol admin)
 vector<string> mostrar_usuarios() {
@@ -159,20 +158,6 @@ vector<string> mostrar_usuarios() {
     if (!hayDatos) cout << "No hay usuarios registrados\n";
     archivo.close();
     return usuarios_name;
-}
-
-
-bool validar_usuario(const string& _username) {
-    ifstream archivo("registroUsuarios.txt");
-    string linea, username, email, clave;
-    while (getline(archivo, linea)) {
-        stringstream ss(linea);
-        getline(ss, email, ',');
-        getline(ss, clave, ',');
-        getline(ss, username, ',');
-        if (username == _username) return true;
-    }
-    return false;
 }
 
 
