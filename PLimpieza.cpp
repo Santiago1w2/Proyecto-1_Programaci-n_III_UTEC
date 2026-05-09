@@ -46,7 +46,7 @@ unordered_map<string, string> accents = {
     {"æ","ae"},{"Æ","ae"},
     {"œ","oe"},{"Œ","oe"}
 };
-
+// Stopword que se eliminaran
 unordered_set<string> stopwords = {
     "the", "and", "his", "her", "that", "with", "him", "for", "she", "but",
     "who", "they", "from", "has", "their", "when", "are", "after", "out",
@@ -65,7 +65,7 @@ unordered_set<string> stopwords = {
     "continue", "point", "further", "form", "cause", "seems"
 };
 
-
+// Pasa los strings a minuscula. Utiliza la libreria algorithm
 string aMinusculas(string texto) {
     transform(texto.begin(), texto.end(), texto.begin(), ::tolower);
     return texto;
@@ -178,17 +178,17 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
     return textoFinal;
 }
 
-// 1. Bloquea "film" y "part" en los paréntesis
+// Limpia la columna Title y borra todo lo que este entre parentesis si estan las palabras film o part dentro
 string limpiarTitulo(const string& s) {
     return limpiarTextoAvanzado(s, {"film", "part"}, {});
 }
 
-// 2. Director usa la maestra, no bloquea nada en paréntesis, pero prohíbe la palabra "director"
+// Limpia la columna Director y borra la palabra director
 string limpiarDirector(const string& s) {
     return limpiarTextoAvanzado(s, {}, {"director"});
 }
 
-// 3. Origen tiene su propia lógica rápida, es 100% letras y guiones.
+// Se limpia la columna Origin/Ethnicity
 string limpiarOrigen(const string& s) {
     string origenFinal = "";
     string palabraActual = "";
@@ -207,15 +207,13 @@ string limpiarOrigen(const string& s) {
     return origenFinal;
 }
 
-// 4. Borra paréntesis y su contenido y filtra palabras específicas como director y screenplay.
+// Se limpia la columna Cast y se borran las palabras director y screenplay
 string limpiarCast(const string& s) {
-    // Pasamos "director" y "screenplay" como palabras prohibidas como la función maestra ya maneja el mapa de 'accents', reemplazará caracteres especiales automáticamente.
     return limpiarTextoAvanzado(s, {}, {"director", "screenplay"});
 }
 
 
-// Limpieza Genérica 
-// Esta es la limpieza genérica que uso principalmente para columnas como Genre y Plot.
+// Esta es la limpieza genérica que se uso para las columnas Genre y Plot.
 string normalizarYLimpiar(const string& s) {
     string res;
     // Reservo memoria desde el inicio para evitar reallocations innecesarios.
@@ -304,8 +302,6 @@ string filtrarStopwords(const string& textoLimpio) {
 }
 
 
-
-
 //Acá ya preparo el texto final que utilizará el motor de búsqueda, la idea es limpiar cada columna individualmente y luego concatenar todo en un solo string grande por película. El resultado final funciona como una especie de representación "indexable" de cada película ya normalizada.
 unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis) {
     unordered_map<int, string> dataLimpia;
@@ -330,11 +326,6 @@ unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& p
 
 
 
-
-
-
-
-// --- EXPORTACIÓN A CSV SIN COMILLAS ---
 //Esta función exporta toda la data ya limpia a un CSV y me sirvió bastante para debugging porque podía revisar manualmente cómo estaba quedando cada columna después de la limpieza.
 void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
     ofstream archivo(nombreArchivo);
@@ -348,7 +339,7 @@ void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string&
         string year     = movie.getYear();
         string title    = limpiarTitulo(movie.getTtitle());
         string origin   = limpiarOrigen(movie.getOrigin());
-        string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
+        string director = limpiarDirector(movie.getDirector()); 
 
         string cast     = limpiarCast(movie.getCast());
         string genre    = normalizarYLimpiar(movie.getGenre());
