@@ -248,28 +248,79 @@ casablanca morocco unexpected arrival former lover ilsa lund..."
 
 ---
 
-## Estructura de datos: Trie
+# Estructura de Datos: Suffix Trie parcial con TF-IDF
 
-Se eligió un **Trie de caracteres con TF-IDF y soporte de subcadenas** como motor de búsqueda.
+Se implementó un **Suffix Trie de caracteres con búsqueda parcial y ranking TF-IDF** como motor principal de recuperación de información.
 
-### ¿Por qué un Trie?
+El sistema permite:
 
-- Búsquedas por prefijo en **O(L)** donde `L` es el tamaño de la query.
-- Permite búsqueda parcial naturalmente.
-- Las subcadenas permiten encontrar palabras aunque el usuario escriba desde el medio.
+- búsquedas exactas,
+- búsquedas por prefijo,
+- búsquedas desde el medio de una palabra,
+- ranking semántico mediante TF-IDF.
 
-Ejemplo:
+---
+
+# ¿Por qué un Suffix Trie?
+
+El Trie permite búsquedas en tiempo proporcional al tamaño de la consulta:
 
 ```txt
-"tion" → encuentra:
-    "action"
-    "fiction"
-    "nation"
+O(L)
+```
+
+donde:
+
+```txt
+L = longitud del token buscado
+```
+
+Además:
+
+- soporta coincidencias parciales naturalmente,
+- evita recorrer todos los documentos,
+- permite indexación eficiente carácter por carácter.
+
+---
+
+# Soporte de Subcadenas
+
+El Suffix Trie no solo inserta palabras completas, sino también subcadenas controladas (*suffix / n-grams*).
+
+Por ejemplo:
+
+```txt
+"action"
+```
+
+genera:
+
+```txt
+action
+ction
+tion
+ion
+on
+n
+```
+
+Esto permite consultas como:
+
+```txt
+"tion"
+```
+
+encontrar:
+
+```txt
+action
+fiction
+nation
 ```
 
 ---
 
-## Estructura de un nodo
+# Estructura del Nodo
 
 ```cpp
 struct Nodo {
@@ -282,259 +333,312 @@ struct Nodo {
 };
 ```
 
-Cada nodo acumula:
+---
+
+# Explicación de la Estructura
+
+Cada nodo almacena:
+
+| atributo | función |
+|---|---|
+| `hijos` | conexiones hacia otros caracteres |
+| `freq` | TF acumulado por película |
+| `esFinDePalabra` | indica coincidencia exacta |
+
+---
+
+# Frecuencias Acumuladas
+
+Cada nodo almacena:
 
 ```cpp
 freq[id] += peso
 ```
 
-De esta manera, los nodos intermedios ya contienen información útil para scoring sin recorrer todo el subárbol.
+donde:
+
+- `id` = identificador de la película,
+- `peso` = relevancia del campo.
 
 ---
 
-## Inserción de subcadenas
+# Pesos por Campo
 
-Para la palabra:
+El sistema asigna distintos pesos según el origen del token:
 
-```txt
-"action"
-```
+| campo | peso |
+|---|---|
+| título | alto |
+| director | alto |
+| cast | medio |
+| género | medio |
+| plot | bajo |
 
-El Trie inserta caminos como:
-
-```txt
-raíz → a→c→t→i→o→n
-raíz → c→t→i→o→n
-raíz → t→i→o→n
-raíz → i→o→n
-raíz → o→n
-raíz → n
-```
-
-Todos los nodos acumulan:
-
-```txt
-freq[id] += peso
-```
-
-Esto permite búsquedas desde cualquier parte de la palabra.
+Esto mejora la relevancia semántica de los resultados.
 
 ---
 
-
-## Pseudo-código de inserción al Trie
-
-Cada película genera una cadena unificada de palabras limpias. Esa cadena se tokeniza y cada token se inserta tanto como palabra completa como mediante subcadenas (suffix / n-grams).
+# Estructura General del Trie
 
 ```txt
-FUNCIÓN insertarTodasLasPeliculas(peliculas: Map<id, Movie>, trie: Trie):
+ESTRUCTURA Trie
 
-    PARA CADA (id, movie) EN peliculas:
+    raíz:
+        Nodo
 
-        textoLimpio ← limpiarTitulo(movie.title)      [peso: alto]
-                    + limpiarOrigen(movie.origin)     [peso: medio]
-                    + limpiarDirector(movie.director) [peso: alto]
-                    + limpiarCast(movie.cast)         [peso: medio]
-                    + normalizarYLimpiar(movie.genre) [peso: medio]
-                    + filtrarStopwords(movie.plot)    [peso: bajo]
+    docFreq:
+        Map<token, DF>
 
-        trie.insertarCompleto(textoLimpio, id, pesoCampo)
+    totalDocs:
+        int
 
-FIN FUNCIÓN
+FIN ESTRUCTURA
 ```
 
 ---
 
-## Inserción completa de texto
+# Variables Globales del Trie
+
+## `totalDocs`
+
+Cantidad total de películas indexadas.
+
+---
+
+## `docFreq`
+
+Almacena:
 
 ```txt
-FUNCIÓN insertarCompleto(texto: string, id: int, pesoCampo: int):
+token → cantidad de documentos
+```
 
-    totalDocs += 1
+Ejemplo:
 
-    tokens ← tokenizar(texto)
-
-    PARA CADA palabra EN tokens:
-
-        insertarpalabra(palabra, id, pesoCampo)
-
-        SI palabra NO ha sido vista antes en este documento:
-
-            seenInDoc[palabra].agregar(id)
-
-            docFreq[palabra] += 1     // usado para IDF
-
-FIN FUNCIÓN
+```txt
+docFreq["spider"] = 120
 ```
 
 ---
 
-## Inserción de palabras y subcadenas
+# Inserción en el Trie
 
-La implementación inserta:
+El algoritmo inserta:
 
-1. La palabra completa con boost extra.
-2. Subcadenas/sufijos controlados para soportar búsqueda parcial.
+1. palabra completa,
+2. subcadenas limitadas.
+
+---
+
+# Inserción de Palabra Completa
+
+Para:
 
 ```txt
-FUNCIÓN insertarpalabra(palabra: string, id: int, pesoCampo: int):
+spider
+```
 
-    n ← largo(palabra)
+se genera:
+
+```txt
+s → p → i → d → e → r
+```
+
+---
+
+# Inserción de Subcadenas
+
+Para:
+
+```txt
+spider
+```
+
+también se insertan:
+
+```txt
+pider
+ider
+der
+er
+r
+```
+
+---
+
+# Pseudocódigo de Inserción
+
+```txt
+FUNCIÓN insertarPalabra(
+    palabra,
+    movieID,
+    pesoCampo
+)
+
+    n ← longitud(palabra)
 
     MAX_LEN ← 6
 
-
-    ---------------------------------------------------
-    // 1. INSERTAR PALABRA COMPLETA
-    ---------------------------------------------------
-
+    // caso 1: INSERTAR PALABRA COMPLETA
     nodo ← raíz
 
-    PARA CADA caracter c EN palabra:
+    PARA CADA caracter c EN palabra
 
-        SI c NO existe en nodo.hijos:
+        SI c NO existe EN nodo.hijos
 
-            nodo.hijos[c] ← nuevo Nodo()
+            nodo.hijos[c]
+                ← nuevo Nodo()
+
+        FIN SI
 
         nodo ← nodo.hijos[c]
 
-        // boost fuerte para coincidencia exacta
-        nodo.freq[id] += pesoCampo * 2
+        nodo.freq[movieID]
+            += pesoCampo * 2
 
-    nodo.esFinDePalabra ← true
+    FIN PARA
 
+    nodo.esFinDePalabra ← verdadero
 
-    ---------------------------------------------------
-    // 2. INSERTAR SUBCADENAS / SUFIJOS
-    ---------------------------------------------------
+    // CASO 2: INSERTAR SUBCADENAS
 
-    PARA i DESDE 0 HASTA n-1:
+    PARA i DESDE 0 HASTA n-1
 
         nodo ← raíz
 
-        PARA j DESDE i HASTA min(n-1, i + MAX_LEN - 1):
+        PARA j DESDE i
+                HASTA min(n-1, i + MAX_LEN - 1)
 
             c ← palabra[j]
 
-            SI c NO existe en nodo.hijos:
+            SI c NO existe EN nodo.hijos
 
-                nodo.hijos[c] ← nuevo Nodo()
+                nodo.hijos[c]
+                    ← nuevo Nodo()
+
+            FIN SI
 
             nodo ← nodo.hijos[c]
 
-            nodo.freq[id] += pesoCampo
+            nodo.freq[movieID]
+                += pesoCampo
 
-        nodo.esFinDePalabra ← true
+        FIN PARA
 
-FIN FUNCIÓN
-```
+        nodo.esFinDePalabra ← verdadero
 
----
-
-## Algoritmo de búsqueda con TF-IDF
-
-```txt
-FUNCIÓN buscar(query: string) → Lista<id>
-
-    score ← Map<id, double>
-
-    matchCount ← Map<id, int>
-
-    totalTokens ← 0
-
-
-    PARA CADA token EN tokenizar(query):
-
-        token ← convertirMinusculas(token)
-
-        SI largo(token) ≤ 2:
-
-            continuar
-
-
-        totalTokens += 1
-
-        resultados ← buscarNodo(token)
-
-
-        df ← tamaño(resultados)
-
-        idf ← log(
-                1 + (totalDocs / (1 + df))
-              )
-
-
-        PARA CADA (id, freq) EN resultados:
-
-            tf ← freq
-
-            add ← tf * idf
-
-            score[id] += add
-
-            matchCount[id] += 1
-
-
-    ---------------------------------------------------
-    // Penalización por coincidencias incompletas
-    ---------------------------------------------------
-
-    PARA CADA (id, sc) EN score:
-
-        SI matchCount[id] < totalTokens:
-
-            score[id] *= 0.5
-
-
-    ---------------------------------------------------
-    // Ordenar resultados
-    ---------------------------------------------------
-
-    ordenar(score DESCENDENTE)
-
-    RETORNAR primeros 5 ids
+    FIN PARA
 
 FIN FUNCIÓN
 ```
 
 ---
 
-## Búsqueda dentro del Trie
+# Optimización de Memoria
+
+Se utiliza:
 
 ```txt
-FUNCIÓN buscarNodo(clave: string) → Map<id, freq>
+MAX_LEN = 6
+```
+
+para evitar crecimiento cuadrático.
+
+Sin este límite, insertar todos los suffix completos produciría:
+
+```txt
+O(n²)
+```
+
+en tiempo y memoria.
+
+Con la restricción:
+
+```txt
+O(n)
+```
+
+---
+
+# Complejidad de Inserción
+
+## Complejidad Temporal
+
+La inserción completa cuesta:
+
+```txt
+O(n)
+```
+
+donde:
+
+```txt
+n = longitud de la palabra
+```
+
+---
+
+## Complejidad Espacial
+
+Cada carácter puede generar un nodo:
+
+```txt
+O(n)
+```
+
+---
+
+# Búsqueda en el Suffix Trie
+
+La búsqueda recorre el Trie carácter por carácter.
+
+---
+
+# Pseudocódigo de Búsqueda de Nodo
+
+```txt
+FUNCIÓN buscarNodo(clave)
 
     nodo ← raíz
 
+    PARA CADA caracter c EN clave
 
-    PARA CADA caracter c EN clave:
+        SI c NO existe EN nodo.hijos
 
-        SI c NO existe en nodo.hijos:
+            RETORNAR vacío
 
-            RETORNAR {}
+        FIN SI
 
         nodo ← nodo.hijos[c]
 
+    FIN PARA
 
-    resultado ← nuevo Map<id, freq>
+    resultado ← nuevo Map<movieID, TF>
+
+    //CASO 1: SE ENCUENTRA UNA PALABRA COMPLETA
+
+    SI nodo.esFinDePalabra
+
+        PARA CADA (id, freq) EN nodo.freq
+
+            resultado[id]
+                += freq * 1.5
+
+        FIN PARA
 
 
-    SI nodo.esFinDePalabra:
+    //CASO 2: SE ENCUENTRA UN SUFIJO O PREFIJO DE LA PALABRA
 
-        // coincidencia exacta → boost ×1.5
+    SINO
 
-        PARA CADA (id, freq) EN nodo.freq:
+        PARA CADA (id, freq) EN nodo.freq
 
-            resultado[id] += freq * 1.5
+            resultado[id]
+                += freq
 
+        FIN PARA
 
-    SINO:
-
-        // coincidencia parcial
-
-        PARA CADA (id, freq) EN nodo.freq:
-
-            resultado[id] += freq
+    FIN SI
 
 
     RETORNAR resultado
@@ -544,21 +648,286 @@ FIN FUNCIÓN
 
 ---
 
-## Liberación de memoria
+# Boost de Coincidencia Exacta
 
-El Trie libera memoria recursivamente recorriendo todos los nodos hijos.
+Cuando existe coincidencia exacta:
+
+```txt
+freq × 1.5
+```
+
+Esto prioriza:
+
+```txt
+spider
+```
+
+sobre:
+
+```txt
+spiderman
+```
+
+---
+
+# Complejidad de `buscarNodo`
+
+## Temporal
+
+```txt
+O(k + r)
+```
+
+donde:
+
+| símbolo | significado |
+|---|---|
+| `k` | longitud de la palabra |
+| `r` | cantidad de documentos encontrados |
+
+---
+
+## Espacial
+
+```txt
+O(r)
+```
+
+---
+
+# Ranking TF-IDF
+
+El sistema utiliza:
+
+```txt
+TF-IDF
+```
+
+para calcular relevancia semántica.
+
+---
+
+# TF (Term Frequency)
+
+Representa:
+
+```txt
+cuántas veces aparece el token
+```
+
+dentro de una película.
+
+---
+
+# IDF (Inverse Document Frequency)
+
+Representa:
+
+```txt
+qué tan raro es el token
+```
+
+en toda la colección.
+
+---
+
+# Fórmula de IDF
+
+```txt
+IDF = log(1 +(totalDocs / (1 + df) ))
+```
+
+donde:
+
+| símbolo | significado |
+|---|---|
+| `totalDocs` | películas totales |
+| `df` | documentos que contienen el token |
+
+---
+
+# Fórmula TF-IDF
+
+```txt
+TF-IDF = TF × IDF
+```
+
+---
+
+# Ejemplo
+
+| token | TF | IDF | score |
+|---|---|---|---|
+| spider | 10 | 1 | 10 |
+| multiverse | 6 | 5 | 30 |
+
+Aunque:
+
+```txt
+spider
+```
+
+aparece más veces,:
+
+```txt
+multiverse
+```
+
+es más relevante por ser más raro.
+
+---
+
+# Pseudocódigo de Búsqueda Completa
+
+```txt
+FUNCIÓN buscar(query)
+
+    score ← nuevo Map<movieID, double>
+
+    matchCount ← nuevo Map<movieID, int>
+
+    tokens ← tokenizar(query)
+
+    totalTokens ← 0
+
+    // RECORRER TOKENS
+
+    PARA CADA token EN tokens
+
+        SI longitud(token) ≤ 2
+
+            CONTINUAR
+
+        FIN SI
+
+
+        totalTokens += 1
+
+        resultados ← buscarNodo(token)
+
+        // CALCULAR IDF
+
+        SI token existe EN docFreq
+
+            df ← docFreq[token]
+
+        SINO
+
+            df ← 1
+
+        FIN SI
+
+
+        idf ← log(1 +(totalDocs / (1 + df) ))
+
+        // TF-IDF
+
+        PARA CADA (id, freq) EN resultados
+
+            tf ← freq
+
+            add ← tf * idf
+
+            score[id]
+                += add
+
+            matchCount[id]
+                += 1
+
+        FIN PARA
+
+    FIN PARA
+
+
+    // PENALIZACIÓN POR NO SER UNA PALBRA COMPLETA
+    
+
+    PARA CADA (id, sc) EN score
+
+        SI matchCount[id] < totalTokens
+
+            score[id]
+                *= 0.5
+
+        FIN SI
+
+    FIN PARA
+
+
+    
+    // ORDENAR DE MAYOR A MENOR SEGUN SCORE CALCULA CON TF-IDF
+    
+
+    ordenar score DESCENDENTE
+
+    // TOP 5 PARA RESULTADO FINAL
+
+    retornar primeros 5 ids
+
+FIN FUNCIÓN
+```
+
+---
+
+# Penalización de Coincidencias Incompletas
+
+Si una película no contiene todos los tokens buscados:
+
+```txt
+score *= 0.5
+```
+
+Esto reduce falsos positivos.
+
+---
+
+# Complejidad de Búsqueda
+
+## Complejidad Temporal
+
+```txt
+O(t * r + m log m)
+```
+
+donde:
+
+| símbolo | significado |
+|---|---|
+| `t` | tokens de la consulta |
+| `r` | documentos encontrados por token |
+| `m` | documentos puntuados |
+
+---
+
+# Complejidad Espacial
+
+```txt
+O(m)
+```
+
+---
+
+# Liberación de Memoria
+
+El Trie libera memoria recursivamente.
+
+---
 
 ```txt
 FUNCIÓN limpiarNodo(nodo)
 
-    SI nodo ES null:
+    SI nodo ES null
 
         RETORNAR
 
+    FIN SI
 
-    PARA CADA hijo EN nodo.hijos:
+
+    PARA CADA hijo EN nodo.hijos
 
         limpiarNodo(hijo)
+
+    FIN PARA
 
 
     eliminar nodo
@@ -568,6 +937,38 @@ FIN FUNCIÓN
 
 ---
 
+# Flujo Completo del Sistema
+
+```txt
+CSV
+    ↓
+
+normalización
+    ↓
+
+tokenización
+    ↓
+
+Trie
+    ↓
+
+TF acumulado
+    ↓
+
+docFreq
+    ↓
+
+búsqueda
+    ↓
+
+TF-IDF
+    ↓
+
+ranking
+    ↓
+
+top resultados
+```
 ## Ventajas de este tipo de implementación
 
 - Soporta búsqueda exacta y parcial.
