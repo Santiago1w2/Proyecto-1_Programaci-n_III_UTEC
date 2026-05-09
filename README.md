@@ -235,16 +235,6 @@ Los caracteres acentuados en UTF-8 ocupan 2, 3 o 4 bytes, por lo que no caben en
 |-----------------------------------------------------------|---------------------------------|
 | `the man was walking and he found a treasure in the cave` | `man walking treasure cave` |
 
-### Ejemplo 5 — Resultado final unificado para el Trie
-
-Para la película *Casablanca* (hipotético):
-
-```
-Texto final indexado:
-"1942 casablanca american michael curtiz humphrey bogart ingrid bergman drama
-world war ii rick blaine cynical american expatriate operates nightclub wartime
-casablanca morocco unexpected arrival former lover ilsa lund..."
-```
 
 ---
 
