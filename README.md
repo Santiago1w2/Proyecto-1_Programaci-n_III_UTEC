@@ -1,9 +1,17 @@
 # 🎬 UTECFlix — Proyecto 1 · Programación III · UTEC
 
-Motor de búsqueda de películas por texto libre, construido sobre un **Trie** de caracteres, con limpieza de datos en varios pasos y una interfaz de consola interactiva para Windows.
+Motor de búsqueda de películas por texto libre, construido sobre un **Sufixx Trie** de caracteres, con limpieza de datos en varios pasos y una interfaz de consola interactiva para Windows.
 
 ---
+# INTEGRANTES
 
+- Jeseph Imanol Burgos Ochoa
+- Jean Piere Milan Arana Chiong
+- Anthony Yonel Rosales Esteban
+- Omar Alonso Guzman Harvey
+- Santiago Cesar Morales Portella
+
+---
 ## Tabla de contenidos
 
 1. [Estructura del proyecto](#estructura-del-proyecto)
