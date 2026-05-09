@@ -308,13 +308,27 @@ nation
 ```cpp
 struct Nodo {
 
-    unordered_map<char, Nodo*> hijos; // conexiones hacia otros caracteres
+    unordered_map<char, Nodo*> hijos;
 
-    unordered_map<int, int> freq; //TF (Frecuencia de aparicion) acumulado por película
+    unordered_map<int, int> freq;
 
-    bool esFinDePalabra = false; // indica si es el fin de la palabra su sirve para indicar si hubo cincidencia exacta con la busqueda
+    bool esFinDePalabra = false;
 };
 ```
+
+---
+
+# Explicación de la Estructura
+
+Cada nodo almacena:
+
+| atributo | función |
+|---|---|
+| `hijos` | conexiones hacia otros caracteres |
+| `freq` | TF acumulado por película |
+| `esFinDePalabra` | indica coincidencia exacta |
+
+---
 
 # Frecuencias Acumuladas
 
@@ -335,13 +349,14 @@ donde:
 
 El sistema asigna distintos pesos según el origen del token:
 
-| campo | peso |
-|---|---|
-| título | alto = 5 |
-| director | bajo = 1 |
-| cast | bajo = 1 |
-| género | bajo = 1 |
-| plot | medio = 2 |
+| campo    | peso      |
+|----------|-----------|
+| título   | alto =5   |
+| año      | bajo = 1  |
+| director | bajo = 1  |
+| cast     | bajo = 1  |
+| género   | bajo = 1  |
+| plot     | medio = 2 |
 
 Esto mejora la relevancia semántica de los resultados.
 
@@ -547,16 +562,6 @@ n = longitud de la palabra
 
 ---
 
-## Complejidad Espacial
-
-Cada carácter puede generar un nodo:
-
-```txt
-O(n)
-```
-
----
-
 # Búsqueda en el Suffix Trie
 
 La búsqueda recorre el Trie carácter por carácter.
@@ -652,17 +657,10 @@ donde:
 | símbolo | significado |
 |---|---|
 | `k` | longitud de la palabra |
-| `r` | cantidad de películas encontrados |
+| `r` | cantidad de documentos encontrados |
 
 ---
 
-## Espacial
-
-```txt
-O(r)
-```
-
----
 
 # Ranking TF-IDF
 
@@ -711,7 +709,7 @@ donde:
 | símbolo | significado |
 |---|---|
 | `totalDocs` | películas totales |
-| `df` | películas que contienen el token |
+| `df` | documentos que contienen el token |
 
 ---
 
@@ -808,7 +806,7 @@ FUNCIÓN buscar(query)
     FIN PARA
 
 
-    // PENALIZACIÓN POR NO SER UNA PALABRA COMPLETA
+    // PENALIZACIÓN POR NO SER UNA PALBRA COMPLETA
     
 
     PARA CADA (id, sc) EN score
@@ -824,7 +822,7 @@ FUNCIÓN buscar(query)
 
 
     
-    // ORDENAR DE MAYOR A MENOR SEGUN SCORE CALCULADO CON TF-IDF
+    // ORDENAR DE MAYOR A MENOR SEGUN SCORE CALCULA CON TF-IDF
     
 
     ordenar score DESCENDENTE
@@ -863,18 +861,11 @@ donde:
 | símbolo | significado |
 |---|---|
 | `t` | tokens de la consulta |
-| `r` | películas encontradas por token |
-| `m` | cantidad de películas que recibieron score|
+| `r` | documentos encontrados por token |
+| `m` | documentos puntuados |
 
 ---
 
-# Complejidad Espacial
-
-```txt
-O(m)
-```
-
----
 
 # Liberación de Memoria
 
@@ -904,29 +895,22 @@ FUNCIÓN limpiarNodo(nodo)
 FIN FUNCIÓN
 ```
 
----
-
 
 ## Ventajas de este tipo de implementación
 
-- Soporta búsqueda exacta, por prefijo y parcial (subcadenas).
-- El uso de n-grams/suffix limitados (MAX_LEN) permite encontrar palabras incluso desde el medio.
-- TF-IDF mejora la relevancia global de los resultados.
-- El boost ×1.5 favorece coincidencias exactas frente a parciales.
-- La penalización ×0.5 reduce resultados incompletos o poco relevantes.
-- seenInDoc permite calcular correctamente el IDF (document frequency) sin duplicados por película.
-- El límite MAX_LEN evita una expansión excesiva del Trie y mantiene el crecimiento controlado.
-- El sistema combina recuperación léxica (Trie) con ranking estadístico (TF-IDF).
+- Soporta búsqueda exacta y parcial.
+- TF-IDF mejora el ranking.
+- El boost ×1.5 favorece coincidencias exactas.
+- La penalización ×0.5 reduce falsos positivos.
+- `MAX_LEN` evita explosión excesiva de memoria.
 
 ---
 
 ## Limitaciones conocidas
 
-- El almacenamiento de subcadenas aumenta el consumo de memoria respecto a un Trie clásico.
-- El sistema no realiza procesamiento lingüístico avanzado.
-- El Trie puede crecer bastante en datasets grandes debido a la duplicación de caminos por subcadenas.
-- Aunque MAX_LEN reduce el problema, sigue existiendo redundancia en nodos intermedios.
-- El ranking depende fuertemente de tokens exactos, por lo que puede fallar en sinónimos o variaciones semánticas.
+- Insertar subcadenas aumenta consumo de memoria.
+- El sistema relaciona palabras mediante prefijos y subcadenas, pero no mediante análisis lingüístico avanzado (stemming o lemmatization).
+- El Trie puede crecer bastante con datasets grandes.
 
 ---
 
@@ -987,11 +971,10 @@ Buscar: _
 ---
 ## Interaccion con el usuario
 
----
 
 Mas allá de la interacción con el usuario a traves de la interfaz, es importante mencionar y enteder algunas validaciones que se realizan.
 
-### Registro historico de usuarios
+### | Registro historico de usuarios | 
 
 Cuando el usuario ingresa a la interfaz, se le da la opcion de crear una nueva cuenta (registrarse) o acceder a una cuentaya creada
 (inicio de sesion)
@@ -1006,7 +989,7 @@ Esto se hace con la finalidad de mejorar la interaccion con el usuario, a trvaes
 peliculas de un genero similar a las que ha visto, etc.
 
 
-### Validaciones en las opciones registrar e iniciar sesion
+### | Validaciones en las opciones registrar e iniciar sesion |
 
 Dependiendo de la opcion elegida por el usuario al ingresar a la interfaz, se ejecutaran una serie de validaciones espeficicas.
 En el caso que eliga *registrarse*, se utilizan funciones como `validar_correo()` para verificar que este usuario nuevo se esta registrando con un correo que no esta en uso.
@@ -1015,7 +998,7 @@ Esto se hace porque el correo se ha elegido como clave primaria, similar a la va
 De manera similar, cuando el usuario elige la opcion de *iniciar sesion* se utilizan funciones como `validar_info()`, la cual verifica que el correo y contraseña que estan siendo ingresados
 corresponden a los que se registraron cuando el usuario creo la cuenta.
 
-### Recomendacion de Peliculas Aleatoria
+### | Recomendacion de Peliculas Aleatoria |
 Como se menciono en la interfaz, cuando el usuario ya valido su identidad, se muestra una recomendacion de 5 peliculas aletorias. Para ello, la funcion `peliculasRecomendadasPanel`
 utiliza un algoritmo simple de generacion aleatoria de un numero que corresponde al indice de una pelicula. Con este indice se accede a un mapa que contiene las peliculas, ya leidas,
 para extraer la informacion que se mostrar en pantalla (titulo, genero,año de lanzamiento).
@@ -1028,36 +1011,7 @@ que las recomendaciones sean lo mas aletorias posibles y el usuario pueda conoce
 
 1. Colocar el dataset original renombrado como `peliculas.csv` dentro de `cmake-build-debug/`.
 2. Compilar con CMake (CLion o línea de comandos).
-3. **Opción A — Desde CLion:** ir a `Run → Edit Configurations` y activar *"Emulate terminal in the output console"*, luego ejecutar normalmente.
-4. **Opción B — Desde el explorador de archivos:** navegar a `cmake-build-debug/` y ejecutar `PROYECTAZO.exe` directamente.
+3. **Desde CLion:** ir a `Run → Edit Configurations` y activar *"Emulate terminal in the output console"*, luego ejecutar normalmente.
 
 > Al iniciar aparecerá brevemente un mensaje de sistema en la consola mientras se configura UTF-8; es esperado y no indica un error.
 
-## Complejidad
-
-### Trie (estructura principal)
-- Búsqueda e inserción: O(L)
-- "A trie supports search and insertion in time proportional to the key length." (Sedgewick & Wayne)
-
-### Hash maps
-- O(1) promedio para acceso
-- "Hash-table operations take O(1) time on average…" (CLRS)
-
-### Árboles balanceados (referencia teórica)
-- O(log n) altura
-- "The height of a balanced binary search tree is O(log n)." (CLRS)
-
-### TF-IDF scoring
-- O(k) por consulta
-- "TF-IDF assigns higher weights to rare terms…" (Manning et al.)
-
-### Inserción con sufijos
-- O(L) por palabra debido a expansión de subcadenas
-- La generación de subcadenas está acotada por una constante, por lo que no crece cuadráticamente.
-- En un Suffix Trie completo sería O(L²), pero aquí se optimiza a lineal.
-
-### Complejidad total de búsqueda
-- O(L + k)
-  donde:
-  L = longitud de query
-  k = documentos relevantes encontrados
