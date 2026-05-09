@@ -349,13 +349,14 @@ donde:
 
 El sistema asigna distintos pesos según el origen del token:
 
-| campo | peso |
-|---|---|
-| título | alto |
-| director | alto |
-| cast | medio |
-| género | medio |
-| plot | bajo |
+| campo    | peso      |
+|----------|-----------|
+| título   | alto =5   |
+| año      | bajo = 1  |
+| director | bajo = 1  |
+| cast     | bajo = 1  |
+| género   | bajo = 1  |
+| plot     | medio = 2 |
 
 Esto mejora la relevancia semántica de los resultados.
 
@@ -561,16 +562,6 @@ n = longitud de la palabra
 
 ---
 
-## Complejidad Espacial
-
-Cada carácter puede generar un nodo:
-
-```txt
-O(n)
-```
-
----
-
 # Búsqueda en el Suffix Trie
 
 La búsqueda recorre el Trie carácter por carácter.
@@ -670,13 +661,6 @@ donde:
 
 ---
 
-## Espacial
-
-```txt
-O(r)
-```
-
----
 
 # Ranking TF-IDF
 
@@ -882,13 +866,6 @@ donde:
 
 ---
 
-# Complejidad Espacial
-
-```txt
-O(m)
-```
-
----
 
 # Liberación de Memoria
 
@@ -918,47 +895,13 @@ FUNCIÓN limpiarNodo(nodo)
 FIN FUNCIÓN
 ```
 
----
 
-# Flujo Completo del Sistema
-
-```txt
-CSV
-    ↓
-
-normalización
-    ↓
-
-tokenización
-    ↓
-
-Trie
-    ↓
-
-TF acumulado
-    ↓
-
-docFreq
-    ↓
-
-búsqueda
-    ↓
-
-TF-IDF
-    ↓
-
-ranking
-    ↓
-
-top resultados
-```
 ## Ventajas de este tipo de implementación
 
 - Soporta búsqueda exacta y parcial.
-- TF-IDF mejora la relevancia.
+- TF-IDF mejora el ranking.
 - El boost ×1.5 favorece coincidencias exactas.
 - La penalización ×0.5 reduce falsos positivos.
-- `seenInDoc` mantiene el cálculo correcto de IDF.
 - `MAX_LEN` evita explosión excesiva de memoria.
 
 ---
@@ -966,10 +909,8 @@ top resultados
 ## Limitaciones conocidas
 
 - Insertar subcadenas aumenta consumo de memoria.
-- Complejidad cercana a **O(L²)** por palabra.
 - El sistema relaciona palabras mediante prefijos y subcadenas, pero no mediante análisis lingüístico avanzado (stemming o lemmatization).
 - El Trie puede crecer bastante con datasets grandes.
-- Insertar todos los sufijos de una palabra de longitud L genera O(L²) nodos, lo que hace que el consumo de memoria crezca rápido con un dataset grande de plots largos.
 
 ---
 
@@ -1033,7 +974,7 @@ Buscar: _
 
 Mas allá de la interacción con el usuario a traves de la interfaz, es importante mencionar y enteder algunas validaciones que se realizan.
 
-### Registro historico de usuarios
+### | Registro historico de usuarios | 
 
 Cuando el usuario ingresa a la interfaz, se le da la opcion de crear una nueva cuenta (registrarse) o acceder a una cuentaya creada
 (inicio de sesion)
@@ -1048,7 +989,7 @@ Esto se hace con la finalidad de mejorar la interaccion con el usuario, a trvaes
 peliculas de un genero similar a las que ha visto, etc.
 
 
-### Validaciones en las opciones registrar e iniciar sesion
+### | Validaciones en las opciones registrar e iniciar sesion |
 
 Dependiendo de la opcion elegida por el usuario al ingresar a la interfaz, se ejecutaran una serie de validaciones espeficicas.
 En el caso que eliga *registrarse*, se utilizan funciones como `validar_correo()` para verificar que este usuario nuevo se esta registrando con un correo que no esta en uso.
@@ -1057,7 +998,7 @@ Esto se hace porque el correo se ha elegido como clave primaria, similar a la va
 De manera similar, cuando el usuario elige la opcion de *iniciar sesion* se utilizan funciones como `validar_info()`, la cual verifica que el correo y contraseña que estan siendo ingresados
 corresponden a los que se registraron cuando el usuario creo la cuenta.
 
-### Recomendacion de Peliculas Aleatoria
+### | Recomendacion de Peliculas Aleatoria |
 Como se menciono en la interfaz, cuando el usuario ya valido su identidad, se muestra una recomendacion de 5 peliculas aletorias. Para ello, la funcion `peliculasRecomendadasPanel`
 utiliza un algoritmo simple de generacion aleatoria de un numero que corresponde al indice de una pelicula. Con este indice se accede a un mapa que contiene las peliculas, ya leidas,
 para extraer la informacion que se mostrar en pantalla (titulo, genero,año de lanzamiento).
@@ -1070,34 +1011,7 @@ que las recomendaciones sean lo mas aletorias posibles y el usuario pueda conoce
 
 1. Colocar el dataset original renombrado como `peliculas.csv` dentro de `cmake-build-debug/`.
 2. Compilar con CMake (CLion o línea de comandos).
-3. **Opción A — Desde CLion:** ir a `Run → Edit Configurations` y activar *"Emulate terminal in the output console"*, luego ejecutar normalmente.
-4. **Opción B — Desde el explorador de archivos:** navegar a `cmake-build-debug/` y ejecutar `PROYECTAZO.exe` directamente.
+3. **Desde CLion:** ir a `Run → Edit Configurations` y activar *"Emulate terminal in the output console"*, luego ejecutar normalmente.
 
 > Al iniciar aparecerá brevemente un mensaje de sistema en la consola mientras se configura UTF-8; es esperado y no indica un error.
 
-## Complejidad
-
-### Trie (estructura principal)
-- Búsqueda e inserción: O(L)
-- "A trie supports search and insertion in time proportional to the key length." (Sedgewick & Wayne)
-
-### Hash maps
-- O(1) promedio para acceso
-- "Hash-table operations take O(1) time on average…" (CLRS)
-
-### Árboles balanceados (referencia teórica)
-- O(log n) altura
-- "The height of a balanced binary search tree is O(log n)." (CLRS)
-
-### TF-IDF scoring
-- O(k) por consulta
-- "TF-IDF assigns higher weights to rare terms…" (Manning et al.)
-
-### Inserción con sufijos
-- O(L²) por palabra debido a expansión de subcadenas
-
-### Complejidad total de búsqueda
-- O(L + k)
-  donde:
-  L = longitud de query
-  k = documentos relevantes encontrados
