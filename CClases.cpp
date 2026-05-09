@@ -69,30 +69,10 @@ void Preprocesador::agregarTokens(DocumentoIndexado &doc, const string &texto, i
 DocumentoIndexado Preprocesador::procesarMovie(int movieID, const DataLimpia &movie) {
     DocumentoIndexado doc;
     doc.movieID = movieID;
-
-    agregarTokens(
-        doc,
-        movie.getTitle(),
-        3
-    );
-
-    agregarTokens(
-        doc,
-        movie.getGenre(),
-        2
-    );
-
-    agregarTokens(
-        doc,
-        movie.getCast(),
-        2
-    );
-
-    agregarTokens(
-        doc,
-        movie.getPlot(),
-        1
-    );
+    agregarTokens(doc,movie.getTitle(),3);
+    agregarTokens(doc,movie.getGenre(),2);
+    agregarTokens(doc,movie.getCast(),2);
+    agregarTokens(doc,movie.getPlot(),1);
     return doc;
 }
 
