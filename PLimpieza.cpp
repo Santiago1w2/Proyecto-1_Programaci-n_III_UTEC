@@ -178,7 +178,7 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
     return textoFinal;
 }
 
-// 1. Título usa la maestra bloqueando "film" y "part" en los paréntesis
+// 1. Bloquea "film" y "part" en los paréntesis
 string limpiarTitulo(const string& s) {
     return limpiarTextoAvanzado(s, {"film", "part"}, {});
 }
@@ -207,14 +207,14 @@ string limpiarOrigen(const string& s) {
     return origenFinal;
 }
 
-// 4. Cast usa la maestra: borra paréntesis y su contenido y filtra palabras específicas como director y screenplay.
+// 4. Borra paréntesis y su contenido y filtra palabras específicas como director y screenplay.
 string limpiarCast(const string& s) {
     // Pasamos "director" y "screenplay" como palabras prohibidas como la función maestra ya maneja el mapa de 'accents', reemplazará caracteres especiales automáticamente.
     return limpiarTextoAvanzado(s, {}, {"director", "screenplay"});
 }
 
 
-// 4. Limpieza Genérica 
+// Limpieza Genérica 
 // Esta es la limpieza genérica que uso principalmente para columnas como Genre y Plot.
 string normalizarYLimpiar(const string& s) {
     string res;
