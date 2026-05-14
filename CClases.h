@@ -52,12 +52,13 @@ public:
     string getGenre() const;
     string getWiki() const;
     string getPlot()const;
-    string getCast() const;
+    string getCast()const;
 
     void more_info();
 };
 
 void procesarComillas(stringstream& ss,string& name);
+
 class Usuario {
     string username;
     string email;
@@ -67,34 +68,51 @@ class Usuario {
     unordered_map<int,Movie> baneado;
     unordered_map<int,Movie> historial;
 public:
+    Usuario();
     Usuario(const string &user, const string &_email, const string &_pass, const unordered_map<int,Movie> &VT, const unordered_map<int,Movie> &MG, const unordered_map<int,Movie> &Ban, const unordered_map<int,Movie> &hist);
     void revisarUsuario();
+
 };
-string aMinusculas(string texto);
-unordered_map<int,Movie> leerPeliculas(const string& csv);
-unordered_map<int, Movie> convertirAPelis(const vector<int>& ids, const unordered_map<int, Movie>& pelis);
-vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& pelis);
 
-vector<int> parseLista(const string& s);
+struct DataLimpia {
+    string title;
+    string release_year;
+    string origin;
+    string director;
+    string cast;
+    string genre;
+    string plot;
+    string getTitle()const{return title;}
+    string getRelease_year()const{return release_year;}
+    string getOrigin()const{return origin;}
+    string getDirector()const{return director;}
+    string getCast()const{return cast;}
+    string getGenre()const{return genre;}
+    string getPlot()const{return plot;}
 
-bool validar_correo(const string& _email);
-bool validar_info(const string& _email, const string& _clave);
-bool validar_usuario(const string& _username); //No es necesario
-
-void registrar_nuevoUsuario(const string& name, const string& email, const string& clave);
-void actualizarUsuario(vector<int> pelis,string tipo);
-
-void peliculasRecomendadas(const string &_email,const vector<Movie>& pelis);
-
-int busquedaBinaria(const vector<Movie>& v, int objetivo_id);
-vector<string> mostrar_usuarios();
+};
 
 
-vector<string> separar(const string& texto);
+struct TokenInfo {
+    string token;
+    int peso;
+};
 
-// Nodo del Suffix Trie
-// - hijos:          mapa char -> nodo siguiente
-// - movieIds:       IDs de peliculas cuyo sufijo TERMINA en este nodo
-// - esFinDePalabra: true si algun sufijo termina aqui
+struct DocumentoIndexado {
+    int movieID;
+    vector<TokenInfo> tokens;
+};
+
+class Preprocesador {
+    unordered_map<int, DocumentoIndexado> documentosProcesados;
+    unordered_map<string, int> docFreq;
+    int totalDocs = 0;
+public:
+    vector<string> tokenizar(const string& texto);
+    void agregarTokens(DocumentoIndexado& doc,const string& texto,int peso);
+    DocumentoIndexado procesarMovie(int movieID,const DataLimpia& movie);
+    void preprocesar(const unordered_map<int, DataLimpia>& peliculas);
+
+};
 
 #endif //PROYECTAZO_CCLASES_H
