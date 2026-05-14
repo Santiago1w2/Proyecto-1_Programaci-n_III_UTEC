@@ -6,6 +6,22 @@
 #include "Plimpieza.h"
 #include <string_view>
 
+DataLimpia::DataLimpia(const string &title, const string &release_year, const string &origin, const string &director,
+const string &cast, const string &genre, const string &plot)    : title(title),
+  release_year(release_year),
+  origin(origin),
+  director(director),
+  cast(cast),
+  genre(genre),
+  plot(plot) {
+
+}
+
+DataLimpia::DataLimpia() {
+
+}
+
+
 Movie::Movie() = default;
 Movie::Movie(string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
     title = _title;

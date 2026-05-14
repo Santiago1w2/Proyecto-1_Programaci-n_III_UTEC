@@ -19,7 +19,19 @@
 #include <cctype>
 
 using namespace std;
+struct DataLimpia {
+    string title;
+    string release_year;
+    string origin;
+    string director;
+    string cast;
+    string genre;
+    string plot;
 
+    DataLimpia(const string &title, const string &release_year, const string &origin, const string &director,
+        const string &cast, const string &genre, const string &plot);
+    DataLimpia();
+};
 
 class Movie {
     string title;
