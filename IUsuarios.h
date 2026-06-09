@@ -1,19 +1,9 @@
-//
-// Created by burgo on 8/5/2026.
-//
-
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_IUSUARIOS_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_IUSUARIOS_H
 
-
-#include <iostream>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 #include "CClases.h"
 #include "Interfaz.h"
-#include "PLimpieza.h"
-using namespace std;
+#include "LimPelis.h"
 
 
 string aMinusculas(string texto);

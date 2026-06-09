@@ -1,8 +1,4 @@
-//
-// Created by smora on 6/05/2026.
-//
-
-#include "LPeliculas.h"
+#include "LecPelis.h"
 
 //Registrar toda la información de una pelicula en una sola linea (string)
 bool leerFilaCSV(ifstream& file, string& lineaCompleta) {

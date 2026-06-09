@@ -1,7 +1,3 @@
-//
-// Created by burgo on 8/5/2026.
-//
-
 #include "IUsuarios.h"
 
 //Flujo(funciones) para la interaccion entre el programa y el usuario
