@@ -6,10 +6,9 @@ set(CMAKE_CXX_STANDARD 26)
 add_executable(PROYECTAZO main.cpp
         CClases.cpp
         Interfaz.cpp
-        LecPelis.cpp
+        Interfaz.cpp
         LimPelis.cpp
+        LecPelis.cpp
         IUsuarios.cpp
-        Trie.cpp
         PreProcesador.cpp
-        PreProcesador.h
 )
