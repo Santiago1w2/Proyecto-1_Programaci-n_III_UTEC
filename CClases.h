@@ -31,7 +31,15 @@ struct DataLimpia {
     DataLimpia(const string &title, const string &release_year, const string &origin, const string &director,
         const string &cast, const string &genre, const string &plot);
     DataLimpia();
+    string getTitle()const{return title;}
+    string getRelease_year()const{return release_year;}
+    string getOrigin()const{return origin;}
+    string getDirector()const{return director;}
+    string getCast()const{return cast;}
+    string getGenre()const{return genre;}
+    string getPlot()const{return plot;}
 };
+
 
 class Movie {
     string title;
@@ -74,23 +82,7 @@ public:
 
 };
 
-struct DataLimpia {
-    string title;
-    string release_year;
-    string origin;
-    string director;
-    string cast;
-    string genre;
-    string plot;
-    string getTitle()const{return title;}
-    string getRelease_year()const{return release_year;}
-    string getOrigin()const{return origin;}
-    string getDirector()const{return director;}
-    string getCast()const{return cast;}
-    string getGenre()const{return genre;}
-    string getPlot()const{return plot;}
 
-};
 
 
 struct TokenInfo {
