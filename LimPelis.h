@@ -1,18 +1,7 @@
 #ifndef PROCESAMIENTO_H
 #define PROCESAMIENTO_H
 
-
 #include "CClases.h"
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
-#include <string>
-#include <sstream>
-#include <algorithm>
-#include <cctype>
-using namespace std;
 
 
 string aMinusculas(string texto);

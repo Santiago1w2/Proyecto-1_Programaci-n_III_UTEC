@@ -1,10 +1,4 @@
-//
-// Created by burgo on 27/3/2026.
-//
-
 #include "CClases.h"
-#include "Plimpieza.h"
-#include <string_view>
 
 DataLimpia::DataLimpia(const string &title, const string &release_year, const string &origin, const string &director,
 const string &cast, const string &genre, const string &plot)    : title(title),
@@ -17,10 +11,7 @@ const string &cast, const string &genre, const string &plot)    : title(title),
 
 }
 
-DataLimpia::DataLimpia() {
-
-}
-
+DataLimpia::DataLimpia() = default;
 
 Movie::Movie() = default;
 Movie::Movie(string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
@@ -64,53 +55,4 @@ void Movie::more_info() {
     cout << "Genre: " << genre << endl;
     cout << "Wiki Page: " << wiki_page << endl;
     cout << "Plot: " << plot << endl;
-}
-
-vector<string> Preprocesador::tokenizar(const string &texto) {
-    vector<string> tokens;
-    stringstream ss(texto);
-    string palabra;
-    while (ss >> palabra) {
-        tokens.push_back(palabra);
-    }
-    return tokens;
-}
-
-void Preprocesador::agregarTokens(DocumentoIndexado &doc, const string &texto, int peso) {
-    vector<string> tokens =tokenizar(texto);
-    for (const string& t : tokens)
-        doc.tokens.push_back({t,peso});
-}
-
-DocumentoIndexado Preprocesador::procesarMovie(int movieID, const DataLimpia &movie) {
-    DocumentoIndexado doc;
-    doc.movieID = movieID;
-
-    agregarTokens(doc,movie.getTitle(),5);
-    agregarTokens(doc,movie.getRelease_year(),1);
-    agregarTokens(doc,movie.getOrigin(),1);
-    agregarTokens(doc,movie.getDirector(),1);
-    agregarTokens(doc,movie.getCast(),1);
-    agregarTokens(doc,movie.getGenre(),1);
-    agregarTokens(doc,movie.getPlot(),2);
-    return doc;
-}
-
-void Preprocesador::preprocesar(const unordered_map<int, DataLimpia> &peliculas) {
-    totalDocs = peliculas.size();
-    for (const auto& par : peliculas) {
-        int movieID = par.first;
-        const DataLimpia& movie = par.second;
-        DocumentoIndexado doc = procesarMovie(movieID, movie);
-        documentosProcesados[movieID] = doc;
-
-        // calcular DOCFREQ (IDF)
-        unordered_set<string> vistos;
-        for (const TokenInfo& tk : doc.tokens) {
-            if (vistos.find(tk.token)==vistos.end()) {
-                docFreq[tk.token]++;
-                vistos.insert(tk.token);
-            }
-        }
-    }
 }

@@ -1,13 +1,9 @@
-//
-// Created by smora on 29/04/2026.
-//
-
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_INTERFAZ_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_INTERFAZ_H
 
 #include "Interfaz.h"
 #include "IUsuarios.h"
-#include "LPeliculas.h"
+#include "LecPelis.h"
 
 #include <conio.h>
 #define WIN32_LEAN_AND_MEAN

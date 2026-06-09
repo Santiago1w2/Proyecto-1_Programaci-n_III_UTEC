@@ -1,9 +1,7 @@
-//
-// Created by burgo on 27/3/2026.
-//
-
 #ifndef PROYECTAZO_CCLASES_H
 #define PROYECTAZO_CCLASES_H
+
+//Se llaman a librerias que se usan a nivel globla en el programa
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -17,6 +15,7 @@
 #include <unordered_set>
 #include <map>
 #include <cctype>
+#include <string_view>
 
 using namespace std;
 struct DataLimpia {
@@ -27,10 +26,16 @@ struct DataLimpia {
     string cast;
     string genre;
     string plot;
-
+    DataLimpia();
     DataLimpia(const string &title, const string &release_year, const string &origin, const string &director,
         const string &cast, const string &genre, const string &plot);
-    DataLimpia();
+    string getTitle()const{return title;}
+    string getRelease_year()const{return release_year;}
+    string getOrigin()const{return origin;}
+    string getDirector()const{return director;}
+    string getCast()const{return cast;}
+    string getGenre()const{return genre;}
+    string getPlot()const{return plot;}
 };
 
 class Movie {
@@ -74,25 +79,6 @@ public:
 
 };
 
-struct DataLimpia {
-    string title;
-    string release_year;
-    string origin;
-    string director;
-    string cast;
-    string genre;
-    string plot;
-    string getTitle()const{return title;}
-    string getRelease_year()const{return release_year;}
-    string getOrigin()const{return origin;}
-    string getDirector()const{return director;}
-    string getCast()const{return cast;}
-    string getGenre()const{return genre;}
-    string getPlot()const{return plot;}
-
-};
-
-
 struct TokenInfo {
     string token;
     int peso;
@@ -103,16 +89,8 @@ struct DocumentoIndexado {
     vector<TokenInfo> tokens;
 };
 
-class Preprocesador {
-    unordered_map<int, DocumentoIndexado> documentosProcesados;
-    unordered_map<string, int> docFreq;
-    int totalDocs = 0;
-public:
-    vector<string> tokenizar(const string& texto);
-    void agregarTokens(DocumentoIndexado& doc,const string& texto,int peso);
-    DocumentoIndexado procesarMovie(int movieID,const DataLimpia& movie);
-    void preprocesar(const unordered_map<int, DataLimpia>& peliculas);
 
-};
+
+
 
 #endif //PROYECTAZO_CCLASES_H

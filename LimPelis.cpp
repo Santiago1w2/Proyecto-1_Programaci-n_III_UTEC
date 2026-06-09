@@ -1,6 +1,4 @@
-//
-// Created by Pieri on 4/05/2026.
-#include "PLimpieza.h"
+#include "LimPelis.h"
 
 // Acá decidí usar un unordered_map<string,string> porque algunos caracteres UTF-8 ocupan más de un byte y además algunos símbolos se convierten en más de una letra.
 unordered_map<string, string> accents = {
