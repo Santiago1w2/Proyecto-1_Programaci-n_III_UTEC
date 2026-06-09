@@ -14,5 +14,11 @@ add_executable(PROYECTAZO main.cpp
         PLimpieza.h
         IUsuarios.cpp
         IUsuarios.h
+        Memento.cpp
+        Memento.h
+        Iterator.cpp
+        Iterator.h
+        Singleton.cpp
+        Singleton.h
 
 )

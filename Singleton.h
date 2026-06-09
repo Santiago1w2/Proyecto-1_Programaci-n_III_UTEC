@@ -1,0 +1,16 @@
+//
+// Created by smora on 9/06/2026.
+//
+
+#ifndef PROYECTO_1_PROGRAMACION_III_UTEC_SINGLETON_H
+#define PROYECTO_1_PROGRAMACION_III_UTEC_SINGLETON_H
+
+
+
+class Singleton {
+
+};
+
+
+
+#endif //PROYECTO_1_PROGRAMACION_III_UTEC_SINGLETON_H
