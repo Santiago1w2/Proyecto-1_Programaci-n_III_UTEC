@@ -56,3 +56,10 @@ void Movie::more_info() {
     cout << "Wiki Page: " << wiki_page << endl;
     cout << "Plot: " << plot << endl;
 }
+
+string aMinuscula(string texto){
+    for(char& c : texto) {
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    }
+    return texto;
+}

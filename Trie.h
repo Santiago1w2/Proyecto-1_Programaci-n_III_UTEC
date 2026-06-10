@@ -1,15 +1,15 @@
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_TRIE_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_TRIE_H
 
-#include <array>
-
 #include "CClases.h"
-using namespace std;
+
+inline constexpr int MAX_LONG = 6;
+
 
 
 struct Nodo {
     array<Nodo*,256> hijos{};
-    unordered_map<int, int> freq; // docID -> conteo simple
+    unordered_map<int, int> freq;
     bool esPalabraExacta= false;
     Nodo(){hijos.fill(nullptr);}
 };
@@ -20,6 +20,7 @@ struct Resultado {
     double score;
 };
 
+
 class Trie {
     Nodo* raiz;
 public:
@@ -27,11 +28,12 @@ public:
     unordered_map<string, int> docFreq;
     unordered_map<string, unordered_set<int>> seenInDoc;
     Trie();
-    void insertarCompleto(const string& texto, int id, int pesoCampo);
     void insertarpalabra(const string& palabra, int id, int pesoCampo) const;
-    vector<int> buscar(const string& query) const;
     unordered_map<int,double> buscarNodo(const string& clave) const;
     unordered_map<int,double> buscarScores(const string& query) const;
 };
+
+
+
 
 #endif
