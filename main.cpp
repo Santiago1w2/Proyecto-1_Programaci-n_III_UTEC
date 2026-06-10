@@ -1,7 +1,6 @@
-#include "CClases.h"
+#include "Utilidades.h"
 #include "LimPelis.h"
 #include "Interfaz.h"
-#include "LecPelis.h"
 #include "Procesador.h"
 
 int main() {
@@ -11,11 +10,11 @@ int main() {
     system("chcp 65001 > nul");
     system("cls");
     cout << "Leyendo archivos..." << endl;
-    unordered_map<int,Movie> pelis = leerPeliculas("peliculas.csv");
+    unordered_map<int,Movie> dataSucia = leerPeliculas("peliculas.csv");
 
     cout << "Limpiando datos y preparando texto..." << endl;
     unordered_map<int , DataLimpia> dataLimpia;
-    exportarDataLimpiaCSV(pelis,"datosLimpios.csv", dataLimpia);
+    exportarDataLimpiaCSV(dataSucia,"datosLimpios.csv", dataLimpia);
 
     Procesador preprocesador;
     cout << "Procesando datos para subir al Trie..."<< endl;

@@ -4,11 +4,10 @@ project(PROYECTAZO)
 set(CMAKE_CXX_STANDARD 26)
 
 add_executable(PROYECTAZO main.cpp
-        CClases.cpp
+        Utilidades.cpp
         Interfaz.cpp
         Interfaz.cpp
         LimPelis.cpp
-        LecPelis.cpp
         IUsuarios.cpp
         Procesador.cpp
         Trie.cpp

@@ -1,7 +1,7 @@
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_IUSUARIOS_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_IUSUARIOS_H
 
-#include "CClases.h"
+#include "Utilidades.h"
 #include "Interfaz.h"
 #include "LimPelis.h"
 
