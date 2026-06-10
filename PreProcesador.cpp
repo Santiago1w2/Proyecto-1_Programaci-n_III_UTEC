@@ -4,21 +4,15 @@
 
 #include "PreProcesador.h"
 
-Preprocesador::Preprocesador()
-{
-    const int NUM_TRIES = 8;
-
-    for(int i = 0; i < NUM_TRIES; i++)
-    {
-        tries.push_back(
-            make_unique<Trie>()
-        );
+//Constructor para definir la cantidad threads que se usaran y cantidad tries que se crearán
+Preprocesador::Preprocesador(){
+    for(int i = 0; i < NUM_THREADS; i++){
+        tries.push_back(make_unique<Trie>());
     }
 }
 
 
-
-
+//Funcio para tokenizar un string (separarlas palabas por cada espacio en el string)
 vector<string> Preprocesador::tokenizar(const string &texto) {
     vector<string> tokens;
     stringstream ss(texto);
@@ -49,27 +43,19 @@ DocumentoIndexado Preprocesador::procesarMovie(int movieID, const DataLimpia &mo
     return doc;
 }
 
-void Preprocesador::preprocesar(const unordered_map<int, DataLimpia>& peliculas)
-{
+
+
+void Preprocesador::preprocesar(const unordered_map<int, DataLimpia>& peliculas){
     totalDocs = peliculas.size();
-
     vector<pair<int, DataLimpia>> datos;
-
-    for(const auto& p : peliculas)
-    {
+    for(const auto& p : peliculas){
         datos.push_back(p);
     }
-
-    const int NUM_THREADS = tries.size();
-
     vector<thread> threads;
+    vector<unordered_map<string,int>> docFreqLocales(NUM_THREADS);
 
-    vector<unordered_map<string,int>>
-        docFreqLocales(NUM_THREADS);
-
-    auto worker =
-        [this,&datos,&docFreqLocales]
-        (
+    auto worker = [this,&datos,&docFreqLocales]
+    (
             int inicio,
             int fin,
             int indiceTrie

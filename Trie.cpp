@@ -3,7 +3,6 @@
 Trie::Trie() : raiz(new Nodo()), totalDocs(0) {}
 
 
-
 //Insersion de palabras
 void Trie::insertarpalabra(
     const string& palabra,
@@ -48,13 +47,9 @@ void Trie::insertarpalabra(
     for(int i = 1; i < n; i++)
     {
         Nodo* actual = raiz;
-
-        for(int j = i;
-            j < min(n, i + MAX_LEN);
-            j++)
-        {
-            unsigned char uc =
-                static_cast<unsigned char>(palabra[j]);
+        for(int j = i;j < min(n, i + MAX_LEN);j++){
+            char c = palabra[j];
+            unsigned char uc = static_cast<unsigned char>(c);
 
             if(actual->hijos[uc] == nullptr)
             {

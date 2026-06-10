@@ -12,6 +12,8 @@
 #include <mutex>
 
 
+inline constexpr int NUM_THREADS = 8;
+
 class Preprocesador {
     vector<unique_ptr<Trie>> tries;
 public:
