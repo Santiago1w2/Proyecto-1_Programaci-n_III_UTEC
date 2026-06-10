@@ -2,8 +2,7 @@
 #include "LimPelis.h"
 #include "Interfaz.h"
 #include "LecPelis.h"
-#include "PreProcesador.h"
-#include <chrono>
+#include "Procesador.h"
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
@@ -18,11 +17,11 @@ int main() {
     unordered_map<int , DataLimpia> dataLimpia;
     exportarDataLimpiaCSV(pelis,"datosLimpios.csv", dataLimpia);
 
-    Preprocesador preprocesador;
+    Procesador preprocesador;
     cout << "Procesando datos para subir al Trie..."<< endl;
 
     auto inicio = std::chrono::high_resolution_clock::now();
-    preprocesador.preprocesar(dataLimpia);
+    preprocesador.procesar(dataLimpia);
     auto fin = std::chrono::high_resolution_clock::now();
     auto duracion =
         std::chrono::duration_cast<

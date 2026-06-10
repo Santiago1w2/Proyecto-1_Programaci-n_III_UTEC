@@ -1,7 +1,7 @@
 #ifndef PROYECTAZO_CCLASES_H
 #define PROYECTAZO_CCLASES_H
 
-//Se llaman a librerias que se usan a nivel globla en el programa
+//Se llaman a librerias que se usan a nivel global en el programa
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -16,6 +16,12 @@
 #include <map>
 #include <cctype>
 #include <string_view>
+#include <array>
+#include <thread>
+#include <memory>
+#include <mutex>
+#include <chrono>
+
 
 using namespace std;
 struct DataLimpia {
@@ -58,7 +64,6 @@ public:
     string getWiki() const;
     string getPlot()const;
     string getCast()const;
-
     void more_info();
 };
 
@@ -89,7 +94,7 @@ struct DocumentoIndexado {
     vector<TokenInfo> tokens;
 };
 
-
+string aMinuscula(string texto);
 
 
 

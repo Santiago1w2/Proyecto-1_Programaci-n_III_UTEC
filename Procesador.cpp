@@ -1,11 +1,9 @@
-//
-// Created by burgo on 9/6/2026.
-//
+#include "Procesador.h"
 
-#include "PreProcesador.h"
+#include "IUsuarios.h"
 
 //Constructor para definir la cantidad threads que se usaran y cantidad tries que se crearán
-Preprocesador::Preprocesador(){
+Procesador::Procesador(){
     for(int i = 0; i < NUM_THREADS; i++){
         tries.push_back(make_unique<Trie>());
     }
@@ -13,7 +11,7 @@ Preprocesador::Preprocesador(){
 
 
 //Funcio para tokenizar un string (separarlas palabas por cada espacio en el string)
-vector<string> Preprocesador::tokenizar(const string &texto) {
+vector<string> tokenizar(const string &texto) {
     vector<string> tokens;
     stringstream ss(texto);
     string palabra;
@@ -23,13 +21,13 @@ vector<string> Preprocesador::tokenizar(const string &texto) {
     return tokens;
 }
 
-void Preprocesador::agregarTokens(DocumentoIndexado &doc, const string &texto, int peso) {
+void agregarTokens(DocumentoIndexado &doc, const string &texto, int peso) {
     vector<string> tokens =tokenizar(texto);
     for (const string& t : tokens)
         doc.tokens.push_back({t,peso});
 }
 
-DocumentoIndexado Preprocesador::procesarMovie(int movieID, const DataLimpia &movie) {
+DocumentoIndexado procesarMovie(int movieID, const DataLimpia &movie) {
     DocumentoIndexado doc;
     doc.movieID = movieID;
 
@@ -45,7 +43,7 @@ DocumentoIndexado Preprocesador::procesarMovie(int movieID, const DataLimpia &mo
 
 
 
-void Preprocesador::preprocesar(const unordered_map<int, DataLimpia>& peliculas){
+void Procesador::procesar(const unordered_map<int, DataLimpia>& peliculas){
     totalDocs = peliculas.size();
     vector<pair<int, DataLimpia>> datos;
     for(const auto& p : peliculas){
@@ -61,59 +59,31 @@ void Preprocesador::preprocesar(const unordered_map<int, DataLimpia>& peliculas)
             int indiceTrie
         )
     {
-        Trie& trie =
-            *tries[indiceTrie];
+        Trie& trie = *tries[indiceTrie];
+        auto& localFreq = docFreqLocales[indiceTrie];
 
-        auto& localFreq =
-            docFreqLocales[indiceTrie];
-
-        for(int i = inicio; i < fin; i++)
-        {
-            int movieID =
-                datos[i].first;
-
-            const DataLimpia& movie =
-                datos[i].second;
-
-            DocumentoIndexado doc =
-                procesarMovie(
-                    movieID,
-                    movie
-                );
-
-
+        for(int i = inicio; i < fin; i++) {
+            int movieID = datos[i].first;
+            const DataLimpia& movie = datos[i].second;
+            DocumentoIndexado doc = procesarMovie(movieID, movie);
             unordered_set<string> vistos;
 
-            for(const TokenInfo& tk :
-                doc.tokens)
-            {
-                trie.insertarpalabra(
-                    tk.token,
-                    movieID,
-                    tk.peso
-                );
+            for(const TokenInfo& tk : doc.tokens) {
+                string tokenMinuscula = aMinuscula(tk.token);
+                trie.insertarpalabra(tokenMinuscula, movieID, tk.peso);
 
-                if(!vistos.count(tk.token))
-                {
-                    localFreq[tk.token]++;
-                    vistos.insert(
-                        tk.token
-                    );
+                if(!vistos.count(tokenMinuscula)) {
+                    localFreq[tokenMinuscula]++;
+                    vistos.insert(tokenMinuscula);
                 }
             }
         }
     };
 
-    int bloque =
-        datos.size()
-        / NUM_THREADS;
+    int bloque = datos.size() / NUM_THREADS;
 
-    for(int t = 0;
-        t < NUM_THREADS;
-        t++)
-    {
-        int inicio =
-            t * bloque;
+    for(int t = 0;t < NUM_THREADS;t++) {
+        int inicio = t * bloque;
 
         int fin =
             (
@@ -167,7 +137,7 @@ void Preprocesador::preprocesar(const unordered_map<int, DataLimpia>& peliculas)
 
 
 vector<int>
-Preprocesador::buscar(
+Procesador::buscar(
     const string& consulta)
 {
     vector<

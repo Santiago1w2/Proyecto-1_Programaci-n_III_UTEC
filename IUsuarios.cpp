@@ -2,7 +2,6 @@
 
 //Flujo(funciones) para la interaccion entre el programa y el usuario
 
-
 vector<int> parseLista(const string& s) {
     vector<int> res;
     string num = "";

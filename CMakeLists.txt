@@ -10,6 +10,6 @@ add_executable(PROYECTAZO main.cpp
         LimPelis.cpp
         LecPelis.cpp
         IUsuarios.cpp
-        PreProcesador.cpp
+        Procesador.cpp
         Trie.cpp
 )
