@@ -3,6 +3,7 @@
 #include "Interfaz.h"
 #include "LecPelis.h"
 #include "PreProcesador.h"
+#include <chrono>
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
@@ -19,7 +20,15 @@ int main() {
 
     Preprocesador preprocesador;
     cout << "Procesando datos para subir al Trie..."<< endl;
+
+    auto inicio = std::chrono::high_resolution_clock::now();
     preprocesador.preprocesar(dataLimpia);
+    auto fin = std::chrono::high_resolution_clock::now();
+    auto duracion =
+        std::chrono::duration_cast<
+            std::chrono::milliseconds
+        >(fin - inicio);
+    cout<<duracion;
 
     cout << "\n===== PRUEBA DEL TRIE =====\n";
     string consulta;

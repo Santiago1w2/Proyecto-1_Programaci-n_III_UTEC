@@ -4,13 +4,20 @@
 
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_PREPROCESADOR_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_PREPROCESADOR_H
+#include <memory>
+
 #include "Trie.h"
 #include "CClases.h"
+#include <thread>
+#include <mutex>
 
+
+inline constexpr int NUM_THREADS = 8;
 
 class Preprocesador {
-    Trie trie;
+    vector<unique_ptr<Trie>> tries;
 public:
+    Preprocesador();
     int totalDocs = 0;
     unordered_map<int, DocumentoIndexado> documentosProcesados;
     unordered_map<string, int> docFreq;
