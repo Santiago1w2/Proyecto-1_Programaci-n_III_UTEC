@@ -1,5 +1,6 @@
 #include "Trie.h"
 
+//Constructor de la clase Trie
 Trie::Trie() {
     raiz = new Nodo();
     totalDocs = 0;

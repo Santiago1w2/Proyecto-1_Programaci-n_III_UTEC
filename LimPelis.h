@@ -1,8 +1,17 @@
 #ifndef PROCESAMIENTO_H
 #define PROCESAMIENTO_H
 
-#include "CClases.h"
+#include "Utilidades.h"
 
+//Flujo para lectura y registro inicial de peliculas
+bool leerFilaCSV(ifstream& file, string& lineaCompleta);
+vector<string> parseCSVLine(const string& linea);
+unordered_map<int,Movie> leerPeliculas(const string& csv);
+
+
+
+
+//Flujo para limpieza de peliculas
 
 string aMinusculas(string texto);
 

@@ -1,20 +1,12 @@
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_INTERFAZ_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_INTERFAZ_H
 
-#include "Interfaz.h"
-#include "IUsuarios.h"
-#include "LecPelis.h"
 
-#include <conio.h>
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <windows.h>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <chrono>
-using namespace std;
-
+#include "IUsuarios.h"
+#include "LimPelis.h"
+#include "Utilidades.h"
 
 
 void limpiarPantalla();

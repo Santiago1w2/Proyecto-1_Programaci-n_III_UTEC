@@ -1,6 +1,8 @@
 #include "LimPelis.h"
 
-// Acá decidí usar un unordered_map<string,string> porque algunos caracteres UTF-8 ocupan más de un byte y además algunos símbolos se convierten en más de una letra.
+// Se usa un unordered_map<string,string> porque algunos caracteres UTF-8 ocupan más de un byte
+
+// Además algunos símbolos se convierten en más de una letra.
 unordered_map<string, string> accents = {
     // A
     {"á","a"},{"à","a"},{"ä","a"},{"â","a"},{"ã","a"},{"å","a"},
@@ -62,6 +64,84 @@ unordered_set<string> stopwords = {
     "saying", "such", "enough", "already", "every", "these", "something",
     "continue", "point", "further", "form", "cause", "seems"
 };
+
+//============================================================================================================
+
+//Flujo para lectura inicial de peliculas
+
+//Registrar toda la información de una pelicula en una sola linea (string)
+bool leerFilaCSV(ifstream& file, string& lineaCompleta) {
+    string linea;
+    if (!getline(file, linea)) return false;
+
+    lineaCompleta = linea;
+    int comillas = 0;
+    for (char c : linea) { if (c == '"') comillas++; }
+
+    while (comillas % 2 != 0) {
+        if (!getline(file, linea)) break;
+        lineaCompleta += "\n" + linea;
+        for (char c : linea) { if (c == '"') comillas++; }
+    }
+    return true;
+}
+
+//Tratamiento de situaciones particulares con el uso de comillas y registro de atributos
+vector<string> parseCSVLine(const string& linea) {
+    vector<string> fila;
+    string campo = "";
+    bool enComillas = false;
+
+    for (size_t i = 0; i < linea.size(); i++) {
+        char c = linea[i];
+        if (c == '"') {
+            if (enComillas && i + 1 < linea.size() && linea[i + 1] == '"') {
+                campo += '"'; i++;
+            } else {
+                enComillas = !enComillas;
+            }
+        }
+        else if (c == ',' && !enComillas) {
+            fila.push_back(campo);
+            campo = "";
+        }
+        else { campo += c; }
+    }
+    fila.push_back(campo);
+    return fila;
+}
+
+//Lectura del CSV y creacion de todas las peliculas en un unordered_map
+unordered_map<int,Movie> leerPeliculas(const string& csv) {
+    unordered_map<int,Movie> movies;
+    int idMovie = 1;
+    ifstream archivo(csv);
+    if (!archivo.is_open()) return movies;
+
+    string linea;
+    leerFilaCSV(archivo, linea); // Saltar cabecera
+
+    while (leerFilaCSV(archivo, linea)) {
+        vector<string> fila = parseCSVLine(linea);
+        if (fila.size() < 8) continue;
+        string _year = fila[0];
+        string _title = fila[1];
+        string _origin = fila[2];
+        string _director = fila[3];
+        string _cast = fila[4];
+        string _genre = fila[5];
+        string _wiki = fila[6];
+        string _plot = fila[7];
+
+        movies.insert({idMovie, Movie(_year,_title,_origin,_director,_cast,_genre,_wiki,_plot)});
+        idMovie++;
+    }
+    archivo.close();
+    return movies;
+}
+
+//============================================================================================================
+
 
 // Pasa los strings a minuscula. Utiliza la libreria algorithm
 string aMinusculas(string texto) {
@@ -301,10 +381,9 @@ string filtrarStopwords(const string& textoLimpio) {
 
 
 
-
 // --- EXPORTACIÓN A CSV SIN COMILLAS ---
 //Esta función exporta toda la data ya limpia a un CSV y me sirvió bastante para debugging porque podía revisar manualmente cómo estaba quedando cada columna después de la limpieza.
-void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
+void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
     ofstream archivo(nombreArchivo);
     if (!archivo.is_open()) {
         cout << "Error: No se pudo crear el archivo " << nombreArchivo << endl;
@@ -312,12 +391,11 @@ void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string&
     }
     archivo << "Release Year,Title,Origin/Ethnicity,Director,Cast,Genre,Plot\n";
     unordered_map<int, DataLimpia> limpiaA;
-    for (const auto& [id, movie] : pelis) {
+    for (auto& [id, movie] : pelis) {
         string year     = movie.getYear();
         string title    = limpiarTitulo(movie.getTtitle());
         string origin   = limpiarOrigen(movie.getOrigin());
-        string director = limpiarDirector(movie.getDirector()); 
-
+        string director = limpiarDirector(movie.getDirector());
         string cast     = limpiarCast(movie.getCast());
         string genre    = normalizarYLimpiar(movie.getGenre());
 
@@ -331,7 +409,7 @@ void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string&
                 << cast << ","
                 << genre << ","
                 << plotFin << "\n";
-        DataLimpia limpia(title,year,origin,director,cast,genre,plotFin);
+        DataLimpia limpia(title,year,origin,director,cast,genre,plotFin,&movie);
         limpiaA[id] = limpia;
 
     }

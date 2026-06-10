@@ -1,14 +1,5 @@
 #include "Procesador.h"
 
-#include "IUsuarios.h"
-
-//Constructor para definir la cantidad threads que se usaran y cantidad tries que se crearán
-Procesador::Procesador(){
-    for(int i = 0; i < NUM_THREADS; i++){
-        tries.push_back(make_unique<Trie>());
-    }
-}
-
 
 //Funcio para tokenizar un string (separarlas palabas por cada espacio en el string)
 vector<string> tokenizar(const string &texto) {
@@ -30,7 +21,6 @@ void agregarTokens(DocumentoIndexado &doc, const string &texto, int peso) {
 DocumentoIndexado procesarMovie(int movieID, const DataLimpia &movie) {
     DocumentoIndexado doc;
     doc.movieID = movieID;
-
     agregarTokens(doc,movie.getTitle(),5);
     agregarTokens(doc,movie.getRelease_year(),1);
     agregarTokens(doc,movie.getOrigin(),1);
@@ -42,9 +32,16 @@ DocumentoIndexado procesarMovie(int movieID, const DataLimpia &movie) {
 }
 
 
+//Constructor para definir la cantidad threads que se usaran y cantidad tries que se crearán
+Procesador::Procesador(){
+    for(int i = 0; i < NUM_THREADS; i++){
+        tries.push_back(make_unique<Trie>());
+    }
+}
+
 
 void Procesador::procesar(const unordered_map<int, DataLimpia>& peliculas){
-    totalDocs = peliculas.size();
+    totalDocsPr = peliculas.size();
     vector<pair<int, DataLimpia>> datos;
     for(const auto& p : peliculas){
         datos.push_back(p);
@@ -54,9 +51,9 @@ void Procesador::procesar(const unordered_map<int, DataLimpia>& peliculas){
 
     auto worker = [this,&datos,&docFreqLocales]
     (
-            int inicio,
-            int fin,
-            int indiceTrie
+        int inicio,
+        int fin,
+        int indiceTrie
         )
     {
         Trie& trie = *tries[indiceTrie];
@@ -81,142 +78,70 @@ void Procesador::procesar(const unordered_map<int, DataLimpia>& peliculas){
     };
 
     int bloque = datos.size() / NUM_THREADS;
-
+    int fin;
     for(int t = 0;t < NUM_THREADS;t++) {
         int inicio = t * bloque;
 
-        int fin =
-            (
-                t ==
-                NUM_THREADS - 1
-            )
-            ?
-            datos.size()
-            :
-            inicio + bloque;
-
-        threads.emplace_back(
-            worker,
-            inicio,
-            fin,
-            t
-        );
+        if (t==NUM_THREADS-1)
+            fin = datos.size();
+        else {
+            fin = inicio + bloque;
+        }
+        threads.emplace_back(worker, inicio, fin, t);
     }
 
-    for(auto& t : threads)
-    {
-        t.join();
-    }
+    for(auto& t : threads){t.join();}
 
-    unordered_map<string,int>
-        globalDocFreq;
+    unordered_map<string,int> globalDocFreq;
 
-    for(const auto& mapa :
-        docFreqLocales)
-    {
-        for(const auto& [token,freq]
-            : mapa)
-        {
-            globalDocFreq[token]
-                += freq;
+    for(const auto& mapa :docFreqLocales) {
+        for(const auto& [token,freq]: mapa) {
+            globalDocFreq[token]+= freq;
         }
     }
 
-    docFreq =
-        move(globalDocFreq);
+    docFreqPr = move(globalDocFreq);
 
-    for(auto& trie : tries)
-    {
-        trie->docFreq =
-            docFreq;
-
-        trie->totalDocs =
-            totalDocs;
+    for(auto& trie : tries) {
+        trie->setDocFreq(docFreqPr);
+        trie->setTotalDocs(totalDocsPr);
     }
 }
 
 
-vector<int>
-Procesador::buscar(
-    const string& consulta)
-{
-    vector<
-        unordered_map<int,double>
-    > resultados(
-        tries.size()
-    );
-
+vector<int> Procesador::buscar(const string& consulta) {
+    vector<unordered_map<int,double>> resultados(tries.size());
     vector<thread> threads;
 
-    for(int i = 0;
-        i < tries.size();
-        i++)
-    {
-        threads.emplace_back(
-            [&,i]()
+    for(int i = 0;i < tries.size();i++) {
+        threads.emplace_back([&,i]()
             {
-                resultados[i] =
-                    tries[i]
-                    ->buscarScores(
-                        consulta
-                    );
+                resultados[i] = tries[i]->buscarScores(consulta);
             }
         );
     }
 
-    for(auto& t : threads)
-    {
-        t.join();
-    }
+    for(auto& t : threads){t.join();}
 
-    unordered_map<int,double>
-        scoreGlobal;
+    unordered_map<int,double>scoreGlobal;
 
-    for(const auto& parcial :
-        resultados)
-    {
-        for(const auto& [id,score]
-            : parcial)
-        {
-            scoreGlobal[id]
-                += score;
+    for(const auto& parcial : resultados) {
+        for(const auto& [id,score]: parcial) {
+            scoreGlobal[id]+= score;
         }
     }
 
     vector<Resultado> orden;
-
-    for(const auto& [id,score]
-        : scoreGlobal)
-    {
-        orden.push_back(
-            {id,score}
-        );
+    for(const auto& [id,score]: scoreGlobal) {
+        orden.push_back({id,score});
     }
 
-    sort(
-        orden.begin(),
-        orden.end(),
-        [](const Resultado& a,
-           const Resultado& b)
-        {
-            return
-                a.score >
-                b.score;
-        }
-    );
+    sort(orden.begin(),orden.end(),[](const Resultado& a,const Resultado& b)
+        {return a.score > b.score;});
 
     vector<int> respuesta;
-
-    for(
-        int i = 0;
-        i < 5 &&
-        i < orden.size();
-        i++
-    )
-    {
-        respuesta.push_back(
-            orden[i].id
-        );
+    for(int i = 0;i < 5 && i < orden.size();i++) {
+        respuesta.push_back(orden[i].id);
     }
 
     return respuesta;

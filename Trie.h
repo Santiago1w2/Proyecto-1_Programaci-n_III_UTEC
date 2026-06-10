@@ -1,11 +1,7 @@
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_TRIE_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_TRIE_H
 
-#include "CClases.h"
-
-inline constexpr int MAX_LONG = 6;
-
-
+#include "Utilidades.h"
 
 struct Nodo {
     array<Nodo*,256> hijos{};
@@ -23,14 +19,15 @@ struct Resultado {
 
 class Trie {
     Nodo* raiz;
-public:
     int totalDocs;
     unordered_map<string, int> docFreq;
-    unordered_map<string, unordered_set<int>> seenInDoc;
+public:
     Trie();
     void insertarpalabra(const string& palabra, int id, int pesoCampo) const;
     unordered_map<int,double> buscarNodo(const string& clave) const;
     unordered_map<int,double> buscarScores(const string& query) const;
+    void setDocFreq(unordered_map<string, int> _docFreq){docFreq = _docFreq;}
+    void setTotalDocs(int _totalDocs){totalDocs = _totalDocs;}
 };
 
 
