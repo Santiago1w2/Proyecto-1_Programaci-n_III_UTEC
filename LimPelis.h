@@ -29,11 +29,8 @@ string limpiarCast(const string& s);
 // Función de limpieza genérica, se usará temporalmente para las demás columnas.
 string normalizarYLimpiar(const string& s);
 
-// Toma el mapa de películas, limpia las columnas y retorna un mapa con los textos para indexar.
-unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis);
-
 // Función para exportar el CSV separado en columnas limpias.
-void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia);
+void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, const string& nombreArchivo, unordered_map<int, DataLimpia>& datalimpia);
 
 
 #endif //PROCESAMIENTO_H

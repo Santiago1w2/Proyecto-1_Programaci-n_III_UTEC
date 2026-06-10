@@ -383,7 +383,7 @@ string filtrarStopwords(const string& textoLimpio) {
 
 // --- EXPORTACIÓN A CSV SIN COMILLAS ---
 //Esta función exporta toda la data ya limpia a un CSV y me sirvió bastante para debugging porque podía revisar manualmente cómo estaba quedando cada columna después de la limpieza.
-void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
+void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
     ofstream archivo(nombreArchivo);
     if (!archivo.is_open()) {
         cout << "Error: No se pudo crear el archivo " << nombreArchivo << endl;
