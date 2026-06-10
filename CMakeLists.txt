@@ -11,4 +11,5 @@ add_executable(PROYECTAZO main.cpp
         LecPelis.cpp
         IUsuarios.cpp
         PreProcesador.cpp
+        Trie.cpp
 )

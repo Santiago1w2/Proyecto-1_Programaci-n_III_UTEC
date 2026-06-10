@@ -1,22 +1,18 @@
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_TRIE_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_TRIE_H
 
+#include <array>
+
 #include "CClases.h"
 using namespace std;
 
 
 struct Nodo {
-    unordered_map<char, Nodo*> hijos;
+    array<Nodo*,256> hijos{};
     unordered_map<int, int> freq; // docID -> conteo simple
     bool esPalabraExacta= false;
-    ~Nodo() {
-        for (auto &p : hijos) delete p.second;
-    }
+    Nodo(){hijos.fill(nullptr);}
 };
-
-
-
-
 
 
 struct Resultado {
@@ -35,7 +31,7 @@ public:
     void insertarpalabra(const string& palabra, int id, int pesoCampo) const;
     vector<int> buscar(const string& query) const;
     unordered_map<int,double> buscarNodo(const string& clave) const;
-
+    unordered_map<int,double> buscarScores(const string& query) const;
 };
 
 #endif

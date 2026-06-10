@@ -4,6 +4,20 @@
 
 #include "PreProcesador.h"
 
+Preprocesador::Preprocesador()
+{
+    const int NUM_TRIES = 8;
+
+    for(int i = 0; i < NUM_TRIES; i++)
+    {
+        tries.push_back(
+            make_unique<Trie>()
+        );
+    }
+}
+
+
+
 
 vector<string> Preprocesador::tokenizar(const string &texto) {
     vector<string> tokens;
@@ -35,41 +49,219 @@ DocumentoIndexado Preprocesador::procesarMovie(int movieID, const DataLimpia &mo
     return doc;
 }
 
-
-void Preprocesador::preprocesar(const unordered_map<int, DataLimpia> &peliculas)
+void Preprocesador::preprocesar(const unordered_map<int, DataLimpia>& peliculas)
 {
     totalDocs = peliculas.size();
-    for (const auto& par : peliculas)
+
+    vector<pair<int, DataLimpia>> datos;
+
+    for(const auto& p : peliculas)
     {
-        int movieID = par.first;
-        const DataLimpia& movie = par.second;
-        DocumentoIndexado doc =
-            procesarMovie(movieID,movie);
-        documentosProcesados[movieID] = doc;
-        unordered_set<string> vistos;
-        for (const TokenInfo& tk : doc.tokens)
-        {  
-            // INSERTAR EN EL TRIE
-            trie.insertarpalabra(
-                tk.token,
-                movieID,
-                tk.peso
-            );
-            // DOC FREQ
-            if (!vistos.count(tk.token))
+        datos.push_back(p);
+    }
+
+    const int NUM_THREADS = tries.size();
+
+    vector<thread> threads;
+
+    vector<unordered_map<string,int>>
+        docFreqLocales(NUM_THREADS);
+
+    auto worker =
+        [this,&datos,&docFreqLocales]
+        (
+            int inicio,
+            int fin,
+            int indiceTrie
+        )
+    {
+        Trie& trie =
+            *tries[indiceTrie];
+
+        auto& localFreq =
+            docFreqLocales[indiceTrie];
+
+        for(int i = inicio; i < fin; i++)
+        {
+            int movieID =
+                datos[i].first;
+
+            const DataLimpia& movie =
+                datos[i].second;
+
+            DocumentoIndexado doc =
+                procesarMovie(
+                    movieID,
+                    movie
+                );
+
+
+            unordered_set<string> vistos;
+
+            for(const TokenInfo& tk :
+                doc.tokens)
             {
-                docFreq[tk.token]++;
-                vistos.insert(tk.token);
+                trie.insertarpalabra(
+                    tk.token,
+                    movieID,
+                    tk.peso
+                );
+
+                if(!vistos.count(tk.token))
+                {
+                    localFreq[tk.token]++;
+                    vistos.insert(
+                        tk.token
+                    );
+                }
             }
         }
+    };
+
+    int bloque =
+        datos.size()
+        / NUM_THREADS;
+
+    for(int t = 0;
+        t < NUM_THREADS;
+        t++)
+    {
+        int inicio =
+            t * bloque;
+
+        int fin =
+            (
+                t ==
+                NUM_THREADS - 1
+            )
+            ?
+            datos.size()
+            :
+            inicio + bloque;
+
+        threads.emplace_back(
+            worker,
+            inicio,
+            fin,
+            t
+        );
     }
-    trie.totalDocs = totalDocs;
-    trie.docFreq = docFreq;
+
+    for(auto& t : threads)
+    {
+        t.join();
+    }
+
+    unordered_map<string,int>
+        globalDocFreq;
+
+    for(const auto& mapa :
+        docFreqLocales)
+    {
+        for(const auto& [token,freq]
+            : mapa)
+        {
+            globalDocFreq[token]
+                += freq;
+        }
+    }
+
+    docFreq =
+        move(globalDocFreq);
+
+    for(auto& trie : tries)
+    {
+        trie->docFreq =
+            docFreq;
+
+        trie->totalDocs =
+            totalDocs;
+    }
 }
 
 
+vector<int>
+Preprocesador::buscar(
+    const string& consulta)
+{
+    vector<
+        unordered_map<int,double>
+    > resultados(
+        tries.size()
+    );
 
+    vector<thread> threads;
 
-vector<int> Preprocesador::buscar(const string& consulta){
-    return trie.buscar(consulta);
+    for(int i = 0;
+        i < tries.size();
+        i++)
+    {
+        threads.emplace_back(
+            [&,i]()
+            {
+                resultados[i] =
+                    tries[i]
+                    ->buscarScores(
+                        consulta
+                    );
+            }
+        );
+    }
+
+    for(auto& t : threads)
+    {
+        t.join();
+    }
+
+    unordered_map<int,double>
+        scoreGlobal;
+
+    for(const auto& parcial :
+        resultados)
+    {
+        for(const auto& [id,score]
+            : parcial)
+        {
+            scoreGlobal[id]
+                += score;
+        }
+    }
+
+    vector<Resultado> orden;
+
+    for(const auto& [id,score]
+        : scoreGlobal)
+    {
+        orden.push_back(
+            {id,score}
+        );
+    }
+
+    sort(
+        orden.begin(),
+        orden.end(),
+        [](const Resultado& a,
+           const Resultado& b)
+        {
+            return
+                a.score >
+                b.score;
+        }
+    );
+
+    vector<int> respuesta;
+
+    for(
+        int i = 0;
+        i < 5 &&
+        i < orden.size();
+        i++
+    )
+    {
+        respuesta.push_back(
+            orden[i].id
+        );
+    }
+
+    return respuesta;
 }
