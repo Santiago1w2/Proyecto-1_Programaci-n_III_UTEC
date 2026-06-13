@@ -1,7 +1,6 @@
 #include "Utilidades.h"
-#include "LimPelis.h"
 #include "Interfaz.h"
-#include "Procesador.h"
+#include "Singleton.h"
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
@@ -9,24 +8,12 @@ int main() {
 
     system("chcp 65001 > nul");
     system("cls");
-    cout << "Leyendo archivos..." << endl;
-    unordered_map<int,Movie> dataSucia = leerPeliculas("peliculas.csv");
 
-    cout << "Limpiando datos y preparando texto..." << endl;
-    unordered_map<int , DataLimpia> dataLimpia;
-    exportarDataLimpiaCSV(dataSucia,"datosLimpios.csv", dataLimpia);
-
-    Procesador preprocesador;
-    cout << "Procesando datos para subir al Trie..."<< endl;
-
-    auto inicio = std::chrono::high_resolution_clock::now();
-    preprocesador.procesar(dataLimpia);
-    auto fin = std::chrono::high_resolution_clock::now();
-    auto duracion =
-        std::chrono::duration_cast<
-            std::chrono::milliseconds
-        >(fin - inicio);
-    cout<<duracion;
+    // Conexion con el patron Singleton:
+    // motor es la unica instancia del gestor de busqueda en todo el programa.
+    // Desde aqui se cargan los CSV, se limpian los datos y se construye el Trie.
+    Singleton& motor = Singleton::getInstancia();
+    motor.cargarDatos("peliculas.csv", "datosLimpios.csv");
 
     cout << "\n===== PRUEBA DEL TRIE =====\n";
     string consulta;
@@ -36,7 +23,7 @@ int main() {
         getline(cin, consulta);
         if(consulta == "exit")
             break;
-        vector<int> resultados =preprocesador.buscar(consulta);
+        vector<int> resultados = motor.buscar(consulta);
         if(resultados.empty())
         {
             cout << "Sin resultados\n";
@@ -45,11 +32,14 @@ int main() {
         cout << "\nResultados:\n";
         for(int id : resultados)
         {
-            cout
-                << id
-                << " -> "
-                << dataLimpia[id].getTitle()
-                << endl;
+            const DataLimpia* pelicula = motor.obtenerPelicula(id);
+            if (pelicula != nullptr) {
+                cout
+                    << id
+                    << " -> "
+                    << pelicula->getTitle()
+                    << endl;
+            }
         }
     }
 

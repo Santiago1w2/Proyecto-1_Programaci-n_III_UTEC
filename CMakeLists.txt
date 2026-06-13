@@ -11,4 +11,5 @@ add_executable(PROYECTAZO main.cpp
         IUsuarios.cpp
         Procesador.cpp
         Trie.cpp
+        Singleton.cpp
 )
