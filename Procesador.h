@@ -3,6 +3,8 @@
 
 #include "Trie.h"
 #include "Utilidades.h"
+#include "Utilidades.h"
+#include "LimPelis.h"
 
 class Procesador {
     vector<unique_ptr<Trie>> tries;
@@ -20,5 +22,5 @@ public:
 vector<string> tokenizar(const string& texto);
 void agregarTokens(DocumentoIndexado& doc,const string& texto,int peso);
 DocumentoIndexado procesarMovie(int movieID,const DataLimpia& movie);
-
+void cargarData(Procesador& preprocesador, unordered_map<int, Movie>& dataSucia, unordered_map<int, DataLimpia>& dataLimpia,  bool& datoslisto);
 #endif //PROYECTO_1_PROGRAMACION_III_UTEC_PREPROCESADOR_H

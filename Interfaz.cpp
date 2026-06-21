@@ -16,7 +16,7 @@ void setColor(int color) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
 
-void inicio() {
+void Home() {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
@@ -268,4 +268,39 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     moverCursor(0, 20);
     cout << "👉 Selecciona una opción: ";
     cin >> n;
+}
+
+void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesador) {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    system("chcp 65001 > nul");
+    system("cls");
+    // ===== INTERFAZ =====
+    string consulta;
+    cout << "╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n";
+    cout << "║ Buscar:                                                                                                                                       ║ \n";
+    cout << "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝\n\n";
+    moverCursor(10,1);
+    getline(cin, consulta);
+    while(true)
+    {
+
+        if(consulta == "exit")
+            break;
+        vector<int> resultados =pre_procesador.buscar(consulta);
+        if(resultados.empty())
+        {
+            cout << "Sin resultados\n";
+            continue;
+        }
+        cout << "\nResultados:\n";
+        for(int id : resultados)
+        {
+            cout
+                << id
+                << " -> "
+                << pelis[id].getTtitle()
+                << endl;
+        }
+    }
 }

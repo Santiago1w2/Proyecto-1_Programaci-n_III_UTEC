@@ -7,13 +7,13 @@
 #include "IUsuarios.h"
 #include "LimPelis.h"
 #include "Utilidades.h"
-
+#include "Procesador.h"
 
 void limpiarPantalla();
 void moverCursor(int x, int y);
 void esperarEnter();
 void setColor(int color);
-void inicio();
+void Home();
 
 void mostrarMenu(int opcion);
 void seleccionar_opcion(char& op);
@@ -25,6 +25,8 @@ void mostrar_registro_usuario();
 void registro(string& correo, string& pass, string& name, string& clave);
 void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, char& opcion_entrada);
 void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n);
+
+void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesador);
 
 
 

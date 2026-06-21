@@ -36,7 +36,7 @@ DocumentoIndexado procesarMovie(int movieID, const DataLimpia &movie) {
 Procesador::Procesador(){
     for(int i = 0; i < NUM_THREADS; i++){
         tries.push_back(make_unique<Trie>());
-    }
+    }w
 }
 
 
@@ -145,4 +145,17 @@ vector<int> Procesador::buscar(const string& consulta) {
     }
 
     return respuesta;
+}
+void cargarData(Procesador& preprocesador, unordered_map<int, Movie>& dataSucia, unordered_map<int, DataLimpia>& dataLimpia, bool& datoslisto) {
+    dataSucia = leerPeliculas("peliculas.csv");
+    exportarDataLimpiaCSV(dataSucia, "datosLimpios.csvv", dataLimpia);
+    auto inicio = std::chrono::high_resolution_clock::now();
+    preprocesador.procesar(dataLimpia);
+    auto fin = std::chrono::high_resolution_clock::now();
+    auto duracion =
+        std::chrono::duration_cast<
+            std::chrono::milliseconds
+        >(fin - inicio);
+    cout<<duracion << endl;
+    datoslisto = true;
 }
