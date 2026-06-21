@@ -1,0 +1,16 @@
+//
+// Created by smora on 9/06/2026.
+//
+
+#ifndef PROYECTO_1_PROGRAMACION_III_UTEC_ITERATOR_H
+#define PROYECTO_1_PROGRAMACION_III_UTEC_ITERATOR_H
+
+
+
+class Iterator {
+
+};
+
+
+
+#endif //PROYECTO_1_PROGRAMACION_III_UTEC_ITERATOR_H

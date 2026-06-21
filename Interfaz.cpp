@@ -1,7 +1,3 @@
-//
-// Created by smora on 29/04/2026.
-//
-
 #include "Interfaz.h"
 
 void moverCursor(int x, int y) {
@@ -10,18 +6,16 @@ void moverCursor(int x, int y) {
     coord.Y = y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
-void limpiarPantalla() {
-    system("cls");
-}
+void limpiarPantalla() {system("cls");}
 
 void esperarEnter() {
     cout << "\nPresiona Enter para continuar...";
-
     cin.get(); // espera Enter real
 }
 void setColor(int color) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
+
 void inicio() {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
@@ -258,7 +252,7 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "│                                    │   │   🎥 RECOMENDACIONES                                                                                 │\n";
     cout << "│  A. 👤 Mi Perfil                   │   │   ───────────────────────────────                                                                    │\n";
     cout << "│  B. 🕘 Historial                   │   │                                                                                                      │\n";
-    cout << "│  C. ⭐ Favoritos                   │   │                                                                                                      │\n";
+    cout << "│  C. ⭐ Favoritos                    │   │                                                                                                      │\n";
     cout << "│  D. 🔍 Buscar                      │   │                                                                                                      │\n";
     cout << "│                                    │   │                                                                                                      │\n";
     cout << "│  0. Salir                          │   │                                                                                                      │\n";

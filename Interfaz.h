@@ -1,21 +1,14 @@
-//
-// Created by smora on 29/04/2026.
-//
-
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_INTERFAZ_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_INTERFAZ_H
 
-#include "Interfaz.h"
-#include <conio.h>
+
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <windows.h>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <chrono>
-#include "Funciones.h"
-using namespace std;
+#include "IUsuarios.h"
+#include "LimPelis.h"
+#include "Utilidades.h"
+
+
 void limpiarPantalla();
 void moverCursor(int x, int y);
 void esperarEnter();

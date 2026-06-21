@@ -1,12 +1,8 @@
-//
-// Created by Pieri on 4/05/2026.
-#include "PLimpieza.h"
-#include <sstream>
-#include <unordered_map>
+#include "LimPelis.h"
 
-#include "CClases.h"
+// Se usa un unordered_map<string,string> porque algunos caracteres UTF-8 ocupan más de un byte
 
-// Nuestro nuevo mapa que devuelve strings
+// Además algunos símbolos se convierten en más de una letra.
 unordered_map<string, string> accents = {
     // A
     {"á","a"},{"à","a"},{"ä","a"},{"â","a"},{"ã","a"},{"å","a"},
@@ -50,7 +46,7 @@ unordered_map<string, string> accents = {
     {"æ","ae"},{"Æ","ae"},
     {"œ","oe"},{"Œ","oe"}
 };
-
+// Stopword que se eliminaran
 unordered_set<string> stopwords = {
     "the", "and", "his", "her", "that", "with", "him", "for", "she", "but",
     "who", "they", "from", "has", "their", "when", "are", "after", "out",
@@ -69,6 +65,11 @@ unordered_set<string> stopwords = {
     "continue", "point", "further", "form", "cause", "seems"
 };
 
+//============================================================================================================
+
+//Flujo para lectura inicial de peliculas
+
+//Registrar toda la información de una pelicula en una sola linea (string)
 bool leerFilaCSV(ifstream& file, string& lineaCompleta) {
     string linea;
     if (!getline(file, linea)) return false;
@@ -85,6 +86,7 @@ bool leerFilaCSV(ifstream& file, string& lineaCompleta) {
     return true;
 }
 
+//Tratamiento de situaciones particulares con el uso de comillas y registro de atributos
 vector<string> parseCSVLine(const string& linea) {
     vector<string> fila;
     string campo = "";
@@ -109,27 +111,57 @@ vector<string> parseCSVLine(const string& linea) {
     return fila;
 }
 
+//Lectura del CSV y creacion de todas las peliculas en un unordered_map
+unordered_map<int,Movie> leerPeliculas(const string& csv) {
+    unordered_map<int,Movie> movies;
+    int idMovie = 1;
+    ifstream archivo(csv);
+    if (!archivo.is_open()) return movies;
+
+    string linea;
+    leerFilaCSV(archivo, linea); // Saltar cabecera
+
+    while (leerFilaCSV(archivo, linea)) {
+        vector<string> fila = parseCSVLine(linea);
+        if (fila.size() < 8) continue;
+        string _year = fila[0];
+        string _title = fila[1];
+        string _origin = fila[2];
+        string _director = fila[3];
+        string _cast = fila[4];
+        string _genre = fila[5];
+        string _wiki = fila[6];
+        string _plot = fila[7];
+
+        movies.insert({idMovie, Movie(_year,_title,_origin,_director,_cast,_genre,_wiki,_plot)});
+        idMovie++;
+    }
+    archivo.close();
+    return movies;
+}
+
+//============================================================================================================
+
+
+// Pasa los strings a minuscula. Utiliza la libreria algorithm
 string aMinusculas(string texto) {
     transform(texto.begin(), texto.end(), texto.begin(), ::tolower);
     return texto;
 }
 
-// --------- NUEVAS FUNCIONES MAESTRAS Y OPTIMIZADAS ---------
-
-// FUNCIÓN MAESTRA REUTILIZABLE: Maneja corchetes, evalúa paréntesis, palabras extranjeras y filtra palabras exactas
+// Esta función no hace traducción automática ni detección real de idioma simplemente descarta caracteres que no reconoce.
 string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisProhibidos, const unordered_set<string>& palabrasProhibidas) {
     string temp = "";
 
-    // Fase 1: Eliminar corchetes y evaluar paréntesis
+    // Manejo de [] y ()
     for (size_t i = 0; i < s.length(); ) {
         if (s[i] == '[') {
             size_t start = i + 1;
             size_t end = start;
             while (end < s.length() && s[end] != ']') end++;
-
+            
             string inside = s.substr(start, end - start);
-
-            // Verificamos si el contenido son SOLO números (o espacios/comas)
+             // Verificamos si adentro solo hay números.
             bool soloNumeros = !inside.empty();
             for (char c : inside) {
                 if (!isdigit((unsigned char)c) && c != ' ' && c != ',') {
@@ -137,19 +169,15 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
                     break;
                 }
             }
-
-            // REGLA: Si NO son solo números, conservamos el texto de adentro
+            // Si NO son solo números, conservamos el contenido
             if (!soloNumeros) {
                 temp += inside;
             }
             // Si eran solo números, no sumamos nada a 'temp' (se elimina el contenido y los [])
-
             i = end;
             if (i < s.length()) i++;
         }
         else if (s[i] == '(') {
-            // ... (aquí sigue tu lógica de paréntesis que ya tenías)
-            // que básicamente borra los () y evalúa el contenido
             size_t start = i + 1;
             size_t end = start;
             while (end < s.length() && s[end] != ')') end++;
@@ -157,6 +185,7 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
 
             string lower_inside = aMinusculas(inside);
             bool descartar = false;
+            // Si encontramos palabras prohibidas dentro del paréntesis se elimina todo el contenido.
             for (const string& prohibida : parentesisProhibidos) {
                 if (lower_inside.find(prohibida) != string::npos) {
                     descartar = true;
@@ -174,14 +203,14 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
         }
     }
 
-    // Fase 2: Procesamiento letra a letra
+    //Procesamiento letra a letra: minúsculas, validación UTF-8, reemplazo acentos y filtrados de otros idiomas.
     string textoFinal = "";
     string palabraActual = "";
     bool palabraValida = true;
 
     auto procesarPalabra = [&]() {
         if (!palabraActual.empty()) {
-            // Si la palabra no tiene caracteres rusos/chinos Y no es una de las palabras prohibidas ("director")
+            // Si la palabra no tiene caracteres rusos/chinos y no es una de las palabras prohibidas ("director")
             if (palabraValida && palabrasProhibidas.find(palabraActual) == palabrasProhibidas.end()) {
                 if (!textoFinal.empty()) textoFinal += " ";
                 textoFinal += palabraActual;
@@ -190,10 +219,10 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
             palabraValida = true;
         }
     };
-
+     // Lectura UTF-8 (necesariamente por carácter)
     for (size_t i = 0; i < temp.length(); ) {
         unsigned char byte = temp[i];
-
+        // ASCII normal
         if (byte < 0x80) {
             char ch = temp[i];
             if (isalnum(ch)) {
@@ -203,6 +232,7 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
                 procesarPalabra();
                 i++;
             }
+        // UTF-8 multibyte
         } else {
             int len = 0;
             if ((byte & 0xE0) == 0xC0) len = 2;
@@ -214,6 +244,7 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
             i += len;
 
             auto it = accents.find(c);
+            // Si conocemos el carácter, lo reemplazamos, de lo contrario se descarta la palabra entera.
             if (it != accents.end()) {
                 palabraActual += it->second;
             } else {
@@ -222,21 +253,20 @@ string limpiarTextoAvanzado(const string& s, const vector<string>& parentesisPro
         }
     }
     procesarPalabra();
-
     return textoFinal;
 }
 
-// 1. Título usa la maestra bloqueando "film" y "part" en los paréntesis
+// Limpia la columna Title y borra todo lo que este entre parentesis si estan las palabras film o part dentro
 string limpiarTitulo(const string& s) {
     return limpiarTextoAvanzado(s, {"film", "part"}, {});
 }
 
-// 2. Director usa la maestra, no bloquea nada en paréntesis, pero prohíbe la palabra "director"
+// Limpia la columna Director y borra la palabra director
 string limpiarDirector(const string& s) {
     return limpiarTextoAvanzado(s, {}, {"director"});
 }
 
-// 3. Origen tiene su propia lógica rápida (es 100% letras y guiones)
+// Se limpia la columna Origin/Ethnicity
 string limpiarOrigen(const string& s) {
     string origenFinal = "";
     string palabraActual = "";
@@ -255,24 +285,24 @@ string limpiarOrigen(const string& s) {
     return origenFinal;
 }
 
-// 4. Cast usa la maestra: borra paréntesis (y su contenido),
-// y filtra palabras específicas como director y screenplay.
+// Se limpia la columna Cast y se borran las palabras director y screenplay
 string limpiarCast(const string& s) {
-    // Pasamos "director" y "screenplay" como palabras prohibidas.
-    // Como la función maestra ya maneja el mapa de 'accents',
-    // reemplazará caracteres especiales automáticamente.
     return limpiarTextoAvanzado(s, {}, {"director", "screenplay"});
 }
 
-// 4. Limpieza Genérica (Se usará TEMPORALMENTE para el resto de columnas)
+
+// Esta es la limpieza genérica que se uso para las columnas Genre y Plot.
 string normalizarYLimpiar(const string& s) {
     string res;
+    // Reservo memoria desde el inicio para evitar reallocations innecesarios.
     res.reserve(s.size());
+    // Esta bandera indica si actualmente estoy dentro de [ ].
     bool enCorchetes = false;
     string bufferCorchetes = "";
-
+    // Recorro el texto carácter por carácter.
     for (size_t i = 0; i < s.size(); ) {
         unsigned char byte = s[i];
+        // Si es un carácter ASCII normal entro acá.
         if ((byte & 0x80) == 0) {
             char ch = s[i];
             if (ch == '[') {
@@ -283,11 +313,13 @@ string normalizarYLimpiar(const string& s) {
             else if (ch == ']') {
                 enCorchetes = false;
                 bool esSoloNumero = true;
+                // Verifico si dentro del corchete solo había números.
                 for (char b : bufferCorchetes) {
                     if (b != ' ' && !isdigit((unsigned char)b)) {
                         esSoloNumero = false; break;
                     }
                 }
+                // Ignoro referencias típicas de Wikipedia porque meten ruido.
                 if (!(esSoloNumero || bufferCorchetes == "clarification needed" ||
                       bufferCorchetes == "citation needed" || bufferCorchetes == "dead link" ||
                       bufferCorchetes == "better source needed")) {
@@ -296,35 +328,43 @@ string normalizarYLimpiar(const string& s) {
                 i++; continue;
             }
             char procesado;
+            // Solo conservo letras y números.
             if (isalnum((unsigned char)ch)) { procesado = tolower((unsigned char)ch); }
             else { procesado = ' '; }
-
+            // Si estoy dentro de corchetes guardo en el buffer temporal.
             if (enCorchetes) bufferCorchetes += procesado;
             else res += procesado;
             i++;
         }
         else {
             int len = 0;
+            // Detecto cuántos bytes ocupa el carácter.
             if ((byte & 0xE0) == 0xC0) len = 2;
             else if ((byte & 0xF0) == 0xE0) len = 3;
             else if ((byte & 0xF8) == 0xF0) len = 4;
+            // Si el formato es inválido simplemente avanzo.
             else { i++; continue; }
-
+            // Extraigo el carácter UTF-8 completo.
             string c = s.substr(i, len);
             i += len;
             string procesado = "";
+            // Busco el carácter en el mapa de acentos.
             auto it = accents.find(c);
+            // Si existe, reemplazo por su versión normalizada.
             if (it != accents.end()) procesado = it->second;
 
             if (enCorchetes) bufferCorchetes += procesado;
             else res += procesado;
         }
     }
+    // Caso borde por si el texto termina con un corchete abierto.
     if (enCorchetes) res += " " + bufferCorchetes;
+    //Yeii
     return res;
 }
 
-// Función auxiliar para el Plot
+
+// Esta función elimina stopwords del plot para reducir ruido en el motor de búsqueda. Palabras como "the", "and", "with", etc. aparecen demasiadas veces y terminan afectando el ranking porque todas las películas comparten esas palabras.
 string filtrarStopwords(const string& textoLimpio) {
     stringstream ss(textoLimpio);
     string palabra, resultado = "";
@@ -339,45 +379,24 @@ string filtrarStopwords(const string& textoLimpio) {
     return resultado;
 }
 
-// --- PREPARACIÓN PARA EL MOTOR DE BÚSQUEDA ---
-unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis) {
-    unordered_map<int, string> dataLimpia;
 
-    for (const auto& [id, movie] : pelis) {
-        string year     = movie.getYear();
-        string title    = limpiarTitulo(movie.getTtitle());
-        string origin   = limpiarOrigen(movie.getOrigin());
-        string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
-
-        string cast     = normalizarYLimpiar(movie.getCast());
-        string genre    = normalizarYLimpiar(movie.getGenre());
-
-        string plotRaw   = normalizarYLimpiar(movie.getPlot());
-        string plotFinal = filtrarStopwords(plotRaw);
-
-        string textoFinal = year + " " + title + " " + origin + " " + director + " " + cast + " " + genre + " " + plotFinal;
-        dataLimpia[id] = textoFinal;
-    }
-    return dataLimpia;
-}
 
 // --- EXPORTACIÓN A CSV SIN COMILLAS ---
-void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
+//Esta función exporta toda la data ya limpia a un CSV y me sirvió bastante para debugging porque podía revisar manualmente cómo estaba quedando cada columna después de la limpieza.
+void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
     ofstream archivo(nombreArchivo);
     if (!archivo.is_open()) {
         cout << "Error: No se pudo crear el archivo " << nombreArchivo << endl;
         return;
     }
-
     archivo << "Release Year,Title,Origin/Ethnicity,Director,Cast,Genre,Plot\n";
     unordered_map<int, DataLimpia> limpiaA;
-    for (const auto& [id, movie] : pelis) {
+    for (auto& [id, movie] : pelis) {
         string year     = movie.getYear();
         string title    = limpiarTitulo(movie.getTtitle());
         string origin   = limpiarOrigen(movie.getOrigin());
-        string director = limpiarDirector(movie.getDirector()); // OPTIMIZADO
-
-        string cast     = normalizarYLimpiar(movie.getCast());
+        string director = limpiarDirector(movie.getDirector());
+        string cast     = limpiarCast(movie.getCast());
         string genre    = normalizarYLimpiar(movie.getGenre());
 
         string plotRaw  = normalizarYLimpiar(movie.getPlot());
@@ -390,7 +409,7 @@ void exportarDataLimpiaCSV(const unordered_map<int, Movie>& pelis, const string&
                 << cast << ","
                 << genre << ","
                 << plotFin << "\n";
-        DataLimpia limpia(title,year,origin,director,cast,genre,plotFin);
+        DataLimpia limpia(title,year,origin,director,cast,genre,plotFin,&movie);
         limpiaA[id] = limpia;
 
     }
