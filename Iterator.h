@@ -1,16 +1,22 @@
-//
-// Created by smora on 9/06/2026.
-//
-
 #ifndef PROYECTO_1_PROGRAMACION_III_UTEC_ITERATOR_H
 #define PROYECTO_1_PROGRAMACION_III_UTEC_ITERATOR_H
 
+#include "Memento.h"
 
+class HistorialIterator {
+    vector<HistorialEntry> entries;
+    int posicion;
+public:
+    HistorialIterator(const vector<HistorialEntry>& _entries);
 
-class Iterator {
+    HistorialEntry primero();
+    HistorialEntry siguiente();
+    bool haySiguiente() const;
+    bool estaVacio() const;
+    void reiniciar();
 
+    HistorialIterator filtrarPorTipo(const string& tipo) const;
+    int total() const;
 };
-
-
 
 #endif //PROYECTO_1_PROGRAMACION_III_UTEC_ITERATOR_H

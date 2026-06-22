@@ -269,3 +269,121 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "👉 Selecciona una opción: ";
     cin >> n;
 }
+
+void mostrarHistorial(Usuario& usuario, const unordered_map<int, Movie>& pelis) {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    system("chcp 65001 > nul");
+
+    char opcion;
+    do {
+        limpiarPantalla();
+        cout << "╔═══════════════════════════════════════════════════════════════════════════╗\n";
+        cout << "║                        🕘 HISTORIAL                                      ║\n";
+        cout << "╚═══════════════════════════════════════════════════════════════════════════╝\n\n";
+
+        cout << "  [1] Ver historial de películas\n";
+        cout << "  [2] Ver historial de búsquedas\n";
+        cout << "  [3] Ver todo el historial\n";
+        cout << "  [4] Guardar snapshot del historial\n";
+        cout << "  [5] Restaurar un snapshot\n";
+        cout << "  [0] Volver\n\n";
+        cout << "  👉 Selecciona una opción: ";
+        cin >> opcion;
+
+        if (opcion == '1') {
+            limpiarPantalla();
+            cout << "═══ HISTORIAL DE PELÍCULAS ═══\n\n";
+            HistorialIterator it = usuario.getHistorialIteratorFiltrado("pelicula");
+            if (it.estaVacio()) {
+                cout << "  No hay películas en el historial.\n";
+            } else {
+                int idx = 1;
+                while (it.haySiguiente()) {
+                    HistorialEntry entry = it.siguiente();
+                    cout << "  " << idx << ". [" << entry.movieId << "]";
+                    auto itPeli = pelis.find(entry.movieId);
+                    if (itPeli != pelis.end())
+                        cout << " " << itPeli->second.getTtitle();
+                    cout << "  (" << entry.timestamp << ")\n";
+                    idx++;
+                }
+            }
+            esperarEnter();
+        }
+        else if (opcion == '2') {
+            limpiarPantalla();
+            cout << "═══ HISTORIAL DE BÚSQUEDAS ═══\n\n";
+            HistorialIterator it = usuario.getHistorialIteratorFiltrado("busqueda");
+            if (it.estaVacio()) {
+                cout << "  No hay búsquedas en el historial.\n";
+            } else {
+                int idx = 1;
+                while (it.haySiguiente()) {
+                    HistorialEntry entry = it.siguiente();
+                    cout << "  " << idx << ". \"" << entry.query << "\"  (" << entry.timestamp << ")\n";
+                    idx++;
+                }
+            }
+            esperarEnter();
+        }
+        else if (opcion == '3') {
+            limpiarPantalla();
+            cout << "═══ TODO EL HISTORIAL ═══\n\n";
+            HistorialIterator it = usuario.getHistorialIterator();
+            if (it.estaVacio()) {
+                cout << "  El historial está vacío.\n";
+            } else {
+                int idx = 1;
+                while (it.haySiguiente()) {
+                    HistorialEntry entry = it.siguiente();
+                    cout << "  " << idx << ". ";
+                    if (entry.tipo == "pelicula") {
+                        cout << "🎬 ";
+                        auto itPeli = pelis.find(entry.movieId);
+                        if (itPeli != pelis.end())
+                            cout << itPeli->second.getTtitle();
+                        else
+                            cout << "Película ID " << entry.movieId;
+                    } else {
+                        cout << "🔍 \"" << entry.query << "\"";
+                    }
+                    cout << "  (" << entry.timestamp << ")\n";
+                    idx++;
+                }
+            }
+            esperarEnter();
+        }
+        else if (opcion == '4') {
+            usuario.guardarSnapshot();
+            limpiarPantalla();
+            cout << "╔═══════════════════════════════════════════════════════════╗\n";
+            cout << "║   ✔ SNAPSHOT GUARDADO CON EXITO                         ║\n";
+            cout << "╚═══════════════════════════════════════════════════════════╝\n";
+            esperar(2);
+        }
+        else if (opcion == '5') {
+            limpiarPantalla();
+            cout << "═══ SNAPSHOTS DISPONIBLES ═══\n\n";
+            if (usuario.cantidadSnapshots() == 0) {
+                cout << "  No hay snapshots guardados.\n";
+                esperarEnter();
+            } else {
+                usuario.mostrarSnapshots();
+                cout << "\n  👉 Selecciona el índice del snapshot a restaurar (o 'c' para cancelar): ";
+                char resp;
+                cin >> resp;
+                if (resp != 'c' && resp != 'C') {
+                    int idx = resp - '0';
+                    if (idx >= 0 && idx < usuario.cantidadSnapshots()) {
+                        usuario.restaurarSnapshot(idx);
+                        cout << "\n  ✔ Snapshot restaurado con éxito.\n";
+                    } else {
+                        cout << "\n  ⚠ Índice inválido.\n";
+                    }
+                    esperar(2);
+                }
+            }
+        }
+    } while (opcion != '0');
+}

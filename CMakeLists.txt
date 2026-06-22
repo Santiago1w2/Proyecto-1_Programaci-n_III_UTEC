@@ -1,14 +1,16 @@
 cmake_minimum_required(VERSION 4.0)
 project(PROYECTAZO)
 
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 20)
 
 add_executable(PROYECTAZO main.cpp
         Utilidades.cpp
-        Interfaz.cpp
         Interfaz.cpp
         LimPelis.cpp
         IUsuarios.cpp
         Procesador.cpp
         Trie.cpp
+        Singleton.cpp
+        Memento.cpp
+        Iterator.cpp
 )

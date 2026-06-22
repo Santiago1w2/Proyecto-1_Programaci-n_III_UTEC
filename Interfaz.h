@@ -25,6 +25,7 @@ void mostrar_registro_usuario();
 void registro(string& correo, string& pass, string& name, string& clave);
 void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, char& opcion_entrada);
 void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n);
+void mostrarHistorial(Usuario& usuario, const unordered_map<int, Movie>& pelis);
 
 
 

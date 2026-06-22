@@ -80,6 +80,11 @@ public:
 
 void procesarComillas(stringstream& ss,string& name);
 
+class HistorialEntry;
+class Memento;
+class HistorialCareTaker;
+class HistorialIterator;
+
 class Usuario {
     string username;
     string email;
@@ -88,10 +93,28 @@ class Usuario {
     unordered_map<int,Movie> meGusta;
     unordered_map<int,Movie> baneado;
     unordered_map<int,Movie> historial;
+    vector<HistorialEntry> historialCompleto;
+    HistorialCareTaker careTaker;
 public:
     Usuario(string &user, string &_email, string &pass, unordered_map<int,Movie> &VMT,
         unordered_map<int,Movie> &MG, unordered_map<int,Movie> &Ban, unordered_map<int,Movie> &hist);
 
+    string getUsername() const { return username; }
+    string getEmail() const { return email; }
+    unordered_map<int,Movie>& getVerMasTarde() { return verMasTarde; }
+    unordered_map<int,Movie>& getMeGusta() { return meGusta; }
+    unordered_map<int,Movie>& getHistorial() { return historial; }
+
+    void agregarPeliculaHistorial(int movieId, const Movie& peli);
+    void agregarBusquedaHistorial(const string& query);
+    vector<HistorialEntry> getHistorialCompleto() const;
+    HistorialIterator getHistorialIterator() const;
+    HistorialIterator getHistorialIteratorFiltrado(const string& tipo) const;
+
+    void guardarSnapshot();
+    void restaurarSnapshot(int indice);
+    int cantidadSnapshots() const;
+    void mostrarSnapshots() const;
 };
 
 struct TokenInfo {

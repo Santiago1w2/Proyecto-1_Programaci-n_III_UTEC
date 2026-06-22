@@ -1,4 +1,6 @@
 #include "Utilidades.h"
+#include "Memento.h"
+#include "Iterator.h"
 
 Movie::Movie() = default;
 Movie::Movie(string _year,string _title, string _origin,string _director ,string _cast, string _genre, string wiki, string _plot) {
@@ -56,4 +58,47 @@ string aMinuscula(string texto){
         c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
     }
     return texto;
+}
+
+void Usuario::agregarPeliculaHistorial(int movieId, const Movie& peli) {
+    historial[movieId] = peli;
+    historialCompleto.emplace_back(movieId, "pelicula", peli.getTtitle());
+}
+
+void Usuario::agregarBusquedaHistorial(const string& query) {
+    historialCompleto.emplace_back(-1, "busqueda", query);
+}
+
+vector<HistorialEntry> Usuario::getHistorialCompleto() const {
+    return historialCompleto;
+}
+
+HistorialIterator Usuario::getHistorialIterator() const {
+    return HistorialIterator(historialCompleto);
+}
+
+HistorialIterator Usuario::getHistorialIteratorFiltrado(const string& tipo) const {
+    HistorialIterator it(historialCompleto);
+    return it.filtrarPorTipo(tipo);
+}
+
+void Usuario::guardarSnapshot() {
+    careTaker.guardar(historialCompleto);
+}
+
+void Usuario::restaurarSnapshot(int indice) {
+    Memento m = careTaker.restaurar(indice);
+    historialCompleto = m.getEstado();
+}
+
+int Usuario::cantidadSnapshots() const {
+    return careTaker.cantidad();
+}
+
+void Usuario::mostrarSnapshots() const {
+    vector<Memento> mementos = careTaker.getMementos();
+    for (int i = 0; i < (int)mementos.size(); i++) {
+        cout << "  [" << i << "] " << mementos[i].getFecha()
+             << " (" << mementos[i].getEstado().size() << " entradas)" << endl;
+    }
 }
