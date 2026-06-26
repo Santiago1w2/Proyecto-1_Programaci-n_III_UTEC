@@ -1,4 +1,5 @@
 #include "IUsuarios.h"
+#include "Proxy.h"
 
 //Flujo(funciones) para la interaccion entre el programa y el usuario
 
@@ -48,10 +49,11 @@ vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& 
         if (linea.empty()) continue;
 
         stringstream ss(linea);
-        string _user, _email, _pass, _vTarde, _likes, _ban, _hist;
+        string _user, _edad, _email, _pass, _vTarde, _likes, _ban, _hist;
 
         getline(ss, _email, ',');
         getline(ss, _pass, ',');
+        getline(ss, _edad, ',');
         getline(ss, _user, ',');
 
         getline(ss, _vTarde, ']'); _vTarde += "]"; ss.ignore(1);
@@ -64,7 +66,7 @@ vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& 
         unordered_map<int,Movie> Ban = convertirAPelis(parseLista(_ban), pelis);
         unordered_map<int,Movie> Hist = convertirAPelis(parseLista(_hist), pelis);
 
-        Usuario us(_user, _email, _pass, VT, MG, Ban, Hist);
+        Usuario us(_user, _email, _edad, _pass, VT, MG, Ban, Hist);
         resultado.push_back(us);
     }
     archivo.close();
@@ -122,13 +124,13 @@ string UserName(const string& _email, const string& _clave) {
 }
 
 //Luego de realizar la validación del nuevo usuario (correo no repetido), se registra la información en el historial de usuarios.
-void registrar_nuevoUsuario(const string& name, const string& email, const string& clave) {
+void registrar_nuevoUsuario(const string& name, const string& fechaNac, const string& email, const string& clave) {
     ofstream archivo("registroUsuarios.txt", ios::app);
     if (!archivo.is_open()) {
         cout << "Error al abrir archivo de usuarios\n";
         return;
     }
-    archivo << email << "," << clave << "," << name <<","<< "[],[],[],[]\n";
+    archivo << email << "," << clave << "," << name << "," << fechaNac << "," << "[],[],[],[]\n";
     archivo.close();
 }
 
@@ -158,7 +160,7 @@ vector<string> mostrar_usuarios() {
 
 
 //Recomendacion aleatoria de 5 peliculas
-void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis) {
+void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edad) {
     //Historial temporal de peliculas que se estan recomendando en una misma interacción
     unordered_map<int,string> hist_temp;
 
@@ -202,7 +204,9 @@ void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis) {
     int col = 45;
     for (auto& k:hist_temp) {
         const Movie& m = pelis.at(k.first);
-        string titulo = m.getTtitle();
+        PeliculaReal real(&m);
+        PeliculaProxy proxy(&real, edad);
+        string titulo = proxy.getTitulo();
         if (titulo.size() > 25)
             titulo = titulo.substr(0, 25);
         moverCursor(col, fila);

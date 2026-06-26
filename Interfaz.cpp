@@ -148,6 +148,8 @@ void mostrar_registro_usuario() {
 ├────────────────────────────────────────────────────┤
 |Email:                                              |
 ├────────────────────────────────────────────────────┤
+|Fecha de Nac. (DD/MM/AAAA):                         |
+├────────────────────────────────────────────────────┤
 |Contraseña:                                         |
 ├────────────────────────────────────────────────────┤
 |Repetir contraseña:                                 |
@@ -158,19 +160,101 @@ void mostrar_registro_usuario() {
 )";
 }
 
-void registro(string& correo, string& pass, string& name, string& clave) {
-    mostrar_registro_usuario();
-    moverCursor(12,4);
-    cin >> name;
-    moverCursor(7, 6);
+void registro(string& correo, string& pass, string& name, string& clave, string& edad) {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    system("chcp 65001 > nul");
+
+    // Paso 1: Nombre de usuario
+    system("cls");
+    cout << R"(
+╭────────────────────────────────────────────────────╮
+|            *REGISTRO DE NUEVO USUARIO*             |
+├────────────────────────────────────────────────────┤
+|  Paso 1/5: Ingresa tu nombre de usuario            |
+├────────────────────────────────────────────────────┤
+|                                                     |
+╰────────────────────────────────────────────────────╯
+)";
+    moverCursor(1, 6);
+    cin >> ws;
+    getline(cin, name);
+
+    // Paso 2: Correo electrónico
+    system("cls");
+    cout << R"(
+╭────────────────────────────────────────────────────╮
+|            *REGISTRO DE NUEVO USUARIO*             |
+├────────────────────────────────────────────────────┤
+|  Paso 2/5: Ingresa tu correo electrónico            |
+├────────────────────────────────────────────────────┤
+|                                                     |
+╰────────────────────────────────────────────────────╯
+)";
+    moverCursor(1, 6);
     cin >> correo;
-    moverCursor(12, 8);
+
+    // Paso 3: Fecha de nacimiento
+    do {
+        system("cls");
+        cout << R"(
+╭────────────────────────────────────────────────────╮
+|            *REGISTRO DE NUEVO USUARIO*             |
+├────────────────────────────────────────────────────┤
+|  Paso 3/5: Ingresa tu fecha de nacimiento           |
+|            (DD/MM/AAAA) ej: 15/03/2000                |
+├────────────────────────────────────────────────────┤
+|                                                     |
+╰────────────────────────────────────────────────────╯
+)";
+        moverCursor(1, 7);
+        cin >> edad;
+        if (calcularEdad(edad) == -1) {
+            system("cls");
+            cout << R"(
+╭────────────────────────────────────────────────────╮
+|            *REGISTRO DE NUEVO USUARIO*             |
+├────────────────────────────────────────────────────┤
+|  ⚠ FECHA INVALIDA                                  |
+|  La fecha no existe o tiene formato incorrecto.     |
+├────────────────────────────────────────────────────┤
+|                                                     |
+╰────────────────────────────────────────────────────╯
+)";
+            esperar(2);
+        }
+    } while (calcularEdad(edad) == -1);
+
+    // Paso 4: Contraseña
+    system("cls");
+    cout << R"(
+╭────────────────────────────────────────────────────╮
+|            *REGISTRO DE NUEVO USUARIO*             |
+├────────────────────────────────────────────────────┤
+|  Paso 4/5: Ingresa tu contraseña                    |
+├────────────────────────────────────────────────────┤
+|                                                     |
+╰────────────────────────────────────────────────────╯
+)";
+    moverCursor(1, 6);
     cin >> pass;
-    moverCursor(21, 10);
+
+    // Paso 5: Repetir contraseña
+    system("cls");
+    cout << R"(
+╭────────────────────────────────────────────────────╮
+|            *REGISTRO DE NUEVO USUARIO*             |
+├────────────────────────────────────────────────────┤
+|  Paso 5/5: Repite tu contraseña                     |
+├────────────────────────────────────────────────────┤
+|                                                     |
+╰────────────────────────────────────────────────────╯
+)";
+    moverCursor(1, 6);
     cin >> clave;
 }
 
-void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, char& opcion_entrada) {
+void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, string& us_edad, char& opcion_entrada) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
@@ -199,7 +283,7 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
     }
     else {
         string clave_temp;
-        registro(us_email,us_password,us_name,clave_temp);
+        registro(us_email,us_password,us_name,clave_temp,us_edad);
         while (validar_correo(us_email)) {
             limpiarPantalla();
             cout << R"(
@@ -208,7 +292,7 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
 ╰───────────────────────────────╯
 )"; esperar(2);
             limpiarPantalla();
-            registro(us_email,us_password,us_name, clave_temp);
+            registro(us_email,us_password,us_name, clave_temp,us_edad);
         }
         while (us_password!=clave_temp) {
             limpiarPantalla();
@@ -219,7 +303,7 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
 )";
             esperar(2);
             limpiarPantalla();
-            registro(us_email,us_password,us_name, clave_temp);
+            registro(us_email,us_password,us_name, clave_temp,us_edad);
         }
         limpiarPantalla();
         cout << R"(
@@ -230,11 +314,11 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
         esperar(3);
 
         limpiarPantalla();
-        registrar_nuevoUsuario(us_name,us_email,us_password);
+        registrar_nuevoUsuario(us_name, us_edad, us_email, us_password);
     }
 }
 
-void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n) {
+void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, int edad, char& n) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
     system("chcp 65001 > nul");
@@ -245,7 +329,7 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝\n\n";
 
     moverCursor(110,1);
-    cout << "Usuario: " << nombre << "\n\n";
+    cout << "Usuario: " << nombre << " | Edad: " << edad << "\n\n";
 
 
     cout << "╭─────────────── MENÚ ───────────────╮   ╭──────────────────── CONTENIDO ───────────────────────────────────────────────────────────────────────╮\n";
@@ -262,7 +346,7 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "╰────────────────────────────────────╯   ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯\n";
 
     // ===== MOSTRAR PELÍCULAS EN PANEL DERECHO =====
-    peliculasRecomendadasPanel(pelis);
+    peliculasRecomendadasPanel(pelis, edad);
 
     // ===== INPUT =====
     moverCursor(0, 20);

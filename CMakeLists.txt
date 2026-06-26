@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 26)
 add_executable(PROYECTAZO main.cpp
         Utilidades.cpp
         Interfaz.cpp
-        Interfaz.cpp
         LimPelis.cpp
         IUsuarios.cpp
         Procesador.cpp
         Trie.cpp
+        Proxy.cpp
 )

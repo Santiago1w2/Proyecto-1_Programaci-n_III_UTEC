@@ -15,9 +15,9 @@ vector<int> parseLista(const string& s);
 bool validar_correo(const string& _email);
 bool validar_info(const string& _email, const string& _clave);
 
-void registrar_nuevoUsuario(const string& name, const string& email, const string& clave);
+void registrar_nuevoUsuario(const string& name, const string& fechaNac, const string& email, const string& clave);
 
-void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis);
+void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edad);
 string UserName(const string& _email, const string& _clave);
 vector<string> mostrar_usuarios();
 
