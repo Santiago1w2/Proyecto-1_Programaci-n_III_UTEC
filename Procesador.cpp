@@ -33,7 +33,7 @@ DocumentoIndexado procesarMovie(int movieID, const DataLimpia &movie) {
 
 
 //Constructor para definir la cantidad threads que se usaran y cantidad tries que se crearán
-Procesador::Procesador(){
+Procesador::Procesador() : rankingStrategy(make_unique<RankingPorScoreStrategy>()) {
     for(int i = 0; i < NUM_THREADS; i++){
         tries.push_back(make_unique<Trie>());
     }
@@ -131,20 +131,13 @@ vector<int> Procesador::buscar(const string& consulta) {
         }
     }
 
-    vector<Resultado> orden;
-    for(const auto& [id,score]: scoreGlobal) {
-        orden.push_back({id,score});
+    return rankingStrategy->ordenar(scoreGlobal);
+}
+
+void Procesador::setRankingStrategy(unique_ptr<RankingStrategy> estrategia) {
+    if (estrategia) {
+        rankingStrategy = move(estrategia);
     }
-
-    sort(orden.begin(),orden.end(),[](const Resultado& a,const Resultado& b)
-        {return a.score > b.score;});
-
-    vector<int> respuesta;
-    for(int i = 0;i < 5 && i < orden.size();i++) {
-        respuesta.push_back(orden[i].id);
-    }
-
-    return respuesta;
 }
 void cargarData(Procesador& preprocesador, unordered_map<int, Movie>& dataSucia, unordered_map<int, DataLimpia>& dataLimpia, bool& datoslisto) {
     dataSucia = leerPeliculas("peliculas.csv");

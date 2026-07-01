@@ -3,18 +3,20 @@
 
 #include "Trie.h"
 #include "Utilidades.h"
-#include "Utilidades.h"
 #include "LimPelis.h"
+#include "RankingStrategy.h"
 
 class Procesador {
     vector<unique_ptr<Trie>> tries;
     int totalDocsPr = 0;
     unordered_map<string, int> docFreqPr;
     unordered_map<int, DocumentoIndexado> documentosProcesados;
+    unique_ptr<RankingStrategy> rankingStrategy;
 public:
     Procesador();
     void procesar(const unordered_map<int, DataLimpia>& peliculas);
     vector<int> buscar(const string& consulta);
+    void setRankingStrategy(unique_ptr<RankingStrategy> estrategia);
     void setDocFreq(unordered_map<string, int> _docFreq){docFreqPr = _docFreq;}
 };
 

@@ -2,7 +2,9 @@
 #include "LimPelis.h"
 #include "Interfaz.h"
 #include "Procesador.h"
+#include "Singleton.h"
 #include <thread>
+#include <exception>
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
@@ -11,11 +13,21 @@ int main() {
     system("chcp 65001 > nul");
     system("cls");
     cout << "Leyendo archivos..." << endl;
-    unordered_map<int,Movie> dataSucia;
-    unordered_map<int , DataLimpia> dataLimpia;
-    Procesador preprocesador;
-    bool datosListos;
-    thread t(cargarData,ref(preprocesador),ref(dataSucia),ref(dataLimpia),ref(datosListos));
+    CatalogoPeliculas& catalogo = CatalogoPeliculas::instancia();
+    atomic_bool datosListos = false;
+    exception_ptr errorCarga = nullptr;
+    thread t([&catalogo, &datosListos, &errorCarga]() {
+        try {
+            auto inicio = chrono::high_resolution_clock::now();
+            catalogo.cargarDatos("peliculas.csv", "datosLimpios.csv");
+            auto fin = chrono::high_resolution_clock::now();
+            auto duracion = chrono::duration_cast<chrono::milliseconds>(fin - inicio);
+            cout << duracion << endl;
+        } catch (...) {
+            errorCarga = current_exception();
+        }
+        datosListos = true;
+    });
 
 
     char opcion_entrada;
@@ -23,7 +35,10 @@ int main() {
     seleccionar_opcion(opcion_entrada);
     limpiarPantalla();
     string us_email,us_password,us_name;
-    InicioSesionAndRegistro(us_email,us_password,us_name,opcion_entrada);
+    string fechaNacUsuario = "01/01/2000";
+    InicioSesionAndRegistro(us_email,us_password,us_name,fechaNacUsuario,opcion_entrada);
+    int edadUsuario = calcularEdad(fechaNacUsuario);
+    if (edadUsuario < 0) edadUsuario = 18;
     limpiarPantalla();
     const string base = "Cargando data";
     const vector<string> anim = {
@@ -41,14 +56,38 @@ int main() {
         }
     }
     t.join();
+    if (errorCarga) {
+        try {
+            rethrow_exception(errorCarga);
+        } catch (const exception& e) {
+            cout << "\nError cargando peliculas: " << e.what() << endl;
+            return 1;
+        }
+    }
 
     bool runnig = true;
     while (runnig) {
         char opcion_menu;
-        pantallaPrincipal(us_name,dataSucia,opcion_menu);
+        pantallaPrincipal(us_name,catalogo.peliculas(),opcion_menu,edadUsuario);
         switch (opcion_menu) {
+            case 'A': {
+                mostrarPerfilUsuario(us_email,us_password,us_name,fechaNacUsuario,edadUsuario);
+                break;
+            }
             case 'D': {
-                interfaz_buscar(dataSucia,preprocesador);
+                interfaz_buscar(catalogo.peliculas(),catalogo.motorBusqueda(),us_email,edadUsuario);
+                break;
+            }
+            case 'B': {
+                mostrarHistorialUsuario(us_email);
+                break;
+            }
+            case 'C': {
+                mostrarFavoritosUsuario(us_email,catalogo.peliculas());
+                break;
+            }
+            case '0': {
+                runnig = false;
                 break;
             }
             default:
