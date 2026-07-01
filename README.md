@@ -1023,3 +1023,81 @@ que las recomendaciones sean lo mas aletorias posibles y el usuario pueda conoce
 
 > Al iniciar aparecerá brevemente un mensaje de sistema en la consola mientras se configura UTF-8; es esperado y no indica un error.
 
+
+---
+
+## Patrones de diseno integrados
+
+La rama actual integra solo patrones que encajan con el flujo real de UTECFlix: carga de catalogo, busqueda global, paginacion de resultados y control de acceso a peliculas. No se integro la feature completa de historial/Memento porque cambia el alcance funcional de esta rama; se tomo la idea de Iterator para resolver la paginacion de busqueda.
+
+| Patron | Clases / archivos | Uso en el proyecto | Por que tiene sentido |
+|---|---|---|---|
+| Singleton + Facade | `CatalogoPeliculas` en `Singleton.h/.cpp` | Centraliza la carga del CSV, la data limpia y el `Procesador` de busqueda. `main.cpp` accede a una unica instancia con `CatalogoPeliculas::instancia()`. | Evita duplicar mapas grandes de peliculas y deja un punto de entrada claro para cargar, buscar y obtener el catalogo. |
+| Strategy | `RankingStrategy`, `RankingPorScoreStrategy` en `RankingStrategy.h/.cpp` | `Procesador` calcula scores globales y delega el ordenamiento/ranking a una estrategia intercambiable. | Permite cambiar el criterio de ranking sin reescribir el motor de busqueda ni el Trie. |
+| Proxy | `IPelicula`, `PeliculaReal`, `PeliculaProxy` en `Proxy.h/.cpp` | Filtra la visualizacion de peliculas restringidas segun edad del usuario. Se usa en recomendaciones, resultados y detalle de pelicula. | Controla acceso a contenido sin modificar `Movie` ni duplicar validaciones en la interfaz. |
+| Iterator | `ResultadosIterator` en `Iterator.h/.cpp` | Recorre los IDs de busqueda en paginas de 5 resultados. | La busqueda sigue siendo global, pero la interfaz puede mostrar resultados paginados sin mezclar logica de recorrido con logica visual. |
+| Memento | `Memento`, `HistorialCareTaker`, `HistorialEntry` en `Memento.h/.cpp` | Guarda snapshots del historial de acciones de la sesion. | Encaja con historial porque permite conservar/restaurar estados de acciones sin exponer la estructura interna. |
+| Observer | `AccionUsuarioSubject`, `NotificacionesArchivoObserver` en `Observer.h/.cpp` | Al dar Like o Ver mas tarde, genera una notificacion en `notificaciones.txt`. | Desacopla la accion del usuario del mecanismo de notificacion en archivo. |
+| Command | `PerfilCommand`, `CambiarNombreCommand`, `CambiarFechaNacimientoCommand`, `CambiarPasswordCommand` en `Command.h/.cpp` | Encapsula cambios de perfil como comandos independientes. | Permite validar seguridad antes de ejecutar y separar cada modificacion del menu de perfil. |
+
+### Decisiones de integracion
+
+- Se conservaron la interfaz y el flujo de busqueda de esta rama.
+- No se mezclo la autenticacion por preguntas/historial de `feat/strategy-and-proxy`, porque cambiaba el login y agregaba archivos de soporte no relacionados con la busqueda principal.
+- El Proxy fue adaptado desde las ramas de proxy para trabajar directamente con `Movie`.
+- El Iterator se aplico a resultados de busqueda, que es el uso pedido por el proyecto: mostrar 5 resultados por pagina.
+- Memento quedo integrado solo para historial de acciones; no se trajeron pantallas de historial ajenas a esta interfaz.
+
+### Archivos de usuario e historial
+
+`registroUsuarios.txt` ahora usa el formato de `feat/strategy-and-proxy`:
+
+```txt
+email,password,fechaNac,nombre,[verMasTarde],[likes],[baneados],[historial]
+```
+
+`fechaNac` se guarda como `dd/mm/aaaa`. Las lineas antiguas con edad numerica siguen siendo aceptadas y al reescribirse se migran a una fecha aproximada `01/01/<anio>`.
+
+Las acciones del usuario se registran en:
+
+- `historialUsuarios.txt`: busquedas, visualizaciones, likes y Ver mas tarde.
+- `notificaciones.txt`: eventos generados por Observer:
+- `preguntasRecuperacion.csv`: preguntas y respuestas normalizadas para restaurar contrasena.
+
+Formato actual de cada notificacion:
+
+```txt
+usuario: <nombre> | email: <correo> | LIKE | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
+usuario: <nombre> | email: <correo> | VER_MAS_TARDE | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
+usuario: <nombre> | email: <correo> | FAVORITO | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
+```
+
+Al iniciar sesion se cargan concurrentemente las notificaciones de `notificaciones.txt`, filtradas por el email del usuario actual. Se guardan en una pila (`stack`) para mostrar primero la notificacion mas reciente desde la opcion `E. Notificaciones`.
+
+La recuperacion de contrasena fue adaptada desde `feat/strategy-and-proxy`:
+
+- Al registrar un usuario se puede activar un conjunto de preguntas de recuperacion.
+- Si el login falla, el usuario puede elegir restaurar la contrasena.
+- Primero se validan 3 preguntas de recuperacion.
+- Si no hay preguntas suficientes, se intenta validar con 2 de las ultimas 5 busquedas registradas en `historialUsuarios.txt`.
+
+---
+
+## Programacion paralela
+
+El preprocesamiento y la busqueda usan programacion paralela en `Procesador.cpp`.
+
+| Etapa | Implementacion secuencial | Implementacion paralela actual | Beneficio |
+|---|---|---|---|
+| Indexacion de peliculas | Un solo Trie procesa todo el catalogo. | `NUM_THREADS` workers dividen el catalogo, cada uno inserta en su propio `Trie` y luego se fusiona `docFreq`. | Reduce tiempo de construccion del indice y evita contencion fuerte entre threads. |
+| Busqueda | Un solo Trie devuelve scores. | Cada Trie parcial busca en paralelo y luego se suman los scores por ID. | Mantiene una busqueda global, pero reparte el costo de consulta. |
+| Ranking | Ordenamiento directo dentro de `Procesador`. | Scores globales delegados a `RankingStrategy`. | Separa paralelismo/recuperacion del criterio de ordenamiento. |
+
+Tabla comparativa sugerida para la rubrica, usando el dataset `peliculas.csv`:
+
+| Operacion | Version secuencial | Version paralela actual | Observacion |
+|---|---:|---:|---|
+| Carga + limpieza + indexacion | Pendiente de medir en una rama secuencial equivalente | El programa imprime el tiempo de carga en milisegundos al iniciar | Medir ambas versiones en la misma PC y con el mismo dataset. |
+| Busqueda global por texto | Pendiente de medir | Busqueda distribuida entre los Tries parciales | Usar consultas como `drama`, `war love`, `michael curtiz`. |
+
+Para completar la medicion final, ejecutar ambas variantes con el mismo `peliculas.csv`, registrar el tiempo impreso por consola y reemplazar los valores pendientes en la tabla.

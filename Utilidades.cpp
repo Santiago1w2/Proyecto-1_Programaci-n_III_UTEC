@@ -38,10 +38,11 @@ void DataLimpia::more_info() {
 }
 
 
-Usuario::Usuario(string &user, string &_email, string &pass, unordered_map<int,Movie> &VMT,
+Usuario::Usuario(string &user, string &_email, string &_fechaNac, string &pass, unordered_map<int,Movie> &VMT,
     unordered_map<int,Movie> &MG, unordered_map<int,Movie> &Ban, unordered_map<int,Movie> &hist) {
     username=user;
     email = _email;
+    fechaNac = _fechaNac;
     password = pass;
     verMasTarde = VMT;
     meGusta = MG;
@@ -49,6 +50,46 @@ Usuario::Usuario(string &user, string &_email, string &pass, unordered_map<int,M
     historial = hist;
 }
 
+string Usuario::getEdad() const {
+    return to_string(calcularEdad(fechaNac));
+}
+
+static bool esBisiesto(int anio) {
+    return (anio % 400 == 0) || (anio % 4 == 0 && anio % 100 != 0);
+}
+
+static int diasDelMes(int mes, int anio) {
+    static const int dias[13] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
+    if (mes == 2 && esBisiesto(anio)) return 29;
+    if (mes < 1 || mes > 12) return 0;
+    return dias[mes];
+}
+
+int calcularEdad(const string& fechaNac) {
+    int dia, mes, anio;
+    char sep1, sep2;
+    stringstream ss(fechaNac);
+    ss >> dia >> sep1 >> mes >> sep2 >> anio;
+
+    SYSTEMTIME hoy;
+    GetLocalTime(&hoy);
+
+    if (!ss || sep1 != '/' || sep2 != '/' || mes < 1 || mes > 12 || dia < 1 || dia > diasDelMes(mes, anio)) {
+        return -1;
+    }
+
+    int edad = hoy.wYear - anio;
+    int diaCumple = dia;
+    int mesCumple = mes;
+    if (mesCumple == 2 && diaCumple == 29 && !esBisiesto(hoy.wYear)) {
+        diaCumple = 28;
+    }
+
+    if (mesCumple > hoy.wMonth || (mesCumple == hoy.wMonth && diaCumple > hoy.wDay)) {
+        edad--;
+    }
+    return edad;
+}
 
 //Convierte un string a minsculas
 string aMinuscula(string texto){

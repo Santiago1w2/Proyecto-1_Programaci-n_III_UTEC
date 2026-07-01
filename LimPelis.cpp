@@ -416,5 +416,4 @@ void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, const string& nombr
     datalimpia = limpiaA;
 
     archivo.close();
-    cout << "  -> Archivo CSV limpio exportado: " << nombreArchivo << endl;
 }

@@ -11,6 +11,9 @@ Trie::Trie() {
 //Insersión de palabras
 void Trie::insertarpalabra(const string& palabra, const int id, const int pesoCampo) const {
     int n = palabra.size();
+    if (n < 3) {
+        return;
+    }
 
     // 1. Insersión de la palabra completa
     Nodo* nodo = raiz;
@@ -42,8 +45,7 @@ void Trie::insertarpalabra(const string& palabra, const int id, const int pesoCa
             unsigned char uc = static_cast<unsigned char>(c);
 
             if(actual->hijos[uc] == nullptr) {
-                actual->hijos[uc] =
-                    new Nodo();
+                actual->hijos[uc] = new Nodo();
             }
 
             actual = actual->hijos[uc];

@@ -21,6 +21,11 @@
 #include <memory>
 #include <mutex>
 #include <chrono>
+#include <cmath>
+#include <atomic>
+#include <functional>
+#include <stack>
+#include <future>
 #include <conio.h>
 #include <windows.h>
 using namespace std;
@@ -83,14 +88,16 @@ void procesarComillas(stringstream& ss,string& name);
 class Usuario {
     string username;
     string email;
+    string fechaNac;
     string password;
     unordered_map<int,Movie> verMasTarde;
     unordered_map<int,Movie> meGusta;
     unordered_map<int,Movie> baneado;
     unordered_map<int,Movie> historial;
 public:
-    Usuario(string &user, string &_email, string &pass, unordered_map<int,Movie> &VMT,
+    Usuario(string &user, string &_email, string &_fechaNac, string &pass, unordered_map<int,Movie> &VMT,
         unordered_map<int,Movie> &MG, unordered_map<int,Movie> &Ban, unordered_map<int,Movie> &hist);
+    string getEdad() const;
 
 };
 
@@ -105,6 +112,7 @@ struct DocumentoIndexado {
 };
 
 string aMinuscula(string texto);
+int calcularEdad(const string& fechaNac);
 
 
 
