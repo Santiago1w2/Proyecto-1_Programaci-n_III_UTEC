@@ -1,4 +1,5 @@
 #include "Iterator.h"
+#include "Interfaz.h"
 #include "Memento.h"
 #include "Proxy.h"
 #include "Singleton.h"
@@ -65,6 +66,94 @@ static void imprimirBenchmark(const vector<ResultadoBenchmark>& resultados) {
     }
 }
 
+static void mostrarPerfil(const string& nombre, const string& correo) {
+    limpiarPantalla();
+    cout << "===== MI PERFIL =====\n";
+    cout << "Nombre: " << nombre << "\n";
+    cout << "Correo: " << correo << "\n";
+    esperarEnter();
+}
+
+static void mostrarHistorialSesion(const vector<HistorialEntry>& historial, const HistorialCareTaker& careTaker) {
+    limpiarPantalla();
+    cout << "===== HISTORIAL DE SESION =====\n";
+
+    if (historial.empty()) {
+        cout << "Aun no hay busquedas ni peliculas vistas en esta sesion.\n";
+    } else {
+        HistorialIterator it(historial);
+        while (it.haySiguiente()) {
+            HistorialEntry entry = it.siguiente();
+            cout << entry.timestamp << " [" << entry.tipo << "] " << entry.detalle << "\n";
+        }
+        cout << "\nSnapshots guardados: " << careTaker.cantidad() << "\n";
+    }
+
+    esperarEnter();
+}
+
+static void mostrarRecomendaciones(const unordered_map<int, Movie>& pelis) {
+    limpiarPantalla();
+    cout << "===== RECOMENDACIONES =====\n\n";
+    peliculasRecomendadasPanel(pelis);
+    cout << "\n";
+    esperarEnter();
+}
+
+static void buscarPelicula(Singleton& motor, int edadUsuario, vector<HistorialEntry>& historial, HistorialCareTaker& careTaker) {
+    limpiarPantalla();
+    cout << "===== BUSCAR PELICULA =====\n";
+    cout << "Escribe 'volver' para regresar al menu.\n\n";
+
+    string consulta;
+    while (true) {
+        cout << "Buscar: ";
+        getline(cin, consulta);
+
+        if (consulta == "volver" || consulta == "VOLVER") {
+            break;
+        }
+        if (consulta.empty()) {
+            cout << "Ingrese una consulta no vacia.\n";
+            continue;
+        }
+
+        historial.emplace_back(-1, "busqueda", consulta);
+        vector<int> resultados = motor.buscar(consulta);
+
+        if (resultados.empty()) {
+            cout << "Sin resultados.\n\n";
+            careTaker.guardar(historial);
+            continue;
+        }
+
+        cout << "\nResultados:\n";
+        int mostrados = 0;
+        for (int id : resultados) {
+            const Movie* movie = motor.obtenerPeliculaOriginal(id);
+            const DataLimpia* limpia = motor.obtenerPelicula(id);
+            if (movie == nullptr) {
+                continue;
+            }
+
+            PeliculaReal real(movie);
+            PeliculaProxy proxy(&real, edadUsuario);
+            const string titulo = limpia ? limpia->getTitle() : proxy.getTitulo();
+            historial.emplace_back(id, "pelicula", titulo);
+
+            cout << id << " -> " << proxy.getTitulo()
+                 << " | " << proxy.getGenero() << "\n";
+
+            if (++mostrados >= 15) {
+                break;
+            }
+        }
+
+        careTaker.guardar(historial);
+        cout << "\n";
+    }
+}
+
 int main(int argc, char* argv[]) {
     try {
         SetConsoleOutputCP(CP_UTF8);
@@ -79,65 +168,58 @@ int main(int argc, char* argv[]) {
         const string salidaLimpia = exportarLimpio ? "datosLimpios.csv" : "";
 
         Singleton& motor = Singleton::getInstancia();
-        motor.cargarDatos(dataset, salidaLimpia);
 
-        auto resultadosBenchmark = motor.ejecutarBenchmark();
-        imprimirBenchmark(resultadosBenchmark);
         if (soloBenchmark) {
+            motor.cargarDatos(dataset, salidaLimpia);
+            auto resultadosBenchmark = motor.ejecutarBenchmark();
+            imprimirBenchmark(resultadosBenchmark);
             return 0;
         }
+
+        inicio();
+
+        string correo;
+        string password;
+        string nombre;
+        char opcionEntrada = 'a';
+        seleccionar_opcion(opcionEntrada);
+        InicioSesionAndRegistro(correo, password, nombre, opcionEntrada);
+
+        cout << "Cargando peliculas, espera un momento...\n";
+        motor.cargarDatos(dataset, salidaLimpia);
 
         vector<HistorialEntry> historial;
         HistorialCareTaker careTaker;
 
-        cout << "\n===== PRUEBA DEL TRIE =====\n";
-        cout << "Dataset cargado: " << dataset << "\n";
-        cout << "Peliculas indexadas: " << motor.obtenerDataLimpia().size() << "\n";
-        cout << "Escribe 'exit' para salir.\n";
+        char opcionPrincipal = '\0';
+        do {
+            pantallaPrincipal(nombre, motor.obtenerDataSucia(), opcionPrincipal);
+            opcionPrincipal = static_cast<char>(toupper(static_cast<unsigned char>(opcionPrincipal)));
 
-        string consulta;
-        while(true)
-        {
-            cout << "\nBuscar: ";
-            getline(cin, consulta);
-            if(consulta == "exit")
-                break;
-            if (consulta.empty()) {
-                cout << "Ingrese una consulta no vacia.\n";
-                continue;
+            switch (opcionPrincipal) {
+                case 'A':
+                    mostrarPerfil(nombre, correo);
+                    break;
+                case 'B':
+                    mostrarHistorialSesion(historial, careTaker);
+                    break;
+                case 'C':
+                    mostrarRecomendaciones(motor.obtenerDataSucia());
+                    break;
+                case 'D':
+                    buscarPelicula(motor, edadUsuario, historial, careTaker);
+                    break;
+                case '0':
+                    break;
+                default:
+                    cout << "Opcion no valida.\n";
+                    esperar(1);
+                    break;
             }
+        } while (opcionPrincipal != '0');
 
-            historial.emplace_back(-1, "busqueda", consulta);
-            vector<int> resultados = motor.buscar(consulta);
-            if(resultados.empty())
-            {
-                cout << "Sin resultados\n";
-                continue;
-            }
-
-            cout << "\nResultados:\n";
-            for(int id : resultados)
-            {
-                const Movie* movie = motor.obtenerPeliculaOriginal(id);
-                const DataLimpia* limpia = motor.obtenerPelicula(id);
-                PeliculaReal real(movie);
-                PeliculaProxy proxy(&real, edadUsuario);
-                historial.emplace_back(id, "pelicula", limpia ? limpia->getTitle() : proxy.getTitulo());
-
-                cout << id << " -> " << proxy.getTitulo() << endl;
-            }
-            careTaker.guardar(historial);
-        }
-
-        if (!historial.empty()) {
-            cout << "\n===== HISTORIAL DE SESION =====\n";
-            HistorialIterator it(historial);
-            while (it.haySiguiente()) {
-                HistorialEntry entry = it.siguiente();
-                cout << entry.timestamp << " [" << entry.tipo << "] " << entry.detalle << endl;
-            }
-            cout << "Snapshots guardados: " << careTaker.cantidad() << endl;
-        }
+        limpiarPantalla();
+        cout << "Gracias por usar UTECFLIX.\n";
 
         return 0;
     } catch (const exception& ex) {
