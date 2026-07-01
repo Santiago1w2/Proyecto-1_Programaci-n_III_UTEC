@@ -141,7 +141,7 @@ void Procesador::setRankingStrategy(unique_ptr<RankingStrategy> estrategia) {
 }
 void cargarData(Procesador& preprocesador, unordered_map<int, Movie>& dataSucia, unordered_map<int, DataLimpia>& dataLimpia, bool& datoslisto) {
     dataSucia = leerPeliculas("peliculas.csv");
-    exportarDataLimpiaCSV(dataSucia, "datosLimpios.csvv", dataLimpia);
+    exportarDataLimpiaCSV(dataSucia, "datosLimpios.csv", dataLimpia);
     auto inicio = std::chrono::high_resolution_clock::now();
     preprocesador.procesar(dataLimpia);
     auto fin = std::chrono::high_resolution_clock::now();
