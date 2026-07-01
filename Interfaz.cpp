@@ -1,4 +1,6 @@
+
 #include "Interfaz.h"
+#include "AutenticacionStrategy.h"
 
 void moverCursor(int x, int y) {
     COORD coord;
@@ -78,12 +80,15 @@ void mostrarMenu(int opcion) {
 
 void seleccionar_opcion(char& op) {
     int opcion = 1;
-    char tecla;
 
     while (true) {
         mostrarMenu(opcion);
 
-        tecla = getch(); // lee tecla sin ENTER
+        int tecla = _getch(); // lectura directa del teclado, sin cin
+
+        if (tecla == 0 || tecla == 224) {
+            tecla = _getch(); // las flechas en Windows llegan en dos partes
+        }
 
         if (tecla == 72) { // ↑
             opcion--;
@@ -98,12 +103,7 @@ void seleccionar_opcion(char& op) {
         if (tecla == 13) { // ENTER
             system("cls");
 
-            if (opcion == 1) {
-                op = 'a';
-            } else if (opcion == 2) {
-                op = 'b';
-            }
-
+            op = (opcion == 1) ? 'a' : 'b';
             break;
         }
     }
@@ -254,32 +254,27 @@ void registro(string& correo, string& pass, string& name, string& clave, string&
     cin >> clave;
 }
 
-void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, string& us_edad, char& opcion_entrada) {
+void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, string& us_edad, char& opcion_entrada, const unordered_map<int, Movie>& pelis) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
     system("chcp 65001 > nul");
     if (opcion_entrada=='a') {
-        inicio_sesion(us_email,us_password);
-        while (!validar_info(us_email,us_password)) {
-            limpiarPantalla();
-            cout << R"(
-╭───────────────────────────────╮
-│ ⚠ ERROR EN LAS CREDENCIALES   │
-╰───────────────────────────────╯
-)";
-            esperar(1);
-            limpiarPantalla();
-            inicio_sesion(us_email,us_password);
-        }
+        ContextoAutenticacion contexto(pelis);
+        UsuarioAutenticado usuario = contexto.iniciar();
+        if (!usuario.autenticado) return;
+
         limpiarPantalla();
-        us_name=UserName(us_email,us_password);
+        us_email = usuario.email;
+        us_password = usuario.password;
+        us_name = usuario.nombre;
+        us_edad = usuario.fechaNac;
         cout << R"(
-╭───────────────────────────────╮
-│  ✔ INICIO DE SESION EXITOSO   │
-╰───────────────────────────────╯
-)"; esperar(1);
+Inicio de sesion exitoso.
+)";
+        esperar(1);
         limpiarPantalla();
+        return;
     }
     else {
         string clave_temp;
@@ -315,6 +310,7 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
 
         limpiarPantalla();
         registrar_nuevoUsuario(us_name, us_edad, us_email, us_password);
+        registrarPreguntasRecuperacion(us_email);
     }
 }
 

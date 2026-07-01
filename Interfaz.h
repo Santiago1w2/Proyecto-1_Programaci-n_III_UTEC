@@ -23,7 +23,7 @@ void inicio_sesion(string& correo, string& pass);
 void esperar(int n);
 void mostrar_registro_usuario();
 void registro(string& correo, string& pass, string& name, string& clave, string& edad);
-void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, string& us_edad, char& opcion_entrada);
+void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, string& us_edad, char& opcion_entrada, const unordered_map<int, Movie>& pelis);
 void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, int edad, char& n);
 
 

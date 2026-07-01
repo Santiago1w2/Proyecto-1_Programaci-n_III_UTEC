@@ -111,16 +111,31 @@ bool validar_info(const string& _email, const string& _clave) {
 //Se utiliza para obtener el nombre del usuario correspondiente a las credenciales ingresadas (cuando ya se ha validado)
 string UserName(const string& _email, const string& _clave) {
     ifstream archivo("registroUsuarios.txt");
-    string linea, username = "", email, clave;
+    string linea, username = "", email, clave, fechaNac;
     while (getline(archivo,linea)) {
         stringstream ss(linea);
         getline(ss,email,',');
         getline(ss,clave,',');
+        getline(ss, fechaNac, ',');
         getline(ss, username, ',');
         if (email==_email and clave==_clave) return username;
     }
     archivo.close();
     return username;
+}
+
+string UserFechaNac(const string& _email, const string& _clave) {
+    ifstream archivo("registroUsuarios.txt");
+    string linea, email, clave, fechaNac;
+    while (getline(archivo,linea)) {
+        stringstream ss(linea);
+        getline(ss,email,',');
+        getline(ss,clave,',');
+        getline(ss, fechaNac, ',');
+        if (email==_email and clave==_clave) return fechaNac;
+    }
+    archivo.close();
+    return "";
 }
 
 //Luego de realizar la validación del nuevo usuario (correo no repetido), se registra la información en el historial de usuarios.
@@ -130,7 +145,7 @@ void registrar_nuevoUsuario(const string& name, const string& fechaNac, const st
         cout << "Error al abrir archivo de usuarios\n";
         return;
     }
-    archivo << email << "," << clave << "," << name << "," << fechaNac << "," << "[],[],[],[]\n";
+    archivo << email << "," << clave << "," << fechaNac << "," << name << "," << "[],[],[],[]\n";
     archivo.close();
 }
 
@@ -138,7 +153,7 @@ void registrar_nuevoUsuario(const string& name, const string& fechaNac, const st
 //Fncion utilizada par visualizar a los usuarios registrados (seria adecuado para un rol admin)
 vector<string> mostrar_usuarios() {
     ifstream archivo("registroUsuarios.txt");
-    string linea, username, email, clave;
+    string linea, username, email, clave, fechaNac;
     vector<string> usuarios_name;
     if (!archivo.is_open()) return {};
 
@@ -148,6 +163,7 @@ vector<string> mostrar_usuarios() {
         stringstream ss(linea);
         getline(ss, email, ',');
         getline(ss, clave, ',');
+        getline(ss, fechaNac, ',');
         getline(ss, username, ',');
         usuarios_name.push_back(username);
         hayDatos = true;
@@ -155,6 +171,101 @@ vector<string> mostrar_usuarios() {
     if (!hayDatos) cout << "No hay usuarios registrados\n";
     archivo.close();
     return usuarios_name;
+}
+
+static string prepararBusquedaParaArchivo(string busqueda) {
+    size_t inicio = busqueda.find_first_not_of(" \t\r\n");
+    size_t fin = busqueda.find_last_not_of(" \t\r\n");
+    if (inicio == string::npos) return "";
+
+    busqueda = busqueda.substr(inicio, fin - inicio + 1);
+    replace(busqueda.begin(), busqueda.end(), ',', ' ');
+    replace(busqueda.begin(), busqueda.end(), ';', ' ');
+    replace(busqueda.begin(), busqueda.end(), '[', ' ');
+    replace(busqueda.begin(), busqueda.end(), ']', ' ');
+    return busqueda;
+}
+
+static vector<string> parseListaBusquedas(const string& texto) {
+    string contenido = texto;
+    if (!contenido.empty() && contenido.front() == '[') contenido.erase(contenido.begin());
+    if (!contenido.empty() && contenido.back() == ']') contenido.pop_back();
+
+    vector<string> busquedas;
+    string busqueda;
+    stringstream ss(contenido);
+    while (getline(ss, busqueda, ';')) {
+        busqueda = prepararBusquedaParaArchivo(busqueda);
+        if (!busqueda.empty()) busquedas.push_back(busqueda);
+    }
+    return busquedas;
+}
+
+static string construirListaBusquedas(const vector<string>& busquedas) {
+    string resultado = "[";
+    for (size_t i = 0; i < busquedas.size(); i++) {
+        if (i > 0) resultado += ";";
+        resultado += busquedas[i];
+    }
+    resultado += "]";
+    return resultado;
+}
+
+static bool busquedaYaExiste(const vector<string>& historial, const string& busqueda) {
+    string busquedaNormalizada = aMinuscula(busqueda);
+    for (const string& guardada : historial) {
+        if (aMinuscula(guardada) == busquedaNormalizada) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void registrarBusquedaUsuario(const string& email, const string& busqueda) {
+    string busquedaLimpia = prepararBusquedaParaArchivo(busqueda);
+    if (email.empty() || busquedaLimpia.empty()) return;
+
+    ifstream entrada("registroUsuarios.txt");
+    if (!entrada.is_open()) return;
+
+    vector<string> lineas;
+    string linea;
+
+    while (getline(entrada, linea)) {
+        stringstream ss(linea);
+        vector<string> campos;
+        string campo;
+        while (getline(ss, campo, ',')) {
+            campos.push_back(campo);
+        }
+
+        if (campos.size() >= 8 && campos[0] == email) {
+            vector<string> historial = parseListaBusquedas(campos[7]);
+
+            if (!busquedaYaExiste(historial, busquedaLimpia)) {
+                historial.push_back(busquedaLimpia);
+                while (historial.size() > 5) {
+                    historial.erase(historial.begin());
+                }
+
+                campos[7] = construirListaBusquedas(historial);
+
+                linea = "";
+                for (size_t i = 0; i < campos.size(); i++) {
+                    if (i > 0) linea += ",";
+                    linea += campos[i];
+                }
+            }
+        }
+
+        if (!linea.empty()) lineas.push_back(linea);
+    }
+    entrada.close();
+
+    ofstream salida("registroUsuarios.txt");
+    for (const string& l : lineas) {
+        salida << l << "\n";
+    }
 }
 
 
@@ -166,18 +277,25 @@ void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edad
 
     random_device rd;
     mt19937 gen(rd());
-    int n=pelis.size();
+    vector<int> ids;
+    ids.reserve(pelis.size());
+    for (const auto& [id, movie] : pelis) {
+        ids.push_back(id);
+    }
+    int n=ids.size();
     if (n==0) return; //Queremos que la funcion sea lo mas escalable posible
     uniform_int_distribution<> dist(0, n - 1);
     int id;
     string genre;
 
     // Algoritmo para la recomendacion aletoria de peliculas
-    for (int i=0;i<5;i++) {
+    for (int i=0;i<5 && i<n;i++) {
         bool cond1 = false;
         bool cond2 = false; //Es necesario que se inicialice como false ya que no se aplica para la primera pelicula (i=0)
+        bool cond3 = false;
+        int intentos = 0;
         do {
-            id = dist(gen);
+            id = ids[dist(gen)];
 
             //No queremos que se recomiende una pelicula más de una vez en una misma interaccion.
             //Se verifica que el ID de la pelicula no este registrado en el historial
@@ -186,6 +304,10 @@ void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edad
             //Se busca recomendar peliculas de diferente genero.
             auto it = pelis.find(id);
             genre = it->second.getGenre();
+            PeliculaReal real(&it->second);
+            PeliculaProxy proxy(&real, edad);
+            IPelicula& peliculaVisible = proxy;
+            cond3 = !peliculaVisible.puedeMostrarse();
             cond2 = false;
             if (i != 0)
                 for (auto& e:hist_temp)
@@ -195,7 +317,9 @@ void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edad
                     }
             //COND1 -> TRUE: ID aun no esta registrado
             //COND2 -> TRUE: Ya se ha registrado una pelicula con el mismo genero
-        } while (cond1==false || cond2==true);
+            intentos++;
+        } while ((cond1==false || cond2==true || cond3==true) && intentos < 100);
+        if (!cond1 || cond2 || cond3) continue;
         hist_temp[id] = genre;
     }
 
@@ -206,7 +330,8 @@ void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edad
         const Movie& m = pelis.at(k.first);
         PeliculaReal real(&m);
         PeliculaProxy proxy(&real, edad);
-        string titulo = proxy.getTitulo();
+        IPelicula& peliculaVisible = proxy;
+        string titulo = peliculaVisible.getTitulo();
         if (titulo.size() > 25)
             titulo = titulo.substr(0, 25);
         moverCursor(col, fila);

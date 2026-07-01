@@ -19,7 +19,9 @@ void registrar_nuevoUsuario(const string& name, const string& fechaNac, const st
 
 void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edad);
 string UserName(const string& _email, const string& _clave);
+string UserFechaNac(const string& _email, const string& _clave);
 vector<string> mostrar_usuarios();
+void registrarBusquedaUsuario(const string& email, const string& busqueda);
 
 
 #endif //PROYECTO_1_PROGRAMACION_III_UTEC_IUSUARIOS_H

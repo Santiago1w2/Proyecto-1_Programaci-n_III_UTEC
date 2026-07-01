@@ -21,11 +21,17 @@ int main() {
     seleccionar_opcion(opcion_entrada);
     limpiarPantalla();
     string us_email,us_password,us_name,us_edad;
-    InicioSesionAndRegistro(us_email,us_password,us_name,us_edad,opcion_entrada);
+    InicioSesionAndRegistro(us_email,us_password,us_name,us_edad,opcion_entrada,dataSucia);
+    if (us_email.empty()) {
+        cout << "No se inicio sesion.\n";
+        return 0;
+    }
     limpiarPantalla();
     int edad = calcularEdad(us_edad);
+    if (edad < 0) edad = 18;
     char g;
     pantallaPrincipal(us_name,dataSucia,edad,g);
+    cin.ignore();
     Procesador preprocesador;
     cout << "Procesando datos para subir al Trie..."<< endl;
 
@@ -46,6 +52,7 @@ int main() {
         getline(cin, consulta);
         if(consulta == "exit")
             break;
+        registrarBusquedaUsuario(us_email, consulta);
         vector<int> resultados =preprocesador.buscar(consulta);
         if(resultados.empty())
         {
@@ -53,15 +60,27 @@ int main() {
             continue;
         }
         cout << "\nResultados:\n";
+        bool hayResultadosVisibles = false;
         for(int id : resultados)
         {
-            PeliculaReal real(&dataSucia[id]);
+            const Movie& pelicula = dataSucia[id];
+            PeliculaReal real(&pelicula);
             PeliculaProxy proxy(&real, edad);
+            IPelicula& peliculaVisible = proxy;
+            if (!peliculaVisible.puedeMostrarse()) {
+                continue;
+            }
+
             cout
                 << id
                 << " -> "
-                << proxy.getTitulo()
+                << peliculaVisible.getTitulo()
                 << endl;
+            hayResultadosVisibles = true;
+        }
+
+        if (!hayResultadosVisibles) {
+            cout << "Sin resultados disponibles para tu edad\n";
         }
     }
     return 0;

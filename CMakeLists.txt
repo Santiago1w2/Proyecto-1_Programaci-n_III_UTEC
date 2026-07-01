@@ -11,4 +11,5 @@ add_executable(PROYECTAZO main.cpp
         Procesador.cpp
         Trie.cpp
         Proxy.cpp
+        AutenticacionStrategy.cpp
 )
