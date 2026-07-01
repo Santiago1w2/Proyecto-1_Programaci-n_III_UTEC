@@ -116,7 +116,9 @@ unordered_map<int,Movie> leerPeliculas(const string& csv) {
     unordered_map<int,Movie> movies;
     int idMovie = 1;
     ifstream archivo(csv);
-    if (!archivo.is_open()) return movies;
+    if (!archivo.is_open()) {
+        throw runtime_error("No se pudo abrir el dataset: " + csv);
+    }
 
     string linea;
     leerFilaCSV(archivo, linea); // Saltar cabecera
@@ -384,12 +386,14 @@ string filtrarStopwords(const string& textoLimpio) {
 // --- EXPORTACIÓN A CSV SIN COMILLAS ---
 //Esta función exporta toda la data ya limpia a un CSV y me sirvió bastante para debugging porque podía revisar manualmente cómo estaba quedando cada columna después de la limpieza.
 void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, const string& nombreArchivo, std::unordered_map<int, DataLimpia>& datalimpia) {
-    ofstream archivo(nombreArchivo);
-    if (!archivo.is_open()) {
-        cout << "Error: No se pudo crear el archivo " << nombreArchivo << endl;
-        return;
+    unique_ptr<ofstream> archivo;
+    if (!nombreArchivo.empty()) {
+        archivo = make_unique<ofstream>(nombreArchivo);
+        if (!archivo->is_open()) {
+            throw runtime_error("No se pudo crear el archivo " + nombreArchivo);
+        }
+        *archivo << "Release Year,Title,Origin/Ethnicity,Director,Cast,Genre,Plot\n";
     }
-    archivo << "Release Year,Title,Origin/Ethnicity,Director,Cast,Genre,Plot\n";
     unordered_map<int, DataLimpia> limpiaA;
     for (auto& [id, movie] : pelis) {
         string year     = movie.getYear();
@@ -402,19 +406,23 @@ void exportarDataLimpiaCSV(unordered_map<int, Movie>& pelis, const string& nombr
         string plotRaw  = normalizarYLimpiar(movie.getPlot());
         string plotFin  = filtrarStopwords(plotRaw);
 
-        archivo << year << ","
-                << title << ","
-                << origin << ","
-                << director << ","
-                << cast << ","
-                << genre << ","
-                << plotFin << "\n";
+        if (archivo) {
+            *archivo << year << ","
+                     << title << ","
+                     << origin << ","
+                     << director << ","
+                     << cast << ","
+                     << genre << ","
+                     << plotFin << "\n";
+        }
         DataLimpia limpia(title,year,origin,director,cast,genre,plotFin,&movie);
         limpiaA[id] = limpia;
 
     }
     datalimpia = limpiaA;
 
-    archivo.close();
-    cout << "  -> Archivo CSV limpio exportado: " << nombreArchivo << endl;
+    if (archivo) {
+        archivo->close();
+        cout << "  -> Archivo CSV limpio exportado: " << nombreArchivo << endl;
+    }
 }

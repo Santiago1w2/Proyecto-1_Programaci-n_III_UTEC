@@ -11,7 +11,9 @@ class Procesador {
     unordered_map<int, DocumentoIndexado> documentosProcesados;
 public:
     Procesador();
+    explicit Procesador(int cantidadTries);
     void procesar(const unordered_map<int, DataLimpia>& peliculas);
+    void procesarSecuencial(const unordered_map<int, DataLimpia>& peliculas);
     vector<int> buscar(const string& consulta);
     void setDocFreq(unordered_map<string, int> _docFreq){docFreqPr = _docFreq;}
 };

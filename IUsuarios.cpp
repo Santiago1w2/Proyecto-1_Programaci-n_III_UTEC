@@ -166,7 +166,7 @@ void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis) {
     mt19937 gen(rd());
     int n=pelis.size();
     if (n==0) return; //Queremos que la funcion sea lo mas escalable posible
-    uniform_int_distribution<> dist(0, n - 1);
+    uniform_int_distribution<> dist(1, n);
     int id;
     string genre;
 
@@ -183,6 +183,10 @@ void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis) {
 
             //Se busca recomendar peliculas de diferente genero.
             auto it = pelis.find(id);
+            if (it == pelis.end()) {
+                cond1 = false;
+                continue;
+            }
             genre = it->second.getGenre();
             cond2 = false;
             if (i != 0)

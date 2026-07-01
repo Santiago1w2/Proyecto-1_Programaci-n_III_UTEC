@@ -21,8 +21,12 @@ class Trie {
     Nodo* raiz;
     int totalDocs;
     unordered_map<string, int> docFreq;
+    void liberar(Nodo* nodo) const;
 public:
     Trie();
+    ~Trie();
+    Trie(const Trie&) = delete;
+    Trie& operator=(const Trie&) = delete;
     void insertarpalabra(const string& palabra, int id, int pesoCampo) const;
     unordered_map<int,double> buscarNodo(const string& clave) const;
     unordered_map<int,double> buscarScores(const string& query) const;

@@ -21,6 +21,9 @@
 #include <memory>
 #include <mutex>
 #include <chrono>
+#include <cmath>
+#include <stdexcept>
+#include <filesystem>
 #include <conio.h>
 #include <windows.h>
 using namespace std;
@@ -54,7 +57,7 @@ public:
 
 
 class DataLimpia {
-    Movie* movie;
+    Movie* movie = nullptr;
     string title;
     string release_year;
     string origin;

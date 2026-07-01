@@ -6,6 +6,20 @@ Trie::Trie() {
     totalDocs = 0;
 }
 
+Trie::~Trie() {
+    liberar(raiz);
+}
+
+void Trie::liberar(Nodo* nodo) const {
+    if (nodo == nullptr) {
+        return;
+    }
+    for (Nodo* hijo : nodo->hijos) {
+        liberar(hijo);
+    }
+    delete nodo;
+}
+
 
 
 //Insersión de palabras
@@ -115,6 +129,10 @@ unordered_map<int, double> Trie::buscarScores(const string &query) const {
     }
 
     // Penalización basada en cobertura
+    if (totalTokens == 0) {
+        return {};
+    }
+
     for (auto &[id, sc] : score) {
         double cobertura =
             (double)matchCount[id] / totalTokens;

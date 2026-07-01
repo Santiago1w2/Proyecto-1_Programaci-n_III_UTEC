@@ -33,10 +33,44 @@ DocumentoIndexado procesarMovie(int movieID, const DataLimpia &movie) {
 
 
 //Constructor para definir la cantidad threads que se usaran y cantidad tries que se crearán
-Procesador::Procesador(){
-    for(int i = 0; i < NUM_THREADS; i++){
+Procesador::Procesador() : Procesador(NUM_THREADS) {}
+
+Procesador::Procesador(int cantidadTries) {
+    if (cantidadTries <= 0) {
+        cantidadTries = 1;
+    }
+    for(int i = 0; i < cantidadTries; i++){
         tries.push_back(make_unique<Trie>());
     }
+}
+
+void Procesador::procesarSecuencial(const unordered_map<int, DataLimpia>& peliculas) {
+    totalDocsPr = peliculas.size();
+    docFreqPr.clear();
+    if (tries.empty()) {
+        tries.push_back(make_unique<Trie>());
+    }
+
+    Trie& trie = *tries[0];
+    unordered_map<string, int> docFreqLocal;
+    for(const auto& [movieID, movie] : peliculas) {
+        DocumentoIndexado doc = procesarMovie(movieID, movie);
+        unordered_set<string> vistos;
+
+        for(const TokenInfo& tk : doc.tokens) {
+            string tokenMinuscula = aMinuscula(tk.token);
+            trie.insertarpalabra(tokenMinuscula, movieID, tk.peso);
+
+            if(!vistos.count(tokenMinuscula)) {
+                docFreqLocal[tokenMinuscula]++;
+                vistos.insert(tokenMinuscula);
+            }
+        }
+    }
+
+    docFreqPr = move(docFreqLocal);
+    trie.setDocFreq(docFreqPr);
+    trie.setTotalDocs(totalDocsPr);
 }
 
 
@@ -46,8 +80,13 @@ void Procesador::procesar(const unordered_map<int, DataLimpia>& peliculas){
     for(const auto& p : peliculas){
         datos.push_back(p);
     }
+    int cantidadTries = static_cast<int>(tries.size());
+    if (cantidadTries <= 0) {
+        tries.push_back(make_unique<Trie>());
+        cantidadTries = 1;
+    }
     vector<thread> threads;
-    vector<unordered_map<string,int>> docFreqLocales(NUM_THREADS);
+    vector<unordered_map<string,int>> docFreqLocales(cantidadTries);
 
     auto worker = [this,&datos,&docFreqLocales]
     (
@@ -77,13 +116,13 @@ void Procesador::procesar(const unordered_map<int, DataLimpia>& peliculas){
         }
     };
 
-    int bloque = datos.size() / NUM_THREADS;
+    int bloque = datos.empty() ? 0 : static_cast<int>(datos.size()) / cantidadTries;
     int fin;
-    for(int t = 0;t < NUM_THREADS;t++) {
+    for(int t = 0;t < cantidadTries;t++) {
         int inicio = t * bloque;
 
-        if (t==NUM_THREADS-1)
-            fin = datos.size();
+        if (t==cantidadTries-1)
+            fin = static_cast<int>(datos.size());
         else {
             fin = inicio + bloque;
         }
@@ -113,7 +152,7 @@ vector<int> Procesador::buscar(const string& consulta) {
     vector<unordered_map<int,double>> resultados(tries.size());
     vector<thread> threads;
 
-    for(int i = 0;i < tries.size();i++) {
+    for(size_t i = 0;i < tries.size();i++) {
         threads.emplace_back([&,i]()
             {
                 resultados[i] = tries[i]->buscarScores(consulta);
@@ -140,7 +179,7 @@ vector<int> Procesador::buscar(const string& consulta) {
         {return a.score > b.score;});
 
     vector<int> respuesta;
-    for(int i = 0;i < 5 && i < orden.size();i++) {
+    for(size_t i = 0;i < 5 && i < orden.size();i++) {
         respuesta.push_back(orden[i].id);
     }
 
