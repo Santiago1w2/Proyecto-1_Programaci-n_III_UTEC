@@ -24,6 +24,8 @@
 #include <cmath>
 #include <atomic>
 #include <functional>
+#include <stack>
+#include <future>
 #include <conio.h>
 #include <windows.h>
 using namespace std;

@@ -145,10 +145,14 @@ void cargarData(Procesador& preprocesador, unordered_map<int, Movie>& dataSucia,
     auto inicio = std::chrono::high_resolution_clock::now();
     preprocesador.procesar(dataLimpia);
     auto fin = std::chrono::high_resolution_clock::now();
-    auto duracion =
-        std::chrono::duration_cast<
-            std::chrono::milliseconds
-        >(fin - inicio);
-    cout<<duracion << endl;
+    auto duracion =std::chrono::duration_cast<std::chrono::milliseconds>(fin - inicio);
+    std::ofstream archivo("metricas_tiempo.txt", std::ios::app);
+
+    if (archivo.is_open()) {
+        archivo << "INSERCION_ARBOL | tiempo_ms: "
+                << duracion.count()
+                << " ms" << std::endl;
+        archivo.close();
+    }
     datoslisto = true;
 }

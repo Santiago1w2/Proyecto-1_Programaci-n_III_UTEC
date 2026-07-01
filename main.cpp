@@ -39,6 +39,7 @@ int main() {
     InicioSesionAndRegistro(us_email,us_password,us_name,fechaNacUsuario,opcion_entrada);
     int edadUsuario = calcularEdad(fechaNacUsuario);
     if (edadUsuario < 0) edadUsuario = 18;
+    future<stack<string>> notificacionesFuture = async(launch::async, cargarNotificacionesUsuario, us_email);
     limpiarPantalla();
     const string base = "Cargando data";
     const vector<string> anim = {
@@ -65,17 +66,19 @@ int main() {
         }
     }
 
+    stack<string> pilaNotificaciones = notificacionesFuture.get();
     bool runnig = true;
     while (runnig) {
         char opcion_menu;
-        pantallaPrincipal(us_name,catalogo.peliculas(),opcion_menu,edadUsuario);
+        pantallaPrincipal(us_name,catalogo.peliculas(),opcion_menu,edadUsuario,pilaNotificaciones.size());
         switch (opcion_menu) {
             case 'A': {
                 mostrarPerfilUsuario(us_email,us_password,us_name,fechaNacUsuario,edadUsuario);
                 break;
             }
             case 'D': {
-                interfaz_buscar(catalogo.peliculas(),catalogo.motorBusqueda(),us_email,edadUsuario);
+                interfaz_buscar(catalogo.peliculas(),catalogo.motorBusqueda(),us_email,us_name,edadUsuario);
+                pilaNotificaciones = cargarNotificacionesUsuario(us_email);
                 break;
             }
             case 'B': {
@@ -84,6 +87,10 @@ int main() {
             }
             case 'C': {
                 mostrarFavoritosUsuario(us_email,catalogo.peliculas());
+                break;
+            }
+            case 'E': {
+                mostrarNotificacionesUsuario(pilaNotificaciones);
                 break;
             }
             case '0': {

@@ -4,9 +4,14 @@
 #include "Utilidades.h"
 
 struct EventoAccionUsuario {
+    string email;
+    string usuario;
     string tipo;
-    int movieId;
+    int movieId = -1;
     string titulo;
+    string fecha;
+
+    EventoAccionUsuario(string email, string usuario, string tipo, int movieId, string titulo);
 };
 
 class ObservadorAccion {

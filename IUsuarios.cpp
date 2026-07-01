@@ -188,6 +188,14 @@ static vector<string> obtenerUltimasBusquedasUsuario(const string& email, size_t
     return busquedas;
 }
 
+static bool tienePreguntasRecuperacionSuficientes(const string& email) {
+    return obtenerPreguntasRecuperacion(email).size() >= 3;
+}
+
+static bool tieneHistorialRecuperacionSuficiente(const string& email) {
+    return obtenerUltimasBusquedasUsuario(email).size() >= 5;
+}
+
 static bool restaurarPasswordEnRegistro(const string& email, const string& nuevaClave) {
     vector<DatosUsuario> usuarios = leerDatosUsuarios();
     bool actualizado = false;
@@ -473,10 +481,9 @@ bool restaurarPasswordConPreguntas(const string& email) {
     if (preguntas.size() < 3) {
         limpiarPantalla();
         cout << "\nEste usuario no tiene preguntas de recuperacion suficientes.\n";
-        cout << "Se intentara recuperar por historial de busquedas.\n";
         esperarEnter();
         limpiarPantalla();
-        return restaurarPasswordConHistorial(email);
+        return false;
     }
 
     shuffle(preguntas.begin(), preguntas.end(), mt19937(random_device{}()));
@@ -503,6 +510,31 @@ bool restaurarPasswordConPreguntas(const string& email) {
     }
 
     return solicitarNuevaPassword(email);
+}
+
+bool restaurarPasswordUsuario(const string& email) {
+    if (email.empty()) {
+        limpiarPantalla();
+        cout << "\nPrimero ingresa un correo para restaurar la contrasena.\n";
+        esperarEnter();
+        limpiarPantalla();
+        return false;
+    }
+
+    if (tienePreguntasRecuperacionSuficientes(email)) {
+        return restaurarPasswordConPreguntas(email);
+    }
+
+    if (tieneHistorialRecuperacionSuficiente(email)) {
+        return restaurarPasswordConHistorial(email);
+    }
+
+    limpiarPantalla();
+    cout << "\nNo cuenta con otro metodo de autenticacion disponible.\n";
+    cout << "Este usuario no tiene preguntas de recuperacion suficientes ni historial de busquedas suficiente.\n";
+    esperarEnter();
+    limpiarPantalla();
+    return false;
 }
 
 static bool agregarIdEnCampoUsuario(const string& email, int movieId, const string& campo) {
@@ -689,6 +721,37 @@ void mostrarFavoritosUsuario(const string& email, const unordered_map<int, Movie
         cout << "[" << id << "] " << it->second.getTtitle()
              << " | " << it->second.getGenre()
              << " | " << it->second.getYear() << "\n";
+    }
+    esperarEnter();
+}
+
+stack<string> cargarNotificacionesUsuario(const string& email) {
+    stack<string> notificaciones;
+    ifstream archivo("notificaciones.txt");
+    string linea;
+    const string marcadorEmail = "email: " + email;
+
+    while (getline(archivo, linea)) {
+        if (linea.find(marcadorEmail) != string::npos) {
+            notificaciones.push(linea);
+        }
+    }
+    return notificaciones;
+}
+
+void mostrarNotificacionesUsuario(stack<string> notificaciones) {
+    limpiarPantalla();
+    cout << "===== NOTIFICACIONES =====\n\n";
+
+    if (notificaciones.empty()) {
+        cout << "No hay notificaciones para este usuario.\n";
+        esperarEnter();
+        return;
+    }
+
+    while (!notificaciones.empty()) {
+        cout << notificaciones.top() << "\n";
+        notificaciones.pop();
     }
     esperarEnter();
 }

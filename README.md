@@ -1064,11 +1064,15 @@ Las acciones del usuario se registran en:
 - `notificaciones.txt`: eventos generados por Observer:
 - `preguntasRecuperacion.csv`: preguntas y respuestas normalizadas para restaurar contrasena.
 
+Formato actual de cada notificacion:
+
 ```txt
-LIKE | id: <id_pelicula> | titulo: <titulo_pelicula>
-VER_MAS_TARDE | id: <id_pelicula> | titulo: <titulo_pelicula>
-FAVORITO | id: <id_pelicula> | titulo: <titulo_pelicula>
+usuario: <nombre> | email: <correo> | LIKE | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
+usuario: <nombre> | email: <correo> | VER_MAS_TARDE | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
+usuario: <nombre> | email: <correo> | FAVORITO | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
 ```
+
+Al iniciar sesion se cargan concurrentemente las notificaciones de `notificaciones.txt`, filtradas por el email del usuario actual. Se guardan en una pila (`stack`) para mostrar primero la notificacion mas reciente desde la opcion `E. Notificaciones`.
 
 La recuperacion de contrasena fue adaptada desde `feat/strategy-and-proxy`:
 

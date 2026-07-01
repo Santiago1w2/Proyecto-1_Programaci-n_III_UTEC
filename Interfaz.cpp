@@ -154,6 +154,12 @@ void mostrar_registro_usuario() {
 |Contraseña:                                         |
 ├────────────────────────────────────────────────────┤
 |Repetir contraseña:                                 |
+├────────────────────────────────────────────────────┤
+|Dia de nacimiento:                                  |
+├────────────────────────────────────────────────────┤
+|Mes de nacimiento:                                  |
+├────────────────────────────────────────────────────┤
+|Anio de nacimiento:                                 |
 ╰────────────────────────────────────────────────────╯
                     ╭─────────────╮
                     │  Registrar  │
@@ -173,12 +179,13 @@ static string pedirFechaNacimiento() {
     int dia, mes, anio;
     string fecha;
     do {
-        cout << "Dia de nacimiento: ";
+        moverCursor(19, 12);
         cin >> dia;
-        cout << "Mes de nacimiento: ";
+        moverCursor(19, 14);
         cin >> mes;
-        cout << "Anio de nacimiento: ";
+        moverCursor(21, 16);
         cin >> anio;
+        moverCursor(1, 20);
         fecha = construirFechaNacimiento(dia, mes, anio);
         if (calcularEdad(fecha) < 0) {
             cout << "Fecha invalida. Intenta nuevamente.\n";
@@ -197,7 +204,6 @@ void registro(string& correo, string& pass, string& name, string& clave, string&
     cin >> pass;
     moverCursor(21, 10);
     cin >> clave;
-    moverCursor(1, 14);
     fechaNac = pedirFechaNacimiento();
 }
 
@@ -221,7 +227,7 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
             char opcionRecuperacion;
             cin >> opcionRecuperacion;
             if (opcionRecuperacion == 'R' || opcionRecuperacion == 'r') {
-                restaurarPasswordConPreguntas(us_email);
+                restaurarPasswordUsuario(us_email);
             }
             limpiarPantalla();
             inicio_sesion(us_email,us_password);
@@ -274,7 +280,7 @@ void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_n
     }
 }
 
-void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n, int edadUsuario) {
+void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n, int edadUsuario, size_t cantidadNotificaciones) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
     system("chcp 65001 > nul");
@@ -294,6 +300,7 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "│  B. 🕘 Historial                   │   │                                                                                                      │\n";
     cout << "│  C. ⭐ Favoritos                    │   │                                                                                                      │\n";
     cout << "│  D. 🔍 Buscar                      │   │                                                                                                      │\n";
+    cout << "│  E. 🔔 Notificaciones              │   │                                                                                                      │\n";
     cout << "│                                    │   │                                                                                                      │\n";
     cout << "│  0. Salir                          │   │                                                                                                      │\n";
     cout << "│                                    │   │                                                                                                      │\n";
@@ -302,6 +309,9 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "╰────────────────────────────────────╯   ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯\n";
 
     // ===== MOSTRAR PELÍCULAS EN PANEL DERECHO =====
+    moverCursor(21, 8);
+    cout << "(" << cantidadNotificaciones << ")";
+    moverCursor(0, 0);
     peliculasRecomendadasPanel(pelis, edadUsuario);
 
     // ===== INPUT =====
@@ -413,9 +423,9 @@ void interfaz_resultado() {
     cout << "╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯\n";
 
 }
-void seleccion_pelicula(int id_peli, unordered_map<int, Movie>& pelis, const string& emailUsuario, int edadUsuario);
+void seleccion_pelicula(int id_peli, unordered_map<int, Movie>& pelis, const string& emailUsuario, const string& nombreUsuario, int edadUsuario);
 
-void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesador, const string& emailUsuario, int edadUsuario) {
+void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesador, const string& emailUsuario, const string& nombreUsuario, int edadUsuario) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
     system("chcp 65001 > nul");
@@ -510,7 +520,7 @@ Selecciona una opción:
             cout << "\nID de pelicula: ";
             cin >> idSeleccionado;
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            seleccion_pelicula(idSeleccionado, pelis, emailUsuario, edadUsuario);
+            seleccion_pelicula(idSeleccionado, pelis, emailUsuario, nombreUsuario, edadUsuario);
         }
         limpiarPantalla();
         interfaz_resultado();
@@ -521,7 +531,7 @@ Selecciona una opción:
 
     }
 }
-void seleccion_pelicula(int id_peli, unordered_map<int, Movie>& pelis, const string& emailUsuario, int edadUsuario) {
+void seleccion_pelicula(int id_peli, unordered_map<int, Movie>& pelis, const string& emailUsuario, const string& nombreUsuario, int edadUsuario) {
     auto it = pelis.find(id_peli);
     limpiarPantalla();
     if (it == pelis.end()) {
@@ -567,17 +577,17 @@ void seleccion_pelicula(int id_peli, unordered_map<int, Movie>& pelis, const str
     if (opcion == 'L') {
         agregarLikeUsuario(emailUsuario, id_peli);
         registrarHistorialUsuario(emailUsuario, "like", id_peli, it->second.getTtitle());
-        subject.notificar({"LIKE", id_peli, it->second.getTtitle()});
+        subject.notificar(EventoAccionUsuario(emailUsuario, nombreUsuario, "LIKE", id_peli, it->second.getTtitle()));
         cout << "\nLike registrado.\n";
     } else if (opcion == 'V') {
         agregarVerMasTardeUsuario(emailUsuario, id_peli);
         registrarHistorialUsuario(emailUsuario, "ver_mas_tarde", id_peli, it->second.getTtitle());
-        subject.notificar({"VER_MAS_TARDE", id_peli, it->second.getTtitle()});
+        subject.notificar(EventoAccionUsuario(emailUsuario, nombreUsuario, "VER_MAS_TARDE", id_peli, it->second.getTtitle()));
         cout << "\nPelicula agregada a Ver mas tarde.\n";
     } else if (opcion == 'F') {
         agregarFavoritoUsuario(emailUsuario, id_peli);
         registrarHistorialUsuario(emailUsuario, "favorito", id_peli, it->second.getTtitle());
-        subject.notificar({"FAVORITO", id_peli, it->second.getTtitle()});
+        subject.notificar(EventoAccionUsuario(emailUsuario, nombreUsuario, "FAVORITO", id_peli, it->second.getTtitle()));
         cout << "\nPelicula agregada a favoritos.\n";
     }
     esperarEnter();

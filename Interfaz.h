@@ -33,10 +33,10 @@ void esperar(int n);
 void mostrar_registro_usuario();
 void registro(string& correo, string& pass, string& name, string& clave, string& fechaNac);
 void InicioSesionAndRegistro(string& us_email, string& us_password, string& us_name, string& us_fechaNac, char& opcion_entrada);
-void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n, int edadUsuario = 18);
+void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pelis, char& n, int edadUsuario = 18, size_t cantidadNotificaciones = 0);
 void mostrarPerfilUsuario(string& email, string& password, string& nombre, string& fechaNac, int& edad);
 
-void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesador, const string& emailUsuario, int edadUsuario = 18);
+void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesador, const string& emailUsuario, const string& nombreUsuario, int edadUsuario = 18);
 
 
 

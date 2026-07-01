@@ -33,6 +33,7 @@ string UserFechaNac(const string& _email, const string& _clave);
 void registrar_nuevoUsuario(const string& name, const string& fechaNac, const string& email, const string& clave);
 void registrarPreguntasRecuperacion(const string& email);
 bool restaurarPasswordConPreguntas(const string& email);
+bool restaurarPasswordUsuario(const string& email);
 bool agregarLikeUsuario(const string& email, int movieId);
 bool agregarVerMasTardeUsuario(const string& email, int movieId);
 bool agregarFavoritoUsuario(const string& email, int movieId);
@@ -44,6 +45,8 @@ void registrarHistorialUsuario(const string& email, const string& tipo, int movi
 vector<HistorialEntry> leerHistorialUsuario(const string& email);
 void mostrarHistorialUsuario(const string& email);
 void mostrarFavoritosUsuario(const string& email, const unordered_map<int, Movie>& pelis);
+stack<string> cargarNotificacionesUsuario(const string& email);
+void mostrarNotificacionesUsuario(stack<string> notificaciones);
 
 void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edadUsuario = 18);
 string UserName(const string& _email, const string& _clave);
