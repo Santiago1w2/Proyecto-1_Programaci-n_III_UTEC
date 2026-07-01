@@ -36,7 +36,7 @@ DocumentoIndexado procesarMovie(int movieID, const DataLimpia &movie) {
 Procesador::Procesador(){
     for(int i = 0; i < NUM_THREADS; i++){
         tries.push_back(make_unique<Trie>());
-    }w
+    }
 }
 
 

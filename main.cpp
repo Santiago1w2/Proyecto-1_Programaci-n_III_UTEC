@@ -25,26 +25,39 @@ int main() {
     string us_email,us_password,us_name;
     InicioSesionAndRegistro(us_email,us_password,us_name,opcion_entrada);
     limpiarPantalla();
-    cout << "Cargando Data";
+    const string base = "Cargando data";
+    const vector<string> anim = {
+        "   ",
+        ".  ",
+        ".. ",
+        "...",
+        "...."
+    };
+
     while (!datosListos) {
-        cout << "." << flush;
-        this_thread::sleep_for(chrono::milliseconds(500));
+        for (const auto& a : anim) {
+            cout << "\r" << base << " " << a << flush;
+            this_thread::sleep_for(chrono::milliseconds(300));
+        }
     }
     t.join();
-    limpiarPantalla();
 
-    char opcion_menu;
-    pantallaPrincipal(us_name,dataSucia,opcion_menu);
-
-
-    switch (opcion_menu) {
-        case 'D':
-            interfaz_buscar(dataSucia,preprocesador);
-            break;
-        default:
-            cout << "Opcion no valida" << endl;
-            break;
+    bool runnig = true;
+    while (runnig) {
+        char opcion_menu;
+        pantallaPrincipal(us_name,dataSucia,opcion_menu);
+        switch (opcion_menu) {
+            case 'D': {
+                interfaz_buscar(dataSucia,preprocesador);
+                break;
+            }
+            default:
+                cout << "Opcion no valida" << endl;
+                limpiarPantalla();
+                break;
+        }
     }
+
 
 
 

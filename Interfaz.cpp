@@ -269,6 +269,25 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "👉 Selecciona una opción: ";
     cin >> n;
 }
+void interfaz_resultado() {
+    cout << "╔═══════════════════════════════════════════════════════════════════════════════════════════════════════╗\n";
+    cout << "║ Buscar:                                                                                               ║ \n";
+    cout << "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════╝\n";
+    cout << "╭────────────────────  RESULTADOS ─────────────────────────────────────────────────────────────────────╮\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "│                                                                                                      │\n";
+    cout << "╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯\n";
+
+}
+void seleccion_pelicula(int id_peli, unordered_map<int, Movie>& pelis);
 
 void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesador) {
     SetConsoleOutputCP(CP_UTF8);
@@ -277,30 +296,65 @@ void interfaz_buscar(unordered_map<int, Movie>& pelis, Procesador& pre_procesado
     system("cls");
     // ===== INTERFAZ =====
     string consulta;
-    cout << "╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n";
-    cout << "║ Buscar:                                                                                                                                       ║ \n";
-    cout << "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝\n\n";
-    moverCursor(10,1);
-    getline(cin, consulta);
+    char opBusqueda;
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
     while(true)
     {
+        interfaz_resultado();
 
-        if(consulta == "exit")
-            break;
-        vector<int> resultados =pre_procesador.buscar(consulta);
+        moverCursor(10,1);
+        getline(cin, consulta);
+
+        vector<int> resultados = pre_procesador.buscar(consulta);
+
         if(resultados.empty())
         {
-            cout << "Sin resultados\n";
+            moverCursor(8,3);
+            cout << "Sin resultados";
+
+            moverCursor(1,14);
+            cout << R"(
+Selecciona una opción:
+ - X: Salir
+ - V: Volver a buscar )";
+
+            cin >> opBusqueda;
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+            if(opBusqueda == 'X')
+                return;
+
+            limpiarPantalla();
             continue;
         }
-        cout << "\nResultados:\n";
+
+        int y = 8;
+
         for(int id : resultados)
         {
-            cout
-                << id
-                << " -> "
-                << pelis[id].getTtitle()
-                << endl;
+            moverCursor(6, y++);
+            cout << id << " -> " << pelis[id].getTtitle() << endl;
         }
+
+        moverCursor(1,14);
+        cout << R"(
+Selecciona una opción:
+ - X: Salir
+ - V: Volver a buscar
+ - C: Selecionar una pelicula
+)";
+
+        cin >> opBusqueda;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        if(opBusqueda == 'X')
+            return;
+        limpiarPantalla();
+
+
     }
+}
+void seleccion_pelicula(int id_peli, unordered_map<int, Movie>& pelis) {
+
 }

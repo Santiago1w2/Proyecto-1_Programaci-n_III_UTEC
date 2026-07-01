@@ -22,7 +22,6 @@ void Trie::insertarpalabra(const string& palabra, const int id, const int pesoCa
         unsigned char uc = static_cast<unsigned char>(c);
 
         if(nodo->hijos[uc] == nullptr) {
-            cout << "Creando nodo para: " << c << endl;
             nodo->hijos[uc] = new Nodo();
         }
 
