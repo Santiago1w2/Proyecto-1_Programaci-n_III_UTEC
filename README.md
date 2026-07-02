@@ -90,7 +90,6 @@ Proyecto-1_Programaci-n_III_UTEC/
 └── Utilidades.h
 ```
 
-También existen localmente las carpetas `.idea/` y `cmake-build-debug/`, generadas por el IDE y por CMake. No se detallan porque contienen configuración local y artefactos de compilación.
 
 ### Responsabilidades principales
 
@@ -130,16 +129,11 @@ Los siguientes archivos no están incluidos actualmente en la raíz del reposito
 
 | Tecnología | Uso en el proyecto |
 |---|---|
-| **C++17** | El código usa recursos compatibles con C++17 como STL, `std::thread`, `std::future`, `std::async`, `std::unique_ptr`, lambdas y contenedores estándar. |
-| **C++20 configurado en CMake** | El archivo `CMakeLists.txt` establece actualmente `CMAKE_CXX_STANDARD 20`. Si la evaluación exige estrictamente C++17, debe cambiarse a `17` y recompilarse para validar compatibilidad. |
 | **STL** | Uso de `vector`, `unordered_map`, `unordered_set`, `stack`, `string`, `stringstream`, algoritmos y utilidades de tiempo. |
 | **Threads** | Indexación paralela del catálogo y destrucción paralela de tries en `Procesador`. |
 | **Futures / async** | Carga asíncrona de notificaciones en `main.cpp` con `std::async` y `std::future`. |
 | **Atomics** | `atomic_bool datosListos` coordina la espera entre la carga del catálogo y la interfaz. |
 | **Smart Pointers** | `unique_ptr<Trie>` y `unique_ptr<RankingStrategy>` administran memoria y polimorfismo. |
-| **CMake** | Compilación del ejecutable `PROYECTAZO`. |
-| **CSV** | Entrada principal `peliculas.csv`; salida generada `datosLimpios.csv`; soporte adicional para `preguntasRecuperacion.csv`. |
-| **Windows API** | Uso de `windows.h`, `conio.h`, `SetConsoleOutputCP`, `SetConsoleCP`, `_getch()` y control de consola. |
 
 ---
 
@@ -167,8 +161,6 @@ Los siguientes archivos no están incluidos actualmente en la raíz del reposito
 | **`unordered_set`** | Control de tokens vistos por documento y stopwords. | Evita duplicados y permite búsquedas rápidas de pertenencia. |
 | **`vector`** | Resultados, tokens, threads, tries, historial y usuarios. | Contenedor secuencial flexible para recorridos y particionado. |
 | **`stack`** | Notificaciones de usuario. | Muestra primero la notificación más reciente. |
-| **`queue`** | No se encontró uso real en el código actual. | No aplica. |
-| **`priority_queue`** | No se encontró uso real en el código actual. | No aplica. |
 
 ---
 
@@ -199,8 +191,6 @@ El proyecto usa paralelismo para reducir el tiempo de carga, indexación y búsq
 | `Procesador.cpp` | `std::thread` | División del catálogo entre `NUM_THREADS` workers para construir tries parciales. |
 | `Procesador.cpp` | `std::thread` | Búsqueda paralela sobre cada Trie parcial y combinación posterior de scores. |
 | `Procesador.cpp` | `std::thread` | Liberación paralela de memoria en el destructor de `Procesador`. |
-
-La constante `NUM_THREADS` está definida en `Utilidades.h` con valor `8`.
 
 ### Mediciones reales
 
@@ -288,15 +278,6 @@ cmake-build-debug/peliculas.csv
 ```
 
 Por claridad, se recomienda mantener el archivo en la raíz del proyecto. El archivo `datosLimpios.csv` se genera durante la ejecución.
-
-### Compilación con CMake
-
-```bash
-cmake -S . -B cmake-build-debug
-cmake --build cmake-build-debug
-```
-
-Luego ejecutar el binario generado por CMake dentro de `cmake-build-debug`.
 
 
 ## 12. Resultados
