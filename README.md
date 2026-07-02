@@ -262,28 +262,8 @@ Validaciones implementadas en el código:
 - Ignora IDs de películas no encontrados al mostrar listas.
 - Control de edad al mostrar películas mediante `PeliculaProxy`.
 
----
 
-## 11. Requisitos
-
-- **Sistema operativo:** Windows.
-- **IDE recomendado:** CLion.
-- **Toolchain:** Visual Studio o MinGW compatible con CMake.
-- **CMake:** versión 3.20 o superior.
-- **Estándar de C++ requerido por el curso:** C++17.
-- **Configuración actual del repositorio:** `CMAKE_CXX_STANDARD 20`.
-- **Archivo de datos:** `peliculas.csv`.
-
-El proyecto depende explícitamente de:
-
-- `windows.h`: configuración y control de consola en Windows.
-- `conio.h`: captura de teclas como flechas y Enter mediante `_getch()`.
-
-Por esas dependencias, el proyecto no es portable directamente a Linux o macOS sin adaptar la interfaz de consola.
-
----
-
-## 12. Instalación y ejecución
+## 11. Instalación y ejecución
 
 ### Opción recomendada: CLion
 
@@ -319,7 +299,7 @@ cmake --build cmake-build-debug
 Luego ejecutar el binario generado por CMake dentro de `cmake-build-debug`.
 
 
-## 14. Resultados
+## 12. Resultados
 
 El proyecto logra integrar un flujo completo de consulta de películas desde datos en CSV:
 
@@ -335,7 +315,7 @@ El proyecto logra integrar un flujo completo de consulta de películas desde dat
 Sus principales ventajas son la separación de responsabilidades por archivos, el uso de estructuras de datos adecuadas para búsqueda textual y la incorporación de patrones de diseño aplicados a casos concretos del sistema.
 
 
-## 16. Referencias
+## 13. Referencias
 
 Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (1994). *Design patterns: Elements of reusable object-oriented software*. Addison-Wesley.
 
