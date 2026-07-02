@@ -114,6 +114,14 @@ struct DocumentoIndexado {
 string aMinuscula(string texto);
 int calcularEdad(const string& fechaNac);
 
-
+template<typename K, typename V>
+vector<pair<K, V>> ordenarPorValor(const unordered_map<K, V>& mapa, bool descendente = true) {
+    vector<pair<K, V>> elementos(mapa.begin(), mapa.end());
+    sort(elementos.begin(), elementos.end(),
+        [descendente](const pair<K, V>& a, const pair<K, V>& b) {
+            return descendente ? a.second > b.second : a.second < b.second;
+        });
+    return elementos;
+}
 
 #endif //PROYECTAZO_CCLASES_H
