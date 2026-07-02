@@ -204,29 +204,30 @@ La constante `NUM_THREADS` está definida en `Utilidades.h` con valor `8`.
 
 ### Mediciones reales
 
-Las mediciones se tomaron ejecutando `cmake-build-debug/PROYECTAZO.exe` desde terminal con el `PATH` de MinGW configurado y usando el archivo real `peliculas.csv` del repositorio. El programa registra tiempos en `metricas_tiempo.txt` mediante `std::chrono::high_resolution_clock`.
+Las mediciones se tomaron ejecutando los binarios desde terminal con el `PATH` de MinGW configurado y usando el archivo real `peliculas.csv` del repositorio. El programa registra tiempos en `metricas_tiempo.txt` mediante `std::chrono::high_resolution_clock`.
 
-Se realizaron 5 ejecuciones completas de inicialización del catálogo con 34 886 películas cargadas. Los valores son promedios en milisegundos.
+Las mediciones paralelas corresponden al promedio de 5 ejecuciones completas de inicialización del catálogo con 34 886 películas cargadas. Las mediciones secuenciales corresponden a 1 ejecución completa usando un `Trie` único sin hilos. Los valores están en milisegundos.
 
 | Operación | Secuencial | Paralelo | Mejora |
-|---|---:|---:|---:|
-| Lectura de `peliculas.csv` | No aplica: no existe implementación paralela en el código actual | 3 174.00 ms | No aplica |
-| Limpieza y exportación a `datosLimpios.csv` | No aplica: no existe implementación paralela en el código actual | 10 463.20 ms | No aplica |
-| Inserción del índice de búsqueda | No medido: no se pudo compilar el benchmark secuencial en esta sesión | 57 699.40 ms | No calculable |
-| Búsqueda por texto | No medido: requiere ejecutar consultas automatizadas o compilar benchmark de búsqueda | No medido | No calculable |
-| Carga total del catálogo | No medido: no se pudo compilar el benchmark secuencial en esta sesión | 71 646.80 ms | No calculable |
+|---|---|---:|---:|---:|
+| Lectura de `peliculas.csv` | 6 718 ms | 3 174.00 ms | Paralelo ~2.1x más rápido |
+| Limpieza y exportación a `datosLimpios.csv` | 13 289 ms | 10 463.20 ms | Paralelo ~1.27x más rápido |
+| Inserción del índice de búsqueda | 305 847 ms | 57 699.40 ms | Paralelo ~5.3x más rápido |
+| Búsqueda por texto (10 consultas) | 289 ms | No medido | No calculable |
+| Carga total del catálogo | 326 148 ms | 71 646.80 ms | Paralelo ~4.55x más rápido |
 
-Detalle de las 5 ejecuciones completas:
+Detalle de ejecuciones:
 
-| Ejecución | Lectura CSV | Limpieza | Inserción paralela | Carga total |
-|---:|---:|---:|---:|---:|
-| 1 | 3 422 ms | 14 054 ms | 62 216 ms | 80 189 ms |
-| 2 | 3 212 ms | 14 240 ms | 68 507 ms | 86 398 ms |
-| 3 | 4 470 ms | 12 894 ms | 59 624 ms | 77 174 ms |
-| 4 | 2 394 ms | 6 304 ms | 38 907 ms | 47 782 ms |
-| 5 | 2 372 ms | 4 824 ms | 59 243 ms | 66 691 ms |
+| Tipo | Ejecución | Lectura CSV | Limpieza | Inserción | Búsqueda | Carga total |
+|---:|---:|---:|---:|---:|---:|
+| Paralela | 1 | 3 422 ms | 14 054 ms | 62 216 ms | — | 80 189 ms |
+| Paralela | 2 | 3 212 ms | 14 240 ms | 68 507 ms | — | 86 398 ms |
+| Paralela | 3 | 4 470 ms | 12 894 ms | 59 624 ms | — | 77 174 ms |
+| Paralela | 4 | 2 394 ms | 6 304 ms | 38 907 ms | — | 47 782 ms |
+| Paralela | 5 | 2 372 ms | 4 824 ms | 59 243 ms | — | 66 691 ms |
+| Secuencial | 1 | 6 718 ms | 13 289 ms | 305 847 ms | 289 ms | 326 148 ms |
 
-Limitación de medición: se intentó compilar instrumentación temporal para construir un índice secuencial equivalente con un solo `Trie`, pero `g++/cc1plus` devolvió código 1 sin diagnóstico incluso con un archivo trivial. Por esa razón no se reportan porcentajes de mejora secuencial/paralelo para índice, búsqueda ni carga total. No se inventaron datos.
+Las mediciones secuenciales se obtuvieron con un benchmark dedicado (`BENCHMARK.exe`) que construye un solo `Trie` sin uso de hilos, procesando el mismo dataset de 34 886 películas. El benchmark incluyó serialización del `Trie` a un archivo temporal (`trie_temp.bin`, ~653 MB), su carga y posterior eliminación, como comprobación de persistencia en disco sin programación paralela.
 
 ---
 
