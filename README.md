@@ -353,10 +353,3 @@ Sedgewick, R., & Wayne, K. (2011). *Algorithms* (4th ed.). Addison-Wesley.
 
 Williams, A. (2019). *C++ Concurrency in Action* (2nd ed.). Manning Publications.
 
----
-
-## 17. Licencia
-
-Este repositorio no incluye un archivo de licencia formal. Mientras no se agregue una licencia explícita, todos los derechos permanecen reservados por sus autores.
-
-Para una entrega académica, se recomienda agregar un archivo `LICENSE` si el equipo desea permitir reutilización, distribución o modificación del código.
