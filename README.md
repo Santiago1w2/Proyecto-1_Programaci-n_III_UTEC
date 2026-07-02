@@ -9,7 +9,6 @@
 | **Universidad** | Universidad de Ingeniería y Tecnología - UTEC |
 | **Integrantes** | Jeseph Imanol Burgos Ochoa<br>Jean Piere Milan Arana Chiong<br>Anthony Yonel Rosales Esteban<br>Omar Alonso Guzman Harvey<br>Santiago Cesar Morales Portella |
 | **Docente** | José Chavez |
-| **Fecha de actualización** | 2 de julio de 2026 |
 
 ---
 
