@@ -318,26 +318,6 @@ cmake --build cmake-build-debug
 
 Luego ejecutar el binario generado por CMake dentro de `cmake-build-debug`.
 
----
-
-## 13. Capturas
-
-Sección preparada para insertar capturas del programa:
-
-| Pantalla | Captura |
-|---|---|
-| Inicio / bienvenida | Pendiente |
-| Registro de usuario | Pendiente |
-| Inicio de sesión | Pendiente |
-| Menú principal | Pendiente |
-| Búsqueda de películas | Pendiente |
-| Detalle de película | Pendiente |
-| Perfil de usuario | Pendiente |
-| Historial | Pendiente |
-| Favoritos | Pendiente |
-| Notificaciones | Pendiente |
-
----
 
 ## 14. Resultados
 
@@ -354,22 +334,6 @@ El proyecto logra integrar un flujo completo de consulta de películas desde dat
 
 Sus principales ventajas son la separación de responsabilidades por archivos, el uso de estructuras de datos adecuadas para búsqueda textual y la incorporación de patrones de diseño aplicados a casos concretos del sistema.
 
----
-
-## 15. Trabajo futuro
-
-- Medir formalmente tiempos secuenciales y paralelos con el mismo dataset y la misma computadora.
-- Ajustar `CMakeLists.txt` a C++17 si la rúbrica exige estrictamente ese estándar.
-- Agregar pruebas unitarias para limpieza, parseo CSV, Trie, login y actualización de usuarios.
-- Mejorar la seguridad del almacenamiento de contraseñas, ya que actualmente se guardan en texto plano.
-- Reemplazar archivos `.txt` por una base de datos ligera como SQLite.
-- Mejorar el ranking con técnicas adicionales de recuperación de información.
-- Agregar stemming o lemmatization para mejorar búsquedas en sinopsis.
-- Hacer portable la interfaz reemplazando `windows.h` y `conio.h`.
-- Agregar mediciones automáticas para `metricas_tiempo.txt`.
-- Incorporar capturas reales del programa en ejecución.
-
----
 
 ## 16. Referencias
 
