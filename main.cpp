@@ -90,7 +90,7 @@ int main() {
                 break;
             }
             case 'E': {
-                mostrarNotificacionesUsuario(pilaNotificaciones);
+                mostrarNotificacionesUsuario(us_email, pilaNotificaciones);
                 break;
             }
             case '0': {

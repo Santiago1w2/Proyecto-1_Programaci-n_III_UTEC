@@ -977,6 +977,60 @@ Buscar: _
 ```
 
 ---
+## Optimizaciones aplicadas al Suffix Trie
+
+El motor mantiene el enfoque original: la estructura principal sigue siendo un
+**Suffix Trie de caracteres**. No se reemplazo por un indice invertido ni por
+otra estructura principal. Las mejoras se enfocan en reducir costo de memoria,
+evitar errores de borde, mejorar ranking y registrar metricas utiles para la
+evaluacion.
+
+### Cambios realizados
+
+- Los hijos de cada nodo del Trie pasaron de una tabla fija de 256 punteros a
+  una estructura dispersa basada en `unordered_map<unsigned char, Nodo*>`.
+- Se agrego liberacion recursiva de memoria en el destructor de `Trie`.
+- La insercion de sufijos conserva las rutas de caracteres, pero ya no guarda
+  listas de peliculas en subcadenas de 1 o 2 caracteres, porque la busqueda
+  descarta consultas de ese tamano.
+- `docFreq` ahora se comparte por referencia entre los Tries parciales durante
+  el procesamiento, evitando copiar el mismo mapa global en cada Trie.
+- La construccion del procesador evita copiar objetos `DataLimpia` completos:
+  usa referencias/punteros a la data limpia ya cargada.
+- Se agrego soporte de frases cortas dentro del mismo Trie. El sistema inserta
+  combinaciones consecutivas de 2 y 3 tokens y aplica un refuerzo cuando la
+  consulta coincide como frase.
+- Para sufijos largos se agrego una raiz auxiliar de rutas reversas dentro de
+  la misma clase `Trie`. Se usa solo cuando la busqueda normal no encuentra
+  resultados y el token supera `MAX_LONG`, evitando construir todos los sufijos
+  completos de forma cuadratica.
+- Se corrigio el caso de consultas vacias o con tokens demasiado cortos para
+  evitar division entre cero durante la penalizacion por cobertura.
+- `metricas_tiempo.txt` registra tiempos de lectura CSV, limpieza/exportacion,
+  insercion paralela del arbol, carga total del catalogo y busquedas paralelas.
+
+### Impacto esperado
+
+| Area | Impacto |
+|---|---|
+| Memoria | Menor uso por nodo al almacenar solo hijos existentes y evitar postings de subcadenas inutiles. |
+| Construccion | Menos copias de `DataLimpia` y menos postings irrelevantes reducen trabajo durante la indexacion. |
+| Busqueda | Las consultas vacias son seguras, las frases cortas y sufijos largos reciben mejor soporte y se mantiene busqueda paralela. |
+| Ranking | Las coincidencias por frase tienen refuerzo adicional sobre la suma token por token. |
+| Metricas | El archivo `metricas_tiempo.txt` permite comparar etapas y observar costo de consultas reales. |
+
+### Limitaciones que se mantienen
+
+- El Suffix Trie sigue consumiendo mas memoria que un indice invertido clasico,
+  porque almacena rutas de caracteres y postings en multiples nodos.
+- Las frases se soportan como n-gramas cortos para controlar memoria. Frases muy
+  largas siguen evaluandose principalmente por tokens individuales.
+- Las busquedas con terminos muy comunes pueden devolver muchos candidatos; el
+  ranking final todavia depende de ordenar esos candidatos.
+- Se conserva la busqueda por palabra, prefijo, sufijo y subpalabra dentro del
+  enfoque de Suffix Trie, por lo que no se cambio la arquitectura principal.
+
+---
 ## Interaccion con el usuario
 
 

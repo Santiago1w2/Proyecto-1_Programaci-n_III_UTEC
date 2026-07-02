@@ -309,7 +309,7 @@ void pantallaPrincipal(const string& nombre, const unordered_map<int, Movie>& pe
     cout << "╰────────────────────────────────────╯   ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯\n";
 
     // ===== MOSTRAR PELÍCULAS EN PANEL DERECHO =====
-    moverCursor(21, 8);
+    moverCursor(25, 9);
     cout << "(" << cantidadNotificaciones << ")";
     moverCursor(0, 0);
     peliculasRecomendadasPanel(pelis, edadUsuario);

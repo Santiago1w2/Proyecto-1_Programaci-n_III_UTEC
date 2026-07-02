@@ -5,6 +5,8 @@
 #include "Utilidades.h"
 #include "LimPelis.h"
 #include "RankingStrategy.h"
+#include <chrono>
+#include <fstream>
 
 class Procesador {
     vector<unique_ptr<Trie>> tries;
@@ -14,6 +16,7 @@ class Procesador {
     unique_ptr<RankingStrategy> rankingStrategy;
 public:
     Procesador();
+    ~Procesador();
     void procesar(const unordered_map<int, DataLimpia>& peliculas);
     vector<int> buscar(const string& consulta);
     void setRankingStrategy(unique_ptr<RankingStrategy> estrategia);

@@ -323,8 +323,7 @@ vector<Usuario> leerUsuarios(const string &csv, const unordered_map<int,Movie>& 
     ifstream archivo(csv);
     if (!archivo.is_open()) {
         cout << "ERROR: no se pudo abrir el archivo de usuarios\n";
-        system("pause");
-        exit(1);
+        return resultado;
     }
     string linea;
     getline(archivo, linea);
@@ -739,21 +738,92 @@ stack<string> cargarNotificacionesUsuario(const string& email) {
     return notificaciones;
 }
 
-void mostrarNotificacionesUsuario(stack<string> notificaciones) {
-    limpiarPantalla();
-    cout << "===== NOTIFICACIONES =====\n\n";
+static bool eliminarNotificacionRecienteArchivo(const string& email, const string& notificacion) {
+    ifstream entrada("notificaciones.txt");
+    vector<string> lineas;
+    string linea;
+    const string marcadorEmail = "email: " + email;
 
-    if (notificaciones.empty()) {
-        cout << "No hay notificaciones para este usuario.\n";
-        esperarEnter();
-        return;
+    while (getline(entrada, linea)) {
+        lineas.push_back(linea);
+    }
+    entrada.close();
+
+    int indiceEliminar = -1;
+    for (int i = static_cast<int>(lineas.size()) - 1; i >= 0; --i) {
+        if (lineas[i] == notificacion && lineas[i].find(marcadorEmail) != string::npos) {
+            indiceEliminar = i;
+            break;
+        }
     }
 
-    while (!notificaciones.empty()) {
-        cout << notificaciones.top() << "\n";
-        notificaciones.pop();
+    if (indiceEliminar < 0) {
+        return false;
     }
-    esperarEnter();
+
+    lineas.erase(lineas.begin() + indiceEliminar);
+    ofstream salida("notificaciones.txt", ios::trunc);
+    if (!salida.is_open()) {
+        return false;
+    }
+
+    for (const string& actual : lineas) {
+        salida << actual << "\n";
+    }
+    return true;
+}
+
+void mostrarNotificacionesUsuario(const string& email, stack<string>& notificaciones) {
+    while (true) {
+        limpiarPantalla();
+        cout << "===== NOTIFICACIONES =====\n\n";
+
+        if (notificaciones.empty()) {
+            cout << "No hay notificaciones para este usuario.\n";
+            esperarEnter();
+            return;
+        }
+
+        stack<string> copia = notificaciones;
+        cout << "Mas reciente:\n";
+        cout << copia.top() << "\n\n";
+        copia.pop();
+
+        if (!copia.empty()) {
+            cout << "Anteriores:\n";
+            while (!copia.empty()) {
+                cout << copia.top() << "\n";
+                copia.pop();
+            }
+            cout << "\n";
+        }
+
+        cout << "Opciones:\n";
+        cout << " - A: Atender notificacion reciente\n";
+        cout << " - 0: Volver\n";
+        cout << "Selecciona una opcion: ";
+
+        char opcion;
+        cin >> opcion;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        opcion = static_cast<char>(toupper(static_cast<unsigned char>(opcion)));
+
+        if (opcion == '0') {
+            limpiarPantalla();
+            return;
+        }
+
+        if (opcion == 'A') {
+            const string atendida = notificaciones.top();
+            if (eliminarNotificacionRecienteArchivo(email, atendida)) {
+                notificaciones.pop();
+                cout << "\nNotificacion atendida.\n";
+            } else {
+                cout << "\nNo se pudo actualizar el archivo de notificaciones.\n";
+            }
+            esperarEnter();
+        }
+    }
 }
 
 

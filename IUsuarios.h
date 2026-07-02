@@ -46,7 +46,7 @@ vector<HistorialEntry> leerHistorialUsuario(const string& email);
 void mostrarHistorialUsuario(const string& email);
 void mostrarFavoritosUsuario(const string& email, const unordered_map<int, Movie>& pelis);
 stack<string> cargarNotificacionesUsuario(const string& email);
-void mostrarNotificacionesUsuario(stack<string> notificaciones);
+void mostrarNotificacionesUsuario(const string& email, stack<string>& notificaciones);
 
 void peliculasRecomendadasPanel(const unordered_map<int, Movie>& pelis, int edadUsuario = 18);
 string UserName(const string& _email, const string& _clave);
