@@ -213,19 +213,18 @@ Las mediciones paralelas corresponden al promedio de 5 ejecuciones completas de 
 | Lectura de `peliculas.csv` | 6 718 ms | 3 174 ms | 2.1x más rápido |
 | Limpieza y exportación a `datosLimpios.csv` | 13 289 ms | 10 463 ms | 1.27x más rápido |
 | Inserción del índice de búsqueda | 305 847 ms | 57 699 ms | 5.3x más rápido |
-| Búsqueda por texto (10 consultas) | 289 ms | No medido | — |
 | Carga total del catálogo | 326 148 ms | 71 647 ms | 4.55x más rápido |
 
 Detalle de ejecuciones:
 
-| Tipo | Ejecución | Lectura CSV | Limpieza | Inserción | Búsqueda | Carga total |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Paralela | 1 | 3 422 ms | 14 054 ms | 62 216 ms | — | 80 189 ms |
-| Paralela | 2 | 3 212 ms | 14 240 ms | 68 507 ms | — | 86 398 ms |
-| Paralela | 3 | 4 470 ms | 12 894 ms | 59 624 ms | — | 77 174 ms |
-| Paralela | 4 | 2 394 ms | 6 304 ms | 38 907 ms | — | 47 782 ms |
-| Paralela | 5 | 2 372 ms | 4 824 ms | 59 243 ms | — | 66 691 ms |
-| Secuencial | 1 | 6 718 ms | 13 289 ms | 305 847 ms | 289 ms | 326 148 ms |
+| Tipo | Ejecución | Lectura CSV | Limpieza | Inserción | Carga total |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Paralela | 1 | 3 422 ms | 14 054 ms | 62 216 ms | 80 189 ms |
+| Paralela | 2 | 3 212 ms | 14 240 ms | 68 507 ms | 86 398 ms |
+| Paralela | 3 | 4 470 ms | 12 894 ms | 59 624 ms | 77 174 ms |
+| Paralela | 4 | 2 394 ms | 6 304 ms | 38 907 ms | 47 782 ms |
+| Paralela | 5 | 2 372 ms | 4 824 ms | 59 243 ms | 66 691 ms |
+| Secuencial | 1 | 6 718 ms | 13 289 ms | 305 847 ms | 326 148 ms |
 
 Las mediciones secuenciales se obtuvieron con un benchmark dedicado (`BENCHMARK.exe`) que construye un solo `Trie` sin uso de hilos, procesando el mismo dataset de 34 886 películas. El benchmark incluyó serialización del `Trie` a un archivo temporal (`trie_temp.bin`, ~653 MB), su carga y posterior eliminación, como comprobación de persistencia en disco sin programación paralela.
 
