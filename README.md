@@ -209,17 +209,17 @@ Las mediciones se tomaron ejecutando los binarios desde terminal con el `PATH` d
 Las mediciones paralelas corresponden al promedio de 5 ejecuciones completas de inicialización del catálogo con 34 886 películas cargadas. Las mediciones secuenciales corresponden a 1 ejecución completa usando un `Trie` único sin hilos. Los valores están en milisegundos.
 
 | Operación | Secuencial | Paralelo | Mejora |
-|---|---|---:|---:|---:|
-| Lectura de `peliculas.csv` | 6 718 ms | 3 174.00 ms | Paralelo ~2.1x más rápido |
-| Limpieza y exportación a `datosLimpios.csv` | 13 289 ms | 10 463.20 ms | Paralelo ~1.27x más rápido |
-| Inserción del índice de búsqueda | 305 847 ms | 57 699.40 ms | Paralelo ~5.3x más rápido |
-| Búsqueda por texto (10 consultas) | 289 ms | No medido | No calculable |
-| Carga total del catálogo | 326 148 ms | 71 646.80 ms | Paralelo ~4.55x más rápido |
+|:---|:---:|:---:|:---:|
+| Lectura de `peliculas.csv` | 6 718 ms | 3 174 ms | 2.1x más rápido |
+| Limpieza y exportación a `datosLimpios.csv` | 13 289 ms | 10 463 ms | 1.27x más rápido |
+| Inserción del índice de búsqueda | 305 847 ms | 57 699 ms | 5.3x más rápido |
+| Búsqueda por texto (10 consultas) | 289 ms | No medido | — |
+| Carga total del catálogo | 326 148 ms | 71 647 ms | 4.55x más rápido |
 
 Detalle de ejecuciones:
 
 | Tipo | Ejecución | Lectura CSV | Limpieza | Inserción | Búsqueda | Carga total |
-|---:|---:|---:|---:|---:|---:|
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | Paralela | 1 | 3 422 ms | 14 054 ms | 62 216 ms | — | 80 189 ms |
 | Paralela | 2 | 3 212 ms | 14 240 ms | 68 507 ms | — | 86 398 ms |
 | Paralela | 3 | 4 470 ms | 12 894 ms | 59 624 ms | — | 77 174 ms |
