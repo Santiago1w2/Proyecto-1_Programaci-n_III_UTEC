@@ -1,1157 +1,399 @@
-# 🎬 UTECFlix — Proyecto 1 · Programación III · UTEC
+# 🎬 UTECFlix
 
-Motor de búsqueda de películas por texto libre, construido sobre un **Sufixx Trie** de caracteres, con limpieza de datos en varios pasos y una interfaz de consola interactiva para Windows.
+## 1. Portada
 
----
-# INTEGRANTES
-
-- Jeseph Imanol Burgos Ochoa
-- Jean Piere Milan Arana Chiong
-- Anthony Yonel Rosales Esteban
-- Omar Alonso Guzman Harvey
-- Santiago Cesar Morales Portella
-
----
-## Tabla de contenidos
-
-1. [Estructura del proyecto](#estructura-del-proyecto)
-2. [Lectura del CSV](#lectura-del-csv)
-3. [Pre-procesamiento y limpieza de datos](#pre-procesamiento-y-limpieza-de-datos)
-4. [Pseudo-código de inserción al Trie](#pseudo-código-de-inserción-al-trie)
-5. [Estructura de datos: Trie](#estructura-de-datos-trie)
-6. [Ejemplos de limpieza](#ejemplos-de-limpieza)
-7. [Avance de la interfaz](#avance-de-la-interfaz)
-8. [Cómo ejecutar](#cómo-ejecutar)
+| Campo | Información |
+|---|---|
+| **Proyecto** | UTECFlix |
+| **Curso** | Programación III |
+| **Universidad** | Universidad de Ingeniería y Tecnología - UTEC |
+| **Integrantes** | Jeseph Imanol Burgos Ochoa<br>Jean Piere Milan Arana Chiong<br>Anthony Yonel Rosales Esteban<br>Omar Alonso Guzman Harvey<br>Santiago Cesar Morales Portella |
+| **Docente** | No especificado en el repositorio |
+| **Fecha de actualización** | 2 de julio de 2026 |
 
 ---
 
-## Estructura del proyecto
+## 2. Descripción del proyecto
 
-```
+**UTECFlix** es una aplicación de consola en C++ orientada a la búsqueda, gestión y consulta de películas a partir de un archivo CSV llamado `peliculas.csv`.
+
+El sistema lee un catálogo de películas, limpia sus campos principales, construye un índice de búsqueda basado en `Trie` y `Suffix Trie`, y permite que un usuario interactúe con el catálogo mediante registro, inicio de sesión, búsqueda textual, recomendaciones, favoritos, historial y notificaciones.
+
+El problema principal que resuelve es la consulta eficiente de películas en un conjunto grande de datos textuales. Para ello, el proyecto combina estructuras de datos, patrones de diseño, procesamiento de archivos, programación paralela y una interfaz de consola para Windows.
+
+---
+
+## 3. Características principales
+
+- Registro de nuevos usuarios.
+- Inicio de sesión con validación de correo y contraseña.
+- Recuperación de contraseña mediante preguntas de seguridad o historial de búsquedas, cuando existe información suficiente.
+- Gestión de perfil:
+  - cambio de nombre;
+  - cambio de fecha de nacimiento;
+  - cambio de contraseña.
+- Lectura de películas desde `peliculas.csv`.
+- Limpieza y normalización de datos de películas.
+- Exportación de datos limpios a `datosLimpios.csv`.
+- Búsqueda de películas por texto libre.
+- Índice de búsqueda con `Trie` y soporte parcial de `Suffix Trie`.
+- Ranking de resultados por puntaje.
+- Soporte de coincidencias por palabras y frases cortas.
+- Recomendaciones aleatorias de películas.
+- Filtro de visualización según edad del usuario mediante Proxy.
+- Registro de historial de acciones.
+- Visualización de favoritos.
+- Sistema de likes, favoritos y "ver más tarde"; en el código actual, favoritos y likes comparten la misma lista interna `likes`.
+- Notificaciones generadas por acciones del usuario.
+- Paginación de resultados.
+- Procesamiento paralelo durante la indexación.
+- Búsqueda paralela sobre múltiples tries parciales.
+- Registro de métricas de tiempo en `metricas_tiempo.txt`.
+
+---
+
+## 4. Arquitectura del proyecto
+
+Estructura real del repositorio en la raíz del proyecto:
+
+```text
 Proyecto-1_Programaci-n_III_UTEC/
-├── main.cpp                  ← Punto de entrada
-├── CClases.h / CClases.cpp   ← Clases Movie, Usuario, DataLimpia
-├── IUsuario.h / IUsuario.cpp   ← Interacción con el usuario
-├── PLimpieza.h / PLimpieza.cpp ← Toda la lógica de limpieza
-├── LPeliculas.h / LPeliculas.cpp ← Lectura CSV, manejo de usuarios
-├── Trie.h / Trie.cpp          ← Estructura de datos principal
-├── Interfaz.h / Interfaz.cpp  ← UI de consola (Windows)
-└── cmake-build-debug/
-    ├── peliculas.csv           ← Dataset original (wiki_movie_plots_deduped.csv)
-    └── datosLimpios.csv        ← CSV generado tras la limpieza
+├── .gitignore
+├── CMakeLists.txt
+├── Command.cpp
+├── Command.h
+├── Interfaz.cpp
+├── Interfaz.h
+├── Iterator.cpp
+├── Iterator.h
+├── IUsuarios.cpp
+├── IUsuarios.h
+├── LimPelis.cpp
+├── LimPelis.h
+├── main.cpp
+├── Memento.cpp
+├── Memento.h
+├── Observer.cpp
+├── Observer.h
+├── peliculas.csv
+├── Procesador.cpp
+├── Procesador.h
+├── Proxy.cpp
+├── Proxy.h
+├── RankingStrategy.cpp
+├── RankingStrategy.h
+├── README.md
+├── Singleton.cpp
+├── Singleton.h
+├── Trie.cpp
+├── Trie.h
+├── Utilidades.cpp
+└── Utilidades.h
 ```
 
----
+También existen localmente las carpetas `.idea/` y `cmake-build-debug/`, generadas por el IDE y por CMake. No se detallan porque contienen configuración local y artefactos de compilación.
 
-## Lectura inicial del CSV
+### Responsabilidades principales
 
-El dataset fuente es `wiki_movie_plots_deduped.csv` (renombrado a `peliculas.csv`).  
-Tiene 8 columnas por fila:
-
-| # | Columna            | Descripción                            |
-|---|--------------------|----------------------------------------|
-| 0 | Release Year       | Año de estreno                         |
-| 1 | Title              | Título de la película                  |
-| 2 | Origin/Ethnicity   | Origen / Industria cinematográfica     |
-| 3 | Director           | Director(es)                           |
-| 4 | Cast               | Reparto                                |
-| 5 | Genre              | Género(s)                              |
-| 6 | Wiki Page          | URL de Wikipedia                       |
-| 7 | Plot               | Sinopsis (puede tener saltos de línea) |
-
-### El problema de los saltos de línea en los plots
-Como muestra en la tabla, el plot presenta una particularidad en cuanto a la manera en como está organizado el texto. 
-En este sentido, el contenido puede estar distribuido en uno o más párrafos separados por saltos de linea. Asimismo, el contenido de un mismo párrafo puede estar dividido por diferentes saltos de linea.
-Al realizar una lectura simple, es decir usando un solo `getline()` no se estaría tomando en cuenta estas limitaciones, por lo cual la lectura no sería apropiada. 
-Consecuentemente, este error genería una mala lectura en las peliculas posteriores.
-
-Ante esta situación se propone un flujo de funciones que generalicen la lectura de los diferentes campos del csv, considerando las salvedades mencionadas anteriormente.
-La función principal de este flujo es `leerPeliculas(const string& csv)`. Esta función va a recibir, por referencia, el csv que se quiere leer y va a crear un unordered_map donde se almacenarán las peliculas leidas.
-La justificación en la elección de este tipo de contenedor se basa en que necesitamos almacenar las peliculas, pero mantenerlas mapeadas a traves de un id. Asimismo, es importante resaltar la baja complejidad algorítmica que tiene para la inserción y búsqueda, a comparación de un mapa simple.
-
-Esta función, a su vez, se apoya de `leerFilaCSV(archivo,linea)`, la cual se encarga de almacenar en una sola línea, la información correspondiente a una misma película. Para ello, la función utiliza una lógica basada en el conteo de comillas en la linea.
-Para que toda la información de la película sea leida debe existir una cantidad par de comillas en la linea. En el caso no se cumpla esto, se infiere que la información no se ha cerrado, por lo que la función lee e integra la línea siguiente, y vuelve a verificar si la cantidad de comillas es par.
-
-Continuando con el flujo, se utiliza la funcion `parseCSVLine(linea)`, la cual se encarga de 'clasificar' el contenido de una linea acorde a la cantidad de atributos de la pelicula. 
-Como aspecto fundamental en esta función, se valida continuamente el uso de comas y comillas en el texto.
-Para ello, es importante recordar que un archivo '.csv' utiliza comillas cuando se usan 'comas' como parte del texto y no como separador de columnas. Asimismo, el formato implica que se utilicen comillas dobles cuando una palabra o frase requiera comillas.
-Tomando esto en cuenta, la función verifica este tipo de singularidades y permite que el campo correspondiente se guarde como un texto 'normal'.
-
----
-
-## Pre-procesamiento y limpieza de datos
-
-Una vez leídas las películas en el `unordered_map<int, Movie>`, se invoca `exportarDataLimpiaCSV()`, que aplica una cadena de transformaciones sobre cada campo antes de insertar las palabras al Trie.
-
-### Flujo general por película
-
-```
-Movie (raw)
-    │
-    ├─ Year         → se usa tal cual (solo números)
-    ├─ Title        → limpiarTitulo()
-    ├─ Origin       → limpiarOrigen()
-    ├─ Director     → limpiarDirector()
-    ├─ Cast         → limpiarCast()
-    ├─ Genre        → normalizarYLimpiar()
-    └─ Plot         → normalizarYLimpiar() → filtrarStopwords()
-            │
-            ▼
-    String unificada: "año titulo origen director cast genero plot"
-            │
-            ▼
-    Inserción al Trie  +  Exportación a datosLimpios.csv
-```
-
-### Dos salidas del pipeline
-
-`exportarDataLimpiaCSV` hace dos cosas en un solo recorrido del mapa de películas, evitando procesar las ~35,000 entradas dos veces:
-
-1. **Escribe `datosLimpios.csv`** — archivo con los 7 campos limpios por fila, sin comillas, útil para depuración e inspección manual.
-2. **Llena `unordered_map<int, DataLimpia>`** — mapa en memoria (pasado por referencia) que asocia cada ID de película con su `DataLimpia` correspondiente. Este mapa es el que usa el resto del sistema para mostrar resultados al usuario.
-
-### `prepararDataLimpia` — Alimentando el Trie
-
-```cpp
-unordered_map<int, string> prepararDataLimpia(const unordered_map<int, Movie>& pelis);
-```
-
-Esta función aplica el mismo pipeline de limpieza que `exportarDataLimpiaCSV`, pero en lugar de escribir un archivo, devuelve un `unordered_map<int, string>` donde cada valor es una **cadena unificada** con todos los campos de la película concatenados:
-
-```
-"1942 casablanca american michael curtiz humphrey bogart ingrid bergman drama rick blaine..."
-```
-
-Esa cadena es la que se tokeniza e inserta palabra por palabra al Trie. El ID entero actúa como clave para relacionar cada palabra indexada con su película de origen.
-
-### Estructura `DataLimpia`
-
-`DataLimpia` es un struct definido en `CClases.h` que almacena los campos de una película ya procesados y normalizados:
-
-```cpp
-struct DataLimpia {
-    string title, release_year, origin, director, cast, genre, plot;
-};
-```
-
-A diferencia de `Movie` (que guarda los datos crudos del CSV incluyendo `wiki_page`), `DataLimpia` omite la URL de Wikipedia y solo conserva los campos indexables ya limpios. Es el resultado final del pipeline de limpieza.
-
-### Funciones de limpieza detalladas
-
-#### `limpiarTextoAvanzado(s, parentesisProhibidos, palabrasProhibidas)` — Función maestra
-
-Es el núcleo del sistema de limpieza. Trabaja en dos fases:
-
-**Fase 1 — Eliminación de corchetes y paréntesis:**
-- `[texto]`: si el contenido son solo números o referencias de Wikipedia (`[1]`, `[2]`...), se elimina por completo. Si el contenido es texto real (p. ej. `[also known as]`), se conserva el texto sin los corchetes.
-- `(texto)`: si el contenido en minúsculas contiene alguna palabra de `parentesisProhibidos` (como `"film"` o `"part"`), se descarta todo el bloque. En caso contrario, se conserva el texto interior.
-
-**Fase 2 — Procesamiento carácter a carácter:**
-- Caracteres ASCII alfanuméricos: se normalizan a minúsculas.
-- Caracteres UTF-8 multibyte: se buscan en el mapa `accents`. Si el carácter no existe en el mapa (cirílico, chino, árabe, etc.), la **palabra completa** se descarta.
-- Separadores y puntuación: disparan el guardado de la palabra acumulada.
-- Palabras en `palabrasProhibidas`: se filtran exactamente (p. ej. `"director"` en campos de cast).
-
-#### `limpiarTitulo(s)`
-Llama a `limpiarTextoAvanzado` prohibiendo `"film"` y `"part"` dentro de paréntesis.  
-Caso real: `"Spider-Man (film)"` → `"spider man"`.
-
-#### `limpiarDirector(s)`
-Llama a `limpiarTextoAvanzado` sin bloqueos en paréntesis, pero filtrando la palabra exacta `"director"` para no indexarla como término de búsqueda.  
-Caso real: `"James Cameron (director)"` → `"james cameron"`.
-
-#### `limpiarOrigen(s)`
-Lógica propia más rápida: solo acepta letras (convierte a minúsculas) y descarta todo lo demás. Se usa una lógica independiente porque el campo Origin solo contiene nombres de países e industrias, sin paréntesis ni caracteres especiales relevantes.  
-Caso real: `"American/British"` → `"american british"`.
-
-#### `limpiarCast(s)`
-Llama a `limpiarTextoAvanzado` filtrando las palabras `"director"` y `"screenplay"` que a veces aparecen mezcladas en la columna de reparto de Wikipedia.  
-Caso real: `"Tom Hanks, Robin Wright (screenplay by Eric Roth)"` → `"tom hanks robin wright"`.
-
-#### `normalizarYLimpiar(s)`
-Limpieza genérica para los campos Genre y Plot. Aplica el mismo mapa de acentos, maneja corchetes de Wikipedia (`[citation needed]`, `[dead link]`, `[better source needed]`, etc.) y normaliza el resto a minúsculas con espacios como separadores. A diferencia de la función maestra, no descarta palabras por caracteres no mapeados: los reemplaza por espacio, lo que la hace más permisiva pero suficiente para estos campos.
-
-#### `filtrarStopwords(textoLimpio)`
-Se aplica exclusivamente al Plot después de `normalizarYLimpiar`. Elimina ~100 palabras de ruido del inglés para reducir el tamaño del índice y mejorar la precisión de las búsquedas.
-
-La lista es en inglés porque el dataset es predominantemente en inglés. Los criterios para incluir una palabra fueron:
-
-- **Alta frecuencia, bajo valor semántico**: artículos, preposiciones, conjunciones y pronombres (`"the"`, `"and"`, `"his"`, `"from"`...).
-- **Verbos auxiliares y copulativos**: `"was"`, `"were"`, `"have"`, `"had"`, `"does"`, `"been"`.
-- **Adverbios y cuantificadores genéricos**: `"very"`, `"much"`, `"most"`, `"many"`, `"few"`, `"already"`, `"never"`.
-- **Palabras narrativas sin valor de búsqueda**: `"going"`, `"found"`, `"saying"`, `"told"`, `"seems"` — aparecen en casi cualquier sinopsis y no distinguen una película de otra.
-
-> La lista **no** se aplica a título, director, cast ni origen, porque en esos campos palabras como `"the"` o `"will"` pueden ser parte de un nombre propio.
-
-### Decisión de diseño: UTF-8 manual sin librerías externas
-
-El sistema procesa texto UTF-8 sin usar ninguna librería de internacionalización (como ICU o `<codecvt>`). En su lugar, detecta la longitud de cada carácter multibyte inspeccionando los bits del primer byte:
-
-| Patrón del primer byte | Longitud del carácter |
+| Archivo | Responsabilidad |
 |---|---|
-| `0xxxxxxx` (< 0x80) | 1 byte — ASCII estándar |
-| `110xxxxx` (& 0xE0 == 0xC0) | 2 bytes |
-| `1110xxxx` (& 0xF0 == 0xE0) | 3 bytes |
-| `11110xxx` (& 0xF8 == 0xF0) | 4 bytes |
+| `main.cpp` | Punto de entrada, carga paralela del catálogo, autenticación inicial y ciclo principal del menú. |
+| `Utilidades.h/.cpp` | Modelos base (`Movie`, `DataLimpia`, `Usuario`) y utilidades generales. |
+| `LimPelis.h/.cpp` | Lectura del CSV, parseo de filas, limpieza de texto y exportación de datos limpios. |
+| `Trie.h/.cpp` | Implementación del Trie, sufijos parciales, búsqueda y cálculo de scores. |
+| `Procesador.h/.cpp` | Tokenización, indexación paralela, búsqueda paralela y coordinación del ranking. |
+| `Interfaz.h/.cpp` | Interfaz de consola, menús, perfil, búsqueda y detalle de películas. |
+| `IUsuarios.h/.cpp` | Registro, login, recuperación de contraseña, historial, favoritos y notificaciones. |
+| `Singleton.h/.cpp` | Catálogo global de películas y motor de búsqueda. |
+| `RankingStrategy.h/.cpp` | Estrategia de ordenamiento de resultados. |
+| `Proxy.h/.cpp` | Control de visualización de películas según edad. |
+| `Iterator.h/.cpp` | Paginación de resultados e iteración de historial. |
+| `Memento.h/.cpp` | Clases de soporte para snapshots de historial. |
+| `Observer.h/.cpp` | Notificaciones ante acciones del usuario. |
+| `Command.h/.cpp` | Comandos para modificar datos del perfil. |
 
-Una vez extraído el carácter completo como `string`, se busca en el mapa `accents`. Si existe, se reemplaza por su equivalente ASCII. Si no existe (cirílico, chino, árabe, etc.), la palabra completa se descarta, ya que no puede ser indexada de forma útil en un índice basado en caracteres latinos.
+### Archivos generados en ejecución
 
-Esta decisión mantiene el proyecto sin dependencias externas y es suficiente dado que el dataset es predominantemente en inglés.
+Los siguientes archivos no están incluidos actualmente en la raíz del repositorio, pero el código puede crearlos o leerlos durante la ejecución:
 
-### El mapa `accents` — Por qué `string → string` y no `char → char`
-
-```cpp
-unordered_map<string, string> accents = { {"á","a"}, {"ñ","n"}, {"æ","ae"}, ... };
-```
-
-Los caracteres acentuados en UTF-8 ocupan 2, 3 o 4 bytes, por lo que no caben en un `char`. La clave del mapa es el carácter multibyte extraído como `string` (por ejemplo, `"á"` son 2 bytes: `0xC3 0xA1`). El valor también es `string` para poder manejar los casos donde un carácter se expande a dos letras ASCII, como `æ → "ae"` y `œ → "oe"`. El mapa cubre más de 80 caracteres entre vocales acentuadas, consonantes especiales europeas y vocales compuestas.
-
----
-## Ejemplos de limpieza
-
-### Ejemplo 1 — Título con paréntesis y caracteres especiales
-
-| Campo    | Valor original                        | Valor limpio         |
-|----------|---------------------------------------|----------------------|
-| Title    | `Spider-Man (film)`                   | `spider man`         |
-| Title    | `Amélie`                              | `amelie`             |
-| Title    | `功夫 (Kung Fu Hustle)`               | `kung fu hustle`     |
-
-### Ejemplo 2 — Director con anotaciones de Wikipedia
-
-| Campo    | Valor original                        | Valor limpio         |
-|----------|---------------------------------------|----------------------|
-| Director | `James Cameron (director)`            | `james cameron`      |
-| Director | `Sergio León [1]`                     | `sergio leon`        |
-
-### Ejemplo 3 — Cast con roles mezclados
-
-| Campo | Valor original                                      | Valor limpio                   |
-|-------|-----------------------------------------------------|--------------------------------|
-| Cast  | `Tom Hanks, Robin Wright (screenplay by Eric Roth)` | `tom hanks robin wright`       |
-
-### Ejemplo 4 — Plot con stopwords
-
-| Antes de filtrar                                          | Después de filtrar stopwords    |
-|-----------------------------------------------------------|---------------------------------|
-| `the man was walking and he found a treasure in the cave` | `man walking treasure cave` |
-
+| Archivo | Estado real | Uso |
+|---|---|---|
+| `datosLimpios.csv` | Generado durante la carga del catálogo. | Guarda campos limpios de películas. |
+| `metricas_tiempo.txt` | Generado si se registran métricas. | Guarda tiempos de lectura, limpieza, carga, indexación y búsqueda. |
+| `registroUsuarios.txt` | Generado al registrar usuarios. | Persiste credenciales y listas del usuario. |
+| `historialUsuarios.txt` | Generado al registrar acciones. | Persiste búsquedas, visualizaciones y acciones. |
+| `notificaciones.txt` | Generado por el Observer. | Persiste notificaciones por usuario. |
+| `preguntasRecuperacion.csv` | Generado si se configuran preguntas. | Persiste preguntas y respuestas de recuperación. |
 
 ---
 
-# Estructura de Datos: Suffix Trie parcial con TF-IDF
+## 5. Tecnologías utilizadas
 
-Se implementó un **Suffix Trie de caracteres con búsqueda parcial y ranking TF-IDF** como motor principal de recuperación de información.
-
-El sistema permite:
-
-- búsquedas exactas,
-- búsquedas por prefijo,
-- búsquedas desde el medio de una palabra,
-- ranking semántico mediante TF-IDF.
-
----
-
-# ¿Por qué un Suffix Trie?
-
-El Trie permite búsquedas en tiempo proporcional al tamaño de la consulta:
-
-```txt
-O(L)
-```
-
-donde:
-
-```txt
-L = longitud del token buscado
-```
-
-Además:
-
-- soporta coincidencias parciales naturalmente,
-- evita recorrer todos los documentos,
-- permite indexación eficiente carácter por carácter.
-
----
-
-# Soporte de Subcadenas
-
-El Suffix Trie no solo inserta palabras completas, sino también subcadenas controladas (*suffix / n-grams*).
-
-Por ejemplo:
-
-```txt
-"action"
-```
-
-genera:
-
-```txt
-action
-ction
-tion
-ion
-on
-n
-```
-
-Esto permite consultas como:
-
-```txt
-"tion"
-```
-
-encontrar:
-
-```txt
-action
-fiction
-nation
-```
-
----
-
-# Estructura del Nodo
-
-```cpp
-struct Nodo {
-
-    unordered_map<char, Nodo*> hijos;
-
-    unordered_map<int, int> freq;
-
-    bool esFinDePalabra = false;
-};
-```
-
----
-
-# Explicación de la Estructura
-
-Cada nodo almacena:
-
-| atributo | función |
+| Tecnología | Uso en el proyecto |
 |---|---|
-| `hijos` | conexiones hacia otros caracteres |
-| `freq` | TF acumulado por película |
-| `esFinDePalabra` | indica coincidencia exacta |
+| **C++17** | El código usa recursos compatibles con C++17 como STL, `std::thread`, `std::future`, `std::async`, `std::unique_ptr`, lambdas y contenedores estándar. |
+| **C++20 configurado en CMake** | El archivo `CMakeLists.txt` establece actualmente `CMAKE_CXX_STANDARD 20`. Si la evaluación exige estrictamente C++17, debe cambiarse a `17` y recompilarse para validar compatibilidad. |
+| **STL** | Uso de `vector`, `unordered_map`, `unordered_set`, `stack`, `string`, `stringstream`, algoritmos y utilidades de tiempo. |
+| **Threads** | Indexación paralela del catálogo y destrucción paralela de tries en `Procesador`. |
+| **Futures / async** | Carga asíncrona de notificaciones en `main.cpp` con `std::async` y `std::future`. |
+| **Atomics** | `atomic_bool datosListos` coordina la espera entre la carga del catálogo y la interfaz. |
+| **Smart Pointers** | `unique_ptr<Trie>` y `unique_ptr<RankingStrategy>` administran memoria y polimorfismo. |
+| **CMake** | Compilación del ejecutable `PROYECTAZO`. |
+| **CSV** | Entrada principal `peliculas.csv`; salida generada `datosLimpios.csv`; soporte adicional para `preguntasRecuperacion.csv`. |
+| **Windows API** | Uso de `windows.h`, `conio.h`, `SetConsoleOutputCP`, `SetConsoleCP`, `_getch()` y control de consola. |
 
 ---
 
-# Frecuencias Acumuladas
+## 6. Patrones de diseño
 
-Cada nodo almacena:
-
-```cpp
-freq[id] += peso
-```
-
-donde:
-
-- `id` = identificador de la película,
-- `peso` = relevancia del campo.
-
----
-
-# Pesos por Campo
-
-El sistema asigna distintos pesos según el origen del token:
-
-| campo    | peso      |
-|----------|-----------|
-| título   | alto =5   |
-| año      | bajo = 1  |
-| director | bajo = 1  |
-| cast     | bajo = 1  |
-| género   | bajo = 1  |
-| plot     | medio = 2 |
-
-Esto mejora la relevancia semántica de los resultados.
+| Patrón | Dónde se usa | Beneficio |
+|---|---|---|
+| **Singleton** | `CatalogoPeliculas` en `Singleton.h/.cpp`. | Mantiene una única instancia del catálogo, evita duplicar estructuras grandes y centraliza carga, búsqueda y acceso a películas. |
+| **Strategy** | `RankingStrategy` y `RankingPorScoreStrategy`. | Permite cambiar el criterio de ordenamiento sin modificar `Procesador` ni `Trie`. |
+| **Proxy** | `IPelicula`, `PeliculaReal`, `PeliculaProxy`. | Controla si una película puede mostrarse según la edad del usuario sin alterar la clase `Movie`. |
+| **Observer** | `AccionUsuarioSubject`, `ObservadorAccion`, `NotificacionesArchivoObserver`. | Desacopla las acciones del usuario de la escritura de notificaciones en archivo. |
+| **Command** | `PerfilCommand`, `CambiarNombreCommand`, `CambiarFechaNacimientoCommand`, `CambiarPasswordCommand`. | Encapsula cambios del perfil como operaciones independientes. |
+| **Iterator** | `ResultadosIterator` y `HistorialIterator`. | Permite recorrer resultados por páginas e historial sin exponer directamente la lógica de recorrido. |
+| **Memento** | `Memento` y `HistorialCareTaker` están implementados en `Memento.h/.cpp`. | Proveen soporte para guardar y restaurar snapshots de historial; en el flujo principal actual no se instancia `HistorialCareTaker`, por lo que el historial visible se maneja con archivos e `HistorialIterator`. |
 
 ---
 
-# Estructura General del Trie
+## 7. Estructuras de datos
 
-```txt
-ESTRUCTURA Trie
-
-    raíz:
-        Nodo
-
-    docFreq:
-        Map<token, DF>
-
-    totalDocs:
-        int
-
-FIN ESTRUCTURA
-```
+| Estructura | Dónde aparece | Motivo de uso |
+|---|---|---|
+| **Trie** | `Trie`, nodo raíz `raiz`. | Búsqueda eficiente por caracteres y prefijos. |
+| **Suffix Trie parcial** | Inserción de subcadenas limitadas y raíz auxiliar `raizSufijos`. | Permite coincidencias parciales y búsqueda de sufijos largos con control de memoria. |
+| **`unordered_map`** | Películas por ID, frecuencias por documento, hijos de nodos, usuarios y scores. | Acceso promedio O(1), útil para índices, conteos y asociaciones por clave. |
+| **`unordered_set`** | Control de tokens vistos por documento y stopwords. | Evita duplicados y permite búsquedas rápidas de pertenencia. |
+| **`vector`** | Resultados, tokens, threads, tries, historial y usuarios. | Contenedor secuencial flexible para recorridos y particionado. |
+| **`stack`** | Notificaciones de usuario. | Muestra primero la notificación más reciente. |
+| **`queue`** | No se encontró uso real en el código actual. | No aplica. |
+| **`priority_queue`** | No se encontró uso real en el código actual. | No aplica. |
 
 ---
 
-# Variables Globales del Trie
+## 8. Algoritmos
 
-## `totalDocs`
-
-Cantidad total de películas indexadas.
-
----
-
-## `docFreq`
-
-Almacena:
-
-```txt
-token → cantidad de documentos
-```
-
-Ejemplo:
-
-```txt
-docFreq["spider"] = 120
-```
+| Algoritmo | Implementación | Complejidad temporal aproximada |
+|---|---|---|
+| Lectura robusta de CSV | `leerFilaCSV` une líneas hasta equilibrar comillas; `parseCSVLine` separa columnas respetando comillas. | O(n) por fila, donde `n` es la longitud de la fila completa. |
+| Limpieza de texto | Normalización a minúsculas, eliminación de caracteres no deseados, manejo básico de UTF-8 y filtrado de stopwords. | O(n) por campo. |
+| Tokenización | `tokenizar` separa texto por espacios usando `stringstream`. | O(n). |
+| Inserción en Trie | `insertarpalabra` inserta palabra completa y subcadenas limitadas por `MAX_LONG`. | O(L * MAX_LONG) aproximado; con `MAX_LONG = 6`, se comporta lineal respecto a la longitud del token. |
+| Búsqueda en Trie | `buscarNodo` recorre caracteres de la consulta. | O(L + R), donde `L` es la longitud del token y `R` la cantidad de resultados asociados. |
+| Búsqueda de sufijo largo | Invierte el token y consulta `raizSufijos` cuando la búsqueda normal no encuentra resultados. | O(L + R). |
+| Ranking por score | `RankingPorScoreStrategy` ordena resultados por puntaje. | O(M log M), donde `M` es la cantidad de candidatos. |
+| Paginación | `ResultadosIterator` divide resultados en páginas de tamaño fijo. | O(k) por página, donde `k` es el tamaño de página. |
+| Recomendación aleatoria | Selección aleatoria de películas evitando repeticiones y géneros repetidos dentro de la interacción. | Depende de intentos; el código limita intentos a 100 por recomendación. |
 
 ---
 
-# Inserción en el Trie
+## 9. Programación paralela
 
-El algoritmo inserta:
+El proyecto usa paralelismo para reducir el tiempo de carga, indexación y búsqueda del catálogo.
 
-1. palabra completa,
-2. subcadenas limitadas.
+| Clase / archivo | Recurso usado | Tarea paralela |
+|---|---|---|
+| `main.cpp` | `std::thread`, `std::atomic_bool` | Carga del catálogo en segundo plano mientras se muestra el flujo inicial de la interfaz. |
+| `main.cpp` | `std::async`, `std::future` | Carga de notificaciones del usuario autenticado. |
+| `Procesador.cpp` | `std::thread` | División del catálogo entre `NUM_THREADS` workers para construir tries parciales. |
+| `Procesador.cpp` | `std::thread` | Búsqueda paralela sobre cada Trie parcial y combinación posterior de scores. |
+| `Procesador.cpp` | `std::thread` | Liberación paralela de memoria en el destructor de `Procesador`. |
 
----
+La constante `NUM_THREADS` está definida en `Utilidades.h` con valor `8`.
 
-# Inserción de Palabra Completa
+### Mediciones reales
 
-Para:
+Las mediciones se tomaron ejecutando `cmake-build-debug/PROYECTAZO.exe` desde terminal con el `PATH` de MinGW configurado y usando el archivo real `peliculas.csv` del repositorio. El programa registra tiempos en `metricas_tiempo.txt` mediante `std::chrono::high_resolution_clock`.
 
-```txt
-spider
-```
+Se realizaron 5 ejecuciones completas de inicialización del catálogo con 34 886 películas cargadas. Los valores son promedios en milisegundos.
 
-se genera:
+| Operación | Secuencial | Paralelo | Mejora |
+|---|---:|---:|---:|
+| Lectura de `peliculas.csv` | No aplica: no existe implementación paralela en el código actual | 3 174.00 ms | No aplica |
+| Limpieza y exportación a `datosLimpios.csv` | No aplica: no existe implementación paralela en el código actual | 10 463.20 ms | No aplica |
+| Inserción del índice de búsqueda | No medido: no se pudo compilar el benchmark secuencial en esta sesión | 57 699.40 ms | No calculable |
+| Búsqueda por texto | No medido: requiere ejecutar consultas automatizadas o compilar benchmark de búsqueda | No medido | No calculable |
+| Carga total del catálogo | No medido: no se pudo compilar el benchmark secuencial en esta sesión | 71 646.80 ms | No calculable |
 
-```txt
-s → p → i → d → e → r
-```
+Detalle de las 5 ejecuciones completas:
 
----
+| Ejecución | Lectura CSV | Limpieza | Inserción paralela | Carga total |
+|---:|---:|---:|---:|---:|
+| 1 | 3 422 ms | 14 054 ms | 62 216 ms | 80 189 ms |
+| 2 | 3 212 ms | 14 240 ms | 68 507 ms | 86 398 ms |
+| 3 | 4 470 ms | 12 894 ms | 59 624 ms | 77 174 ms |
+| 4 | 2 394 ms | 6 304 ms | 38 907 ms | 47 782 ms |
+| 5 | 2 372 ms | 4 824 ms | 59 243 ms | 66 691 ms |
 
-# Inserción de Subcadenas
-
-Para:
-
-```txt
-spider
-```
-
-también se insertan:
-
-```txt
-pider
-ider
-der
-er
-r
-```
+Limitación de medición: se intentó compilar instrumentación temporal para construir un índice secuencial equivalente con un solo `Trie`, pero `g++/cc1plus` devolvió código 1 sin diagnóstico incluso con un archivo trivial. Por esa razón no se reportan porcentajes de mejora secuencial/paralelo para índice, búsqueda ni carga total. No se inventaron datos.
 
 ---
 
-# Pseudocódigo de Inserción
+## 10. Manejo de errores y validaciones
 
-```txt
-FUNCIÓN insertarPalabra(
-    palabra,
-    movieID,
-    pesoCampo
-)
+Validaciones implementadas en el código:
 
-    n ← longitud(palabra)
-
-    MAX_LEN ← 6
-
-    // caso 1: INSERTAR PALABRA COMPLETA
-    nodo ← raíz
-
-    PARA CADA caracter c EN palabra
-
-        SI c NO existe EN nodo.hijos
-
-            nodo.hijos[c]
-                ← nuevo Nodo()
-
-        FIN SI
-
-        nodo ← nodo.hijos[c]
-
-        nodo.freq[movieID]
-            += pesoCampo * 2
-
-    FIN PARA
-
-    nodo.esFinDePalabra ← verdadero
-
-    // CASO 2: INSERTAR SUBCADENAS
-
-    PARA i DESDE 0 HASTA n-1
-
-        nodo ← raíz
-
-        PARA j DESDE i
-                HASTA min(n-1, i + MAX_LEN - 1)
-
-            c ← palabra[j]
-
-            SI c NO existe EN nodo.hijos
-
-                nodo.hijos[c]
-                    ← nuevo Nodo()
-
-            FIN SI
-
-            nodo ← nodo.hijos[c]
-
-            nodo.freq[movieID]
-                += pesoCampo
-
-        FIN PARA
-
-        nodo.esFinDePalabra ← verdadero
-
-    FIN PARA
-
-FIN FUNCIÓN
-```
+- Verificación de apertura de archivos:
+  - `peliculas.csv`;
+  - `registroUsuarios.txt`;
+  - `preguntasRecuperacion.csv`;
+  - `notificaciones.txt`;
+  - `datosLimpios.csv`;
+  - `metricas_tiempo.txt`.
+- Si no se cargan películas desde el CSV, `CatalogoPeliculas::cargarDatos` lanza un `runtime_error`.
+- Si no se construye la data limpia, `CatalogoPeliculas::cargarDatos` lanza un `runtime_error`.
+- Si se intenta buscar antes de inicializar el catálogo, `CatalogoPeliculas::buscar` lanza un `logic_error`.
+- Lectura de CSV con control de comillas para evitar cortar sinopsis multilínea.
+- Ignora filas del CSV con menos de 8 columnas.
+- Limpieza de texto con normalización de minúsculas, acentos y caracteres especiales.
+- Descarte de tokens de longitud menor o igual a 2 en el Trie.
+- Retorno vacío ante búsquedas sin tokens válidos.
+- Validación de correo repetido al registrar usuario.
+- Validación de credenciales en inicio de sesión.
+- Validación de contraseñas repetidas durante registro y cambio de contraseña.
+- Validación de contraseña actual antes de modificar datos del perfil.
+- Validación de fecha de nacimiento mediante `calcularEdad`.
+- Validación de existencia de usuario antes de actualizar datos.
+- Evita duplicar IDs en listas de likes, historial y ver más tarde.
+- Manejo de notificaciones vacías.
+- Manejo de historial vacío.
+- Manejo de favoritos vacíos.
+- Ignora IDs de películas no encontrados al mostrar listas.
+- Control de edad al mostrar películas mediante `PeliculaProxy`.
 
 ---
 
-# Optimización de Memoria
+## 11. Requisitos
 
-Se utiliza:
+- **Sistema operativo:** Windows.
+- **IDE recomendado:** CLion.
+- **Toolchain:** Visual Studio o MinGW compatible con CMake.
+- **CMake:** versión 3.20 o superior.
+- **Estándar de C++ requerido por el curso:** C++17.
+- **Configuración actual del repositorio:** `CMAKE_CXX_STANDARD 20`.
+- **Archivo de datos:** `peliculas.csv`.
 
-```txt
-MAX_LEN = 6
-```
+El proyecto depende explícitamente de:
 
-para evitar crecimiento cuadrático.
+- `windows.h`: configuración y control de consola en Windows.
+- `conio.h`: captura de teclas como flechas y Enter mediante `_getch()`.
 
-Sin este límite, insertar todos los suffix completos produciría:
-
-```txt
-O(n²)
-```
-
-en tiempo y memoria.
-
-Con la restricción:
-
-```txt
-O(n)
-```
+Por esas dependencias, el proyecto no es portable directamente a Linux o macOS sin adaptar la interfaz de consola.
 
 ---
 
-# Complejidad de Inserción
+## 12. Instalación y ejecución
 
-## Complejidad Temporal
+### Opción recomendada: CLion
 
-La inserción completa cuesta:
+1. Abrir la carpeta del proyecto en CLion.
+2. Verificar que `peliculas.csv` esté en la raíz del proyecto:
 
-```txt
-O(n)
+```text
+Proyecto-1_Programaci-n_III_UTEC/peliculas.csv
 ```
 
-donde:
+3. Cargar el proyecto con CMake.
+4. Compilar el target `PROYECTAZO`.
+5. Ejecutar el programa desde CLion.
 
-```txt
-n = longitud de la palabra
+El código también intenta resolver `peliculas.csv` en estas rutas:
+
+```text
+peliculas.csv
+cmake-build-debug/peliculas.csv
+../peliculas.csv
+../cmake-build-debug/peliculas.csv
 ```
+
+Por claridad, se recomienda mantener el archivo en la raíz del proyecto. El archivo `datosLimpios.csv` se genera durante la ejecución.
+
+### Compilación con CMake
+
+```bash
+cmake -S . -B cmake-build-debug
+cmake --build cmake-build-debug
+```
+
+Luego ejecutar el binario generado por CMake dentro de `cmake-build-debug`.
 
 ---
 
-# Búsqueda en el Suffix Trie
+## 13. Capturas
 
-La búsqueda recorre el Trie carácter por carácter.
+Sección preparada para insertar capturas del programa:
 
----
-
-# Pseudocódigo de Búsqueda de Nodo
-
-```txt
-FUNCIÓN buscarNodo(clave)
-
-    nodo ← raíz
-
-    PARA CADA caracter c EN clave
-
-        SI c NO existe EN nodo.hijos
-
-            RETORNAR vacío
-
-        FIN SI
-
-        nodo ← nodo.hijos[c]
-
-    FIN PARA
-
-    resultado ← nuevo Map<movieID, TF>
-
-    //CASO 1: SE ENCUENTRA UNA PALABRA COMPLETA
-
-    SI nodo.esFinDePalabra
-
-        PARA CADA (id, freq) EN nodo.freq
-
-            resultado[id]
-                += freq * 1.5
-
-        FIN PARA
-
-
-    //CASO 2: SE ENCUENTRA UN SUFIJO O PREFIJO DE LA PALABRA
-
-    SINO
-
-        PARA CADA (id, freq) EN nodo.freq
-
-            resultado[id]
-                += freq
-
-        FIN PARA
-
-    FIN SI
-
-
-    RETORNAR resultado
-
-FIN FUNCIÓN
-```
-
----
-
-# Boost de Coincidencia Exacta
-
-Cuando existe coincidencia exacta:
-
-```txt
-freq × 1.5
-```
-
-Esto prioriza:
-
-```txt
-spider
-```
-
-sobre:
-
-```txt
-spiderman
-```
-
----
-
-# Complejidad de `buscarNodo`
-
-## Temporal
-
-```txt
-O(k + r)
-```
-
-donde:
-
-| símbolo | significado |
+| Pantalla | Captura |
 |---|---|
-| `k` | longitud de la palabra |
-| `r` | cantidad de documentos encontrados |
+| Inicio / bienvenida | Pendiente |
+| Registro de usuario | Pendiente |
+| Inicio de sesión | Pendiente |
+| Menú principal | Pendiente |
+| Búsqueda de películas | Pendiente |
+| Detalle de película | Pendiente |
+| Perfil de usuario | Pendiente |
+| Historial | Pendiente |
+| Favoritos | Pendiente |
+| Notificaciones | Pendiente |
 
 ---
 
+## 14. Resultados
 
-# Ranking TF-IDF
+El proyecto logra integrar un flujo completo de consulta de películas desde datos en CSV:
 
-El sistema utiliza:
+- carga y parseo de un catálogo grande;
+- limpieza de campos textuales;
+- construcción de un índice de búsqueda;
+- búsqueda textual con ranking;
+- interacción de usuario con registro, login, perfil, historial, favoritos y notificaciones;
+- aplicación de patrones de diseño vistos en el curso;
+- uso de programación paralela para indexación y consulta;
+- persistencia básica en archivos `.txt` y `.csv`.
 
-```txt
-TF-IDF
-```
-
-para calcular relevancia semántica.
-
----
-
-# TF (Term Frequency)
-
-Representa:
-
-```txt
-cuántas veces aparece el token
-```
-
-dentro de una película.
+Sus principales ventajas son la separación de responsabilidades por archivos, el uso de estructuras de datos adecuadas para búsqueda textual y la incorporación de patrones de diseño aplicados a casos concretos del sistema.
 
 ---
 
-# IDF (Inverse Document Frequency)
+## 15. Trabajo futuro
 
-Representa:
-
-```txt
-qué tan raro es el token
-```
-
-en toda la colección.
-
----
-
-# Fórmula de IDF
-
-```txt
-IDF = log(1 +(totalDocs / (1 + df) ))
-```
-
-donde:
-
-| símbolo | significado |
-|---|---|
-| `totalDocs` | películas totales |
-| `df` | documentos que contienen el token |
+- Medir formalmente tiempos secuenciales y paralelos con el mismo dataset y la misma computadora.
+- Ajustar `CMakeLists.txt` a C++17 si la rúbrica exige estrictamente ese estándar.
+- Agregar pruebas unitarias para limpieza, parseo CSV, Trie, login y actualización de usuarios.
+- Mejorar la seguridad del almacenamiento de contraseñas, ya que actualmente se guardan en texto plano.
+- Reemplazar archivos `.txt` por una base de datos ligera como SQLite.
+- Mejorar el ranking con técnicas adicionales de recuperación de información.
+- Agregar stemming o lemmatization para mejorar búsquedas en sinopsis.
+- Hacer portable la interfaz reemplazando `windows.h` y `conio.h`.
+- Agregar mediciones automáticas para `metricas_tiempo.txt`.
+- Incorporar capturas reales del programa en ejecución.
 
 ---
 
-# Fórmula TF-IDF
+## 16. Referencias
 
-```txt
-TF-IDF = TF × IDF
-```
+Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (1994). *Design patterns: Elements of reusable object-oriented software*. Addison-Wesley.
 
----
+Lippman, S. B., Lajoie, J., & Moo, B. E. (2012). *C++ Primer* (5th ed.). Addison-Wesley.
 
-# Ejemplo
+Meyers, S. (2014). *Effective Modern C++: 42 specific ways to improve your use of C++11 and C++14*. O'Reilly Media.
 
-| token | TF | IDF | score |
-|---|---|---|---|
-| spider | 10 | 1 | 10 |
-| multiverse | 6 | 5 | 30 |
+ISO. (2024). *ISO/IEC 14882:2024: Programming languages - C++*. International Organization for Standardization.
 
-Aunque:
+cppreference. (s. f.). *C++ reference*. https://en.cppreference.com/
 
-```txt
-spider
-```
+GeeksforGeeks. (s. f.). *Trie data structure*. https://www.geeksforgeeks.org/trie-insert-and-search/
 
-aparece más veces,:
+Sedgewick, R., & Wayne, K. (2011). *Algorithms* (4th ed.). Addison-Wesley.
 
-```txt
-multiverse
-```
-
-es más relevante por ser más raro.
+Williams, A. (2019). *C++ Concurrency in Action* (2nd ed.). Manning Publications.
 
 ---
 
-# Pseudocódigo de Búsqueda Completa
+## 17. Licencia
 
-```txt
-FUNCIÓN buscar(query)
+Este repositorio no incluye un archivo de licencia formal. Mientras no se agregue una licencia explícita, todos los derechos permanecen reservados por sus autores.
 
-    score ← nuevo Map<movieID, double>
-
-    matchCount ← nuevo Map<movieID, int>
-
-    tokens ← tokenizar(query)
-
-    totalTokens ← 0
-
-    // RECORRER TOKENS
-
-    PARA CADA token EN tokens
-
-        SI longitud(token) ≤ 2
-
-            CONTINUAR
-
-        FIN SI
-
-
-        totalTokens += 1
-
-        resultados ← buscarNodo(token)
-
-        // CALCULAR IDF
-
-        SI token existe EN docFreq
-
-            df ← docFreq[token]
-
-        SINO
-
-            df ← 1
-
-        FIN SI
-
-
-        idf ← log(1 +(totalDocs / (1 + df) ))
-
-        // TF-IDF
-
-        PARA CADA (id, freq) EN resultados
-
-            tf ← freq
-
-            add ← tf * idf
-
-            score[id]
-                += add
-
-            matchCount[id]
-                += 1
-
-        FIN PARA
-
-    FIN PARA
-
-
-    // PENALIZACIÓN POR NO SER UNA PALBRA COMPLETA
-    
-
-    PARA CADA (id, sc) EN score
-
-        SI matchCount[id] < totalTokens
-
-            score[id]
-                *= 0.5
-
-        FIN SI
-
-    FIN PARA
-
-
-    
-    // ORDENAR DE MAYOR A MENOR SEGUN SCORE CALCULA CON TF-IDF
-    
-
-    ordenar score DESCENDENTE
-
-    // TOP 5 PARA RESULTADO FINAL
-
-    retornar primeros 5 ids
-
-FIN FUNCIÓN
-```
-
----
-
-# Penalización de Coincidencias Incompletas
-
-Si una película no contiene todos los tokens buscados:
-
-```txt
-score *= 0.5
-```
-
-Esto reduce falsos positivos.
-
----
-
-# Complejidad de Búsqueda
-
-## Complejidad Temporal
-
-```txt
-O(t * r + m log m)
-```
-
-donde:
-
-| símbolo | significado |
-|---|---|
-| `t` | tokens de la consulta |
-| `r` | documentos encontrados por token |
-| `m` | documentos puntuados |
-
----
-
-
-# Liberación de Memoria
-
-El Trie libera memoria recursivamente.
-
----
-
-```txt
-FUNCIÓN limpiarNodo(nodo)
-
-    SI nodo ES null
-
-        RETORNAR
-
-    FIN SI
-
-
-    PARA CADA hijo EN nodo.hijos
-
-        limpiarNodo(hijo)
-
-    FIN PARA
-
-
-    eliminar nodo
-
-FIN FUNCIÓN
-```
-
-
-## Ventajas de este tipo de implementación
-
-- Soporta búsqueda exacta y parcial.
-- TF-IDF mejora el ranking.
-- El boost ×1.5 favorece coincidencias exactas.
-- La penalización ×0.5 reduce falsos positivos.
-- `MAX_LEN` evita explosión excesiva de memoria.
-
----
-
-## Limitaciones conocidas
-
-- Insertar subcadenas aumenta consumo de memoria.
-- El sistema relaciona palabras mediante prefijos y subcadenas, pero no mediante análisis lingüístico avanzado (stemming o lemmatization).
-- El Trie puede crecer bastante con datasets grandes.
-
----
-
-
-## Avance de la interfaz
-
-La interfaz corre en la terminal de Windows usando `conio.h` y la API de consola Win32. Tiene tres pantallas principales:
-
-### Pantalla de bienvenida — Logo ASCII
-
-```
-██╗   ██╗████████╗███████╗ ██████╗███████╗██╗     ██╗██╗  ██╗
-██║   ██║╚══██╔══╝██╔════╝██╔════╝██╔════╝██║     ██║╚██╗██╔╝
-██║   ██║   ██║   █████╗  ██║     █████╗  ██║     ██║ ╚███╔╝
-██║   ██║   ██║   ██╔══╝  ██║     ██╔══╝  ██║     ██║ ██╔██╗
-╚██████╔╝   ██║   ███████╗╚██████╗██║     ███████╗██║██╔╝ ██╗
- ╚═════╝    ╚═╝   ╚══════╝ ╚═════╝╚═╝     ╚══════╝╚═╝╚═╝  ╚═╝
-
-         🎬 Películas y series
-            sin límites y mucho más 🍿
-```
-
-### Menú de ingreso — navegable con flechas
-
-```
-╭────────────────────────────────────╮
-│        * INGRESO AL SISTEMA *      │
-├────────────────────────────────────┤
-│   -> Iniciar sesión                │   ← opción seleccionada (resaltada en cyan)
-│      Registrarse                   │
-├────────────────────────────────────┤
-│   Usa ↑ ↓ y ENTER                  │
-╰────────────────────────────────────╯
-```
-
-La selección se mueve con las teclas `↑` `↓` y se confirma con `ENTER`.
-
-### Pantalla principal — Panel de películas
-
-Una vez autenticado, el usuario ve:
-- Su nombre de bienvenida.
-- Un bloque de 5 películas recomendadas de forma aleatoria (géneros variados, sin repetir).
-- Un campo de búsqueda de texto libre conectado al Trie.
-
-```
-Bienvenido, [usuario]
-
-RECOMENDACIONES:
-[482]  Inception             Sci-Fi   | 2010
-[1203] The Godfather         Crime    | 1972
-[3891] Spirited Away         Animation| 2001
-[621]  Mad Max: Fury Road    Action   | 2015
-[2047] Amélie                Romance  | 2001
-
-Buscar: _
-```
-
----
-## Optimizaciones aplicadas al Suffix Trie
-
-El motor mantiene el enfoque original: la estructura principal sigue siendo un
-**Suffix Trie de caracteres**. No se reemplazo por un indice invertido ni por
-otra estructura principal. Las mejoras se enfocan en reducir costo de memoria,
-evitar errores de borde, mejorar ranking y registrar metricas utiles para la
-evaluacion.
-
-### Cambios realizados
-
-- Los hijos de cada nodo del Trie pasaron de una tabla fija de 256 punteros a
-  una estructura dispersa basada en `unordered_map<unsigned char, Nodo*>`.
-- Se agrego liberacion recursiva de memoria en el destructor de `Trie`.
-- La insercion de sufijos conserva las rutas de caracteres, pero ya no guarda
-  listas de peliculas en subcadenas de 1 o 2 caracteres, porque la busqueda
-  descarta consultas de ese tamano.
-- `docFreq` ahora se comparte por referencia entre los Tries parciales durante
-  el procesamiento, evitando copiar el mismo mapa global en cada Trie.
-- La construccion del procesador evita copiar objetos `DataLimpia` completos:
-  usa referencias/punteros a la data limpia ya cargada.
-- Se agrego soporte de frases cortas dentro del mismo Trie. El sistema inserta
-  combinaciones consecutivas de 2 y 3 tokens y aplica un refuerzo cuando la
-  consulta coincide como frase.
-- Para sufijos largos se agrego una raiz auxiliar de rutas reversas dentro de
-  la misma clase `Trie`. Se usa solo cuando la busqueda normal no encuentra
-  resultados y el token supera `MAX_LONG`, evitando construir todos los sufijos
-  completos de forma cuadratica.
-- Se corrigio el caso de consultas vacias o con tokens demasiado cortos para
-  evitar division entre cero durante la penalizacion por cobertura.
-- `metricas_tiempo.txt` registra tiempos de lectura CSV, limpieza/exportacion,
-  insercion paralela del arbol, carga total del catalogo y busquedas paralelas.
-
-### Impacto esperado
-
-| Area | Impacto |
-|---|---|
-| Memoria | Menor uso por nodo al almacenar solo hijos existentes y evitar postings de subcadenas inutiles. |
-| Construccion | Menos copias de `DataLimpia` y menos postings irrelevantes reducen trabajo durante la indexacion. |
-| Busqueda | Las consultas vacias son seguras, las frases cortas y sufijos largos reciben mejor soporte y se mantiene busqueda paralela. |
-| Ranking | Las coincidencias por frase tienen refuerzo adicional sobre la suma token por token. |
-| Metricas | El archivo `metricas_tiempo.txt` permite comparar etapas y observar costo de consultas reales. |
-
-### Limitaciones que se mantienen
-
-- El Suffix Trie sigue consumiendo mas memoria que un indice invertido clasico,
-  porque almacena rutas de caracteres y postings en multiples nodos.
-- Las frases se soportan como n-gramas cortos para controlar memoria. Frases muy
-  largas siguen evaluandose principalmente por tokens individuales.
-- Las busquedas con terminos muy comunes pueden devolver muchos candidatos; el
-  ranking final todavia depende de ordenar esos candidatos.
-- Se conserva la busqueda por palabra, prefijo, sufijo y subpalabra dentro del
-  enfoque de Suffix Trie, por lo que no se cambio la arquitectura principal.
-
----
-## Interaccion con el usuario
-
-
-Mas allá de la interacción con el usuario a traves de la interfaz, es importante mencionar y enteder algunas validaciones que se realizan.
-
-### | Registro historico de usuarios | 
-
-Cuando el usuario ingresa a la interfaz, se le da la opcion de crear una nueva cuenta (registrarse) o acceder a una cuentaya creada
-(inicio de sesion)
-
-Esto se hace con la finalida de tener un mejor control en la validacion de usuarios y mantener un registro histórico de todos los usuarios registrados.
-El registro histórico consiste en un archivo .txt donde se guarda de manera secuencial
-
-`correo,password,nombre de usuario,lista de peliculas para ver mas tarde,
-lista de peliculas que le gustan, lista de peliculas que no desea ver,  lista con todas las peliculas que ha visto`
-
-Esto se hace con la finalidad de mejorar la interaccion con el usuario, a trvaes de una personalizacion de peliculas recomendadas, basado en las peliculas que le gustan,
-peliculas de un genero similar a las que ha visto, etc.
-
-
-### | Validaciones en las opciones registrar e iniciar sesion |
-
-Dependiendo de la opcion elegida por el usuario al ingresar a la interfaz, se ejecutaran una serie de validaciones espeficicas.
-En el caso que eliga *registrarse*, se utilizan funciones como `validar_correo()` para verificar que este usuario nuevo se esta registrando con un correo que no esta en uso.
-Esto se hace porque el correo se ha elegido como clave primaria, similar a la validacion que usan las plataformas de streaming en la actualidad.
-
-De manera similar, cuando el usuario elige la opcion de *iniciar sesion* se utilizan funciones como `validar_info()`, la cual verifica que el correo y contraseña que estan siendo ingresados
-corresponden a los que se registraron cuando el usuario creo la cuenta.
-
-### | Recomendacion de Peliculas Aleatoria |
-Como se menciono en la interfaz, cuando el usuario ya valido su identidad, se muestra una recomendacion de 5 peliculas aletorias. Para ello, la funcion `peliculasRecomendadasPanel`
-utiliza un algoritmo simple de generacion aleatoria de un numero que corresponde al indice de una pelicula. Con este indice se accede a un mapa que contiene las peliculas, ya leidas,
-para extraer la informacion que se mostrar en pantalla (titulo, genero,año de lanzamiento).
-
-Asimismo, se realiza un registro y validacion interna de las pelicula que estan saliendo, con la finalidad de que no se repitan peliculas del mismo genero. Esto se hace para
-que las recomendaciones sean lo mas aletorias posibles y el usuario pueda conocer un catálogo diverso de peliculas.
-
----
-## Cómo ejecutar
-
-1. Colocar el dataset original renombrado como `peliculas.csv` dentro de `cmake-build-debug/`.
-2. Compilar con CMake (CLion o línea de comandos).
-3. **Desde CLion:** ir a `Run → Edit Configurations` y activar *"Emulate terminal in the output console"*, luego ejecutar normalmente.
-
-> Al iniciar aparecerá brevemente un mensaje de sistema en la consola mientras se configura UTF-8; es esperado y no indica un error.
-
-
----
-
-## Patrones de diseno integrados
-
-La rama actual integra solo patrones que encajan con el flujo real de UTECFlix: carga de catalogo, busqueda global, paginacion de resultados y control de acceso a peliculas. No se integro la feature completa de historial/Memento porque cambia el alcance funcional de esta rama; se tomo la idea de Iterator para resolver la paginacion de busqueda.
-
-| Patron | Clases / archivos | Uso en el proyecto | Por que tiene sentido |
-|---|---|---|---|
-| Singleton + Facade | `CatalogoPeliculas` en `Singleton.h/.cpp` | Centraliza la carga del CSV, la data limpia y el `Procesador` de busqueda. `main.cpp` accede a una unica instancia con `CatalogoPeliculas::instancia()`. | Evita duplicar mapas grandes de peliculas y deja un punto de entrada claro para cargar, buscar y obtener el catalogo. |
-| Strategy | `RankingStrategy`, `RankingPorScoreStrategy` en `RankingStrategy.h/.cpp` | `Procesador` calcula scores globales y delega el ordenamiento/ranking a una estrategia intercambiable. | Permite cambiar el criterio de ranking sin reescribir el motor de busqueda ni el Trie. |
-| Proxy | `IPelicula`, `PeliculaReal`, `PeliculaProxy` en `Proxy.h/.cpp` | Filtra la visualizacion de peliculas restringidas segun edad del usuario. Se usa en recomendaciones, resultados y detalle de pelicula. | Controla acceso a contenido sin modificar `Movie` ni duplicar validaciones en la interfaz. |
-| Iterator | `ResultadosIterator` en `Iterator.h/.cpp` | Recorre los IDs de busqueda en paginas de 5 resultados. | La busqueda sigue siendo global, pero la interfaz puede mostrar resultados paginados sin mezclar logica de recorrido con logica visual. |
-| Memento | `Memento`, `HistorialCareTaker`, `HistorialEntry` en `Memento.h/.cpp` | Guarda snapshots del historial de acciones de la sesion. | Encaja con historial porque permite conservar/restaurar estados de acciones sin exponer la estructura interna. |
-| Observer | `AccionUsuarioSubject`, `NotificacionesArchivoObserver` en `Observer.h/.cpp` | Al dar Like o Ver mas tarde, genera una notificacion en `notificaciones.txt`. | Desacopla la accion del usuario del mecanismo de notificacion en archivo. |
-| Command | `PerfilCommand`, `CambiarNombreCommand`, `CambiarFechaNacimientoCommand`, `CambiarPasswordCommand` en `Command.h/.cpp` | Encapsula cambios de perfil como comandos independientes. | Permite validar seguridad antes de ejecutar y separar cada modificacion del menu de perfil. |
-
-### Decisiones de integracion
-
-- Se conservaron la interfaz y el flujo de busqueda de esta rama.
-- No se mezclo la autenticacion por preguntas/historial de `feat/strategy-and-proxy`, porque cambiaba el login y agregaba archivos de soporte no relacionados con la busqueda principal.
-- El Proxy fue adaptado desde las ramas de proxy para trabajar directamente con `Movie`.
-- El Iterator se aplico a resultados de busqueda, que es el uso pedido por el proyecto: mostrar 5 resultados por pagina.
-- Memento quedo integrado solo para historial de acciones; no se trajeron pantallas de historial ajenas a esta interfaz.
-
-### Archivos de usuario e historial
-
-`registroUsuarios.txt` ahora usa el formato de `feat/strategy-and-proxy`:
-
-```txt
-email,password,fechaNac,nombre,[verMasTarde],[likes],[baneados],[historial]
-```
-
-`fechaNac` se guarda como `dd/mm/aaaa`. Las lineas antiguas con edad numerica siguen siendo aceptadas y al reescribirse se migran a una fecha aproximada `01/01/<anio>`.
-
-Las acciones del usuario se registran en:
-
-- `historialUsuarios.txt`: busquedas, visualizaciones, likes y Ver mas tarde.
-- `notificaciones.txt`: eventos generados por Observer:
-- `preguntasRecuperacion.csv`: preguntas y respuestas normalizadas para restaurar contrasena.
-
-Formato actual de cada notificacion:
-
-```txt
-usuario: <nombre> | email: <correo> | LIKE | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
-usuario: <nombre> | email: <correo> | VER_MAS_TARDE | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
-usuario: <nombre> | email: <correo> | FAVORITO | id: <id_pelicula> | titulo: <titulo> | fecha: dd/mm/aaaa hh:mm:ss
-```
-
-Al iniciar sesion se cargan concurrentemente las notificaciones de `notificaciones.txt`, filtradas por el email del usuario actual. Se guardan en una pila (`stack`) para mostrar primero la notificacion mas reciente desde la opcion `E. Notificaciones`.
-
-La recuperacion de contrasena fue adaptada desde `feat/strategy-and-proxy`:
-
-- Al registrar un usuario se puede activar un conjunto de preguntas de recuperacion.
-- Si el login falla, el usuario puede elegir restaurar la contrasena.
-- Primero se validan 3 preguntas de recuperacion.
-- Si no hay preguntas suficientes, se intenta validar con 2 de las ultimas 5 busquedas registradas en `historialUsuarios.txt`.
-
----
-
-## Programacion paralela
-
-El preprocesamiento y la busqueda usan programacion paralela en `Procesador.cpp`.
-
-| Etapa | Implementacion secuencial | Implementacion paralela actual | Beneficio |
-|---|---|---|---|
-| Indexacion de peliculas | Un solo Trie procesa todo el catalogo. | `NUM_THREADS` workers dividen el catalogo, cada uno inserta en su propio `Trie` y luego se fusiona `docFreq`. | Reduce tiempo de construccion del indice y evita contencion fuerte entre threads. |
-| Busqueda | Un solo Trie devuelve scores. | Cada Trie parcial busca en paralelo y luego se suman los scores por ID. | Mantiene una busqueda global, pero reparte el costo de consulta. |
-| Ranking | Ordenamiento directo dentro de `Procesador`. | Scores globales delegados a `RankingStrategy`. | Separa paralelismo/recuperacion del criterio de ordenamiento. |
-
-Tabla comparativa sugerida para la rubrica, usando el dataset `peliculas.csv`:
-
-| Operacion | Version secuencial | Version paralela actual | Observacion |
-|---|---:|---:|---|
-| Carga + limpieza + indexacion | Pendiente de medir en una rama secuencial equivalente | El programa imprime el tiempo de carga en milisegundos al iniciar | Medir ambas versiones en la misma PC y con el mismo dataset. |
-| Busqueda global por texto | Pendiente de medir | Busqueda distribuida entre los Tries parciales | Usar consultas como `drama`, `war love`, `michael curtiz`. |
-
-Para completar la medicion final, ejecutar ambas variantes con el mismo `peliculas.csv`, registrar el tiempo impreso por consola y reemplazar los valores pendientes en la tabla.
+Para una entrega académica, se recomienda agregar un archivo `LICENSE` si el equipo desea permitir reutilización, distribución o modificación del código.
